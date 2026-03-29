@@ -40,8 +40,8 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import leaf_path_is_catch_all_bucket
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-1.2" / "outputs"
-STEP13_OUT = ROOT / "step-1.3" / "outputs"
+STEP12_OUT = ROOT / "step-2-match-items-bigrams" / "outputs"
+STEP13_OUT = ROOT / "step-2-interactive-keyword-manual" / "outputs"
 STEP14_OUTDIR = Path(__file__).resolve().parent / "outputs"
 ENV_PATH = ROOT / ".env"
 
@@ -270,7 +270,12 @@ def main() -> None:
     parser.add_argument(
         "--manual-13",
         metavar="PATH",
-        help="Step-1.3 manual JSON (item_matches excluded from LLM pool). Default: auto if unique match.",
+        help="Step-2.3 manual JSON (item_matches excluded from LLM pool). Default: auto if unique match.",
+    )
+    parser.add_argument(
+        "--step1-manual",
+        metavar="PATH",
+        help="Optional step-1 similar-title manual JSON; item_matches merged first (highest dedupe precedence).",
     )
     parser.add_argument("--no-auto-manual", action="store_true", help="Do not auto-pick a 1.3 manual file.")
     parser.add_argument("--model", default=DEFAULT_MODEL)
@@ -314,10 +319,14 @@ def main() -> None:
             found = find_latest_manual_for_source(STEP13_OUT, in_path)
             if found:
                 manual_13 = found
-                print(f"Using auto-discovered 1.3 manual: {manual_13.relative_to(ROOT)}")
+                print(f"Using auto-discovered 2.3 manual: {manual_13.relative_to(ROOT)}")
     else:
         in_path, manual_interactive = pick_inputs_interactive()
         manual_13 = manual_interactive
+
+    step1_manual: Optional[Path] = None
+    if getattr(args, "step1_manual", None):
+        step1_manual = Path(args.step1_manual).expanduser().resolve()
 
     if not in_path.exists():
         raise SystemExit(f"Input not found: {in_path}")
@@ -343,6 +352,22 @@ def main() -> None:
         raise SystemExit("Expected matched.json to be a JSON array.")
 
     matched_items_12: List[dict] = [x for x in matched_12_raw if isinstance(x, dict)]
+
+    ids_step1: Set[str] = set()
+    item_matches_step1: List[dict] = []
+    if step1_manual is not None:
+        if not step1_manual.exists():
+            raise SystemExit(f"--step1-manual not found: {step1_manual}")
+        s1data = json.loads(step1_manual.read_text(encoding="utf-8"))
+        im1 = s1data.get("item_matches")
+        if isinstance(im1, list):
+            for row in im1:
+                if not isinstance(row, dict):
+                    continue
+                iid = row.get("id")
+                if isinstance(iid, str) and iid:
+                    ids_step1.add(iid)
+                    item_matches_step1.append(row)
 
     ids_13: Set[str] = set()
     item_matches_13: List[dict] = []
@@ -376,13 +401,14 @@ def main() -> None:
         subtitle = it.get("subtitle") or ""
         if not isinstance(iid, str) or not iid:
             continue
-        if iid in ids_13:
+        if iid in ids_13 or iid in ids_step1:
             continue
         llm_inputs.append({"id": iid, "title": title, "subtitle": subtitle})
 
     print(f"Split unmatched items: {len(unmatched_items_in)}")
     print(f"Matched in 1.2 (matched.json): {len(matched_items_12)}")
-    print(f"Excluded by 1.3 manual: {len(ids_13)}")
+    print(f"Excluded by step-1 manual: {len(ids_step1)}")
+    print(f"Excluded by 2.3 manual: {len(ids_13)}")
     print(f"Items to send to LLM: {len(llm_inputs)}")
     print(f"Min confidence: {args.min_confidence}")
 
@@ -395,11 +421,13 @@ def main() -> None:
         return CHECKPOINT_DIR / f"step14_checkpoint_{hashlib.sha256(base_fingerprint.encode('utf-8')).hexdigest()[:10]}.json"
 
     manual_fp = file_fingerprint(manual_13) if manual_13 else "none"
+    step1_fp = file_fingerprint(step1_manual) if step1_manual else "none"
     base_fp = (
         f"taxonomy={file_fingerprint(TAXONOMY_PATH)}"
         f"|input={file_fingerprint(in_path)}"
         f"|matched12={file_fingerprint(matched_12_path)}"
         f"|manual13={manual_fp}"
+        f"|step1={step1_fp}"
         f"|model={args.model}"
         f"|min_conf={args.min_confidence}"
         f"|batch_size={args.batch_size}"
@@ -462,6 +490,9 @@ def main() -> None:
     print(f"LLM high-confidence assignments kept: {len(kept_by_id)} in {elapsed:.1f}s")
 
     existing_ids: Set[str] = set()
+    for m in item_matches_step1:
+        if isinstance(m.get("id"), str) and m["id"]:
+            existing_ids.add(m["id"])
     for m in matched_items_12:
         if isinstance(m.get("id"), str) and m["id"]:
             existing_ids.add(m["id"])
@@ -498,6 +529,7 @@ def main() -> None:
         llm_added += 1
 
     merged_matched: List[dict] = []
+    merged_matched.extend(item_matches_step1)
     merged_matched.extend(matched_items_12)
     merged_matched.extend(item_matches_13)
     merged_matched.extend(llm_matched_rows)
@@ -509,7 +541,7 @@ def main() -> None:
         iid = it.get("id")
         if not isinstance(iid, str) or not iid:
             continue
-        if iid in ids_13:
+        if iid in ids_13 or iid in ids_step1:
             continue
         if iid in kept_by_id:
             continue
@@ -524,11 +556,14 @@ def main() -> None:
         "unmatched_keywords_source": str(in_path.resolve()),
         "matched_json_source": str(matched_12_path.resolve()),
         "manual_13_source": str(manual_13.resolve()) if manual_13 else None,
+        "step1_manual_source": str(step1_manual.resolve()) if step1_manual else None,
         "leaf_paths_count": len(leaf_paths),
         "counts": {
+            "matched_step1_similar_title": len(item_matches_step1),
             "matched_1_2_bigram": len(matched_items_12),
             "matched_1_3_manual": len(item_matches_13),
             "matched_1_4_llm": llm_added,
+            "note": "matched_* keys retain legacy 1.x names; step1 = similar-title interactive.",
             "merged_matched_total": len(merged_matched),
             "unmatched_after_llm": len(remaining_unmatched),
         },

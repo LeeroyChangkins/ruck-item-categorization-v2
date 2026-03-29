@@ -36,7 +36,7 @@ if str(ROOT) not in sys.path:
 from taxonomy_cascade import is_catch_all_bucket_slug
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP16_OUT = ROOT / "step-1.6" / "outputs"
+STEP16_OUT = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100
 PREVIEW_ITEMS_MAX = 12
@@ -302,7 +302,7 @@ def load_resume(
 
 
 def init_step15_dedup_cache_from_groups(groups_path: Path) -> None:
-    """Load matched_deduped + unmatched_deduped once (siblings of source_unmatched_deduped)."""
+    """Load item pool from groups file: source_items_catalog (full raw) or legacy step-1.5 unmatched_deduped."""
     global _step15_dedup_cache
     unmatched_src: str | None = None
     matched_src: str | None = None
@@ -310,9 +310,6 @@ def init_step15_dedup_cache_from_groups(groups_path: Path) -> None:
     unmatched_pool: List[dict] = []
     try:
         gd = json.loads(groups_path.read_text(encoding="utf-8"))
-        u = gd.get("source_unmatched_deduped")
-        if isinstance(u, str) and u.strip():
-            unmatched_src = str(Path(u).expanduser().resolve())
     except (OSError, json.JSONDecodeError):
         _step15_dedup_cache = {
             "unmatched_src": None,
@@ -321,6 +318,31 @@ def init_step15_dedup_cache_from_groups(groups_path: Path) -> None:
             "unmatched_pool": [],
         }
         return
+
+    cat = gd.get("source_items_catalog")
+    if isinstance(cat, str) and cat.strip():
+        unmatched_src = str(Path(cat).expanduser().resolve())
+        try:
+            raw = json.loads(Path(unmatched_src).read_text(encoding="utf-8"))
+            if isinstance(raw, list):
+                unmatched_pool = [x for x in raw if isinstance(x, dict)]
+            elif isinstance(raw, dict):
+                ui = raw.get("unmatched_items") or raw.get("items")
+                if isinstance(ui, list):
+                    unmatched_pool = [x for x in ui if isinstance(x, dict)]
+        except (OSError, json.JSONDecodeError):
+            pass
+        _step15_dedup_cache = {
+            "unmatched_src": unmatched_src,
+            "matched_src": None,
+            "matched_prior": [],
+            "unmatched_pool": unmatched_pool,
+        }
+        return
+
+    u = gd.get("source_unmatched_deduped")
+    if isinstance(u, str) and u.strip():
+        unmatched_src = str(Path(u).expanduser().resolve())
 
     if unmatched_src:
         mp = Path(unmatched_src).parent / "matched_deduped.json"
@@ -349,7 +371,6 @@ def init_step15_dedup_cache_from_groups(groups_path: Path) -> None:
         "matched_prior": matched_prior,
         "unmatched_pool": unmatched_pool,
     }
-
 
 def clear_step15_dedup_cache() -> None:
     global _step15_dedup_cache
@@ -388,6 +409,7 @@ def normalize_16_item_to_match_row(m: dict) -> dict:
         "leaf_slug": m.get("leaf_slug") or "",
         "leaf_display_name": m.get("leaf_display_name") or "",
         "method": "similar_title_group_1_6",
+        "source": "manual_similar_title_1_6",
     }
 
 
@@ -414,33 +436,47 @@ def compute_cumulative_matched_and_remaining(
         unmatched_pool = []
         try:
             gd = json.loads(groups_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            gd = {}
+        cat = gd.get("source_items_catalog")
+        if isinstance(cat, str) and cat.strip():
+            unmatched_src = str(Path(cat).expanduser().resolve())
+            try:
+                raw = json.loads(Path(unmatched_src).read_text(encoding="utf-8"))
+                if isinstance(raw, list):
+                    unmatched_pool = [x for x in raw if isinstance(x, dict)]
+                elif isinstance(raw, dict):
+                    ui = raw.get("unmatched_items") or raw.get("items")
+                    if isinstance(ui, list):
+                        unmatched_pool = [x for x in ui if isinstance(x, dict)]
+            except (OSError, json.JSONDecodeError):
+                pass
+        else:
             u = gd.get("source_unmatched_deduped")
             if isinstance(u, str) and u.strip():
                 unmatched_src = str(Path(u).expanduser().resolve())
-        except (OSError, json.JSONDecodeError):
-            pass
 
-        if unmatched_src:
-            mp = Path(unmatched_src).parent / "matched_deduped.json"
-            if mp.is_file():
-                matched_src = str(mp.resolve())
+            if unmatched_src:
+                mp = Path(unmatched_src).parent / "matched_deduped.json"
+                if mp.is_file():
+                    matched_src = str(mp.resolve())
 
-        if matched_src:
-            try:
-                md = json.loads(Path(matched_src).read_text(encoding="utf-8"))
-                mi = md.get("matched_items")
-                if isinstance(mi, list):
-                    matched_prior = [x for x in mi if isinstance(x, dict)]
-            except (OSError, json.JSONDecodeError):
-                pass
-        if unmatched_src:
-            try:
-                ud = json.loads(Path(unmatched_src).read_text(encoding="utf-8"))
-                ui = ud.get("unmatched_items")
-                if isinstance(ui, list):
-                    unmatched_pool = [x for x in ui if isinstance(x, dict)]
-            except (OSError, json.JSONDecodeError):
-                pass
+            if matched_src:
+                try:
+                    md = json.loads(Path(matched_src).read_text(encoding="utf-8"))
+                    mi = md.get("matched_items")
+                    if isinstance(mi, list):
+                        matched_prior = [x for x in mi if isinstance(x, dict)]
+                except (OSError, json.JSONDecodeError):
+                    pass
+            if unmatched_src:
+                try:
+                    ud = json.loads(Path(unmatched_src).read_text(encoding="utf-8"))
+                    ui = ud.get("unmatched_items")
+                    if isinstance(ui, list):
+                        unmatched_pool = [x for x in ui if isinstance(x, dict)]
+                except (OSError, json.JSONDecodeError):
+                    pass
 
     id_to_gid = build_id_to_similar_title_group_id(groups_path)
     unknown_gids = {x.get("group_id") for x in unknown_groups if isinstance(x.get("group_id"), str)}
@@ -537,6 +573,20 @@ def write_manual_snapshot(
     tmp = out_path.with_suffix(out_path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     tmp.replace(out_path)
+    ua_path = out_path.parent / "unmatched_after_step1.json"
+    ua_items = [
+        {"id": r["id"], "title": r.get("title") or "", "subtitle": r.get("subtitle") or ""}
+        for r in cumulative.get("unmatched_and_skipped_cumulative") or []
+        if isinstance(r.get("id"), str) and r["id"]
+    ]
+    ua_payload = {
+        "version": "unmatched-after-step1",
+        "manual_session": str(out_path.resolve()),
+        "groups_source": str(groups_path.resolve()),
+        "item_count": len(ua_items),
+        "items": ua_items,
+    }
+    ua_path.write_text(json.dumps(ua_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
 def copy_to_clipboard(text: str) -> bool:
@@ -602,7 +652,7 @@ def main() -> None:
     parser.add_argument(
         "--groups",
         metavar="PATH",
-        help="unmatched_similar_title_groups.json (default: newest under step-1.6/outputs/).",
+        help="unmatched_similar_title_groups.json (default: newest under step-1-assign-group-leaves/outputs/).",
     )
     parser.add_argument("--resume-from", metavar="PATH", help="Continue this 1.6 manual JSON.")
     parser.add_argument("--fresh-run", action="store_true", help="Start a new manual file; no auto-resume.")
@@ -980,7 +1030,7 @@ def main() -> None:
     if cc:
         print(
             f"Cumulative: matched {cc.get('matched_cumulative_unique_ids', '?')} "
-            f"(1.5 + 1.6); remaining unmatched/skipped "
+            f"(step 1); remaining unmatched/skipped "
             f"{cc.get('remaining_unmatched_or_skipped_after_1_6', '?')}"
         )
 

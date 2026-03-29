@@ -46,7 +46,15 @@ from taxonomy_cascade import collect_slug_to_path, dedupe_category_slugs, is_cat
 
 ITEMS_PATH = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-MAPPINGS_DIR = ROOT / "step-1.1" / "outputs"
+def _mapping_candidate_files() -> List[Path]:
+    out: List[Path] = []
+    for d in (ROOT / "step-2-map-bigrams-taxonomy", ROOT / "step-2-map-bigrams-openai"):
+        if d.is_dir():
+            out.extend(sorted(d.glob("outputs/1.1*-bigram_categories_mapping*.json")))
+    return out
+
+
+MAPPINGS_DIR = ROOT / "step-2-map-bigrams-taxonomy" / "outputs"  # default scan dir (legacy)
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 
@@ -327,14 +335,14 @@ def write_split_artifacts(
 
 
 def pick_mapping_file_interactive() -> Path:
-    candidates = sorted(MAPPINGS_DIR.glob("1.1*-bigram_categories_mapping*.json"))
-    latest = max(candidates, key=lambda p: p.stat().st_mtime) if candidates else None
+    candidates = sorted(_mapping_candidate_files(), key=lambda p: p.stat().st_mtime)
+    latest = candidates[-1] if candidates else None
 
     print("Choose bigram mapping file:")
     if latest:
-        print(f"  1) Use most recent: {latest.name}")
+        print(f"  1) Use most recent: {latest.relative_to(ROOT)}")
     else:
-        print("  1) (No files found in step-1.1/outputs)")
+        print("  1) (No files under step-2-map-bigrams-*/outputs/)")
     print("  2) Enter a path manually")
 
     choice = input("> ").strip()
@@ -416,12 +424,10 @@ def run_single_mapping(args: argparse.Namespace) -> None:
     pair_meta_title, word_to_pairs_title = build_index(title_bigrams)
     pair_meta_sub, word_to_pairs_sub = build_index(subtitle_bigrams)
 
-    items = json.loads(ITEMS_PATH.read_text(encoding="utf-8"))
-    if not isinstance(items, list):
-        raise SystemExit(f"Expected array in {ITEMS_PATH}")
+    items, items_fp = _load_items_list()
 
     fp = (
-        f"items={file_fingerprint(ITEMS_PATH)}"
+        f"items={file_fingerprint(items_fp)}"
         f"|mapping={file_fingerprint(mapping_path)}"
         f"|cross_side={not bool(args.strict_sides)}"
     )
@@ -484,7 +490,7 @@ def run_single_mapping(args: argparse.Namespace) -> None:
         "version": "1.2",
         "phased_cascade": False,
         "bigram_mapping_file": mapping_path.name,
-        "items_file": ITEMS_PATH.name,
+        "items_file": str(items_fp.relative_to(ROOT)),
         "match_rules": [
             "Item matches a bigram if BOTH bigram words appear in the side text (title or subtitle), any order, not necessarily adjacent.",
             "Matching is token-based on letter-only runs; comparisons are case-insensitive.",
@@ -532,18 +538,16 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
     except ValueError as e:
         raise SystemExit(str(e)) from e
 
-    items = json.loads(ITEMS_PATH.read_text(encoding="utf-8"))
-    if not isinstance(items, list):
-        raise SystemExit(f"Expected array in {ITEMS_PATH}")
+    items, items_fp = _load_items_list()
 
     cross_side = not args.strict_sides
     print(
-        f"Phased cascade: {len(paths)} mapping file(s), {len(items)} items, "
+        f"Phased cascade: {len(paths)} mapping file(s), {len(items)} items (source={items_fp.name}), "
         f"cross-side matching={'on' if cross_side else 'off'}.",
         flush=True,
     )
 
-    fp_parts = ["items=" + file_fingerprint(ITEMS_PATH), f"cross_side={cross_side}", "cascade=1"]
+    fp_parts = ["items=" + file_fingerprint(items_fp), f"cross_side={cross_side}", "cascade=1"]
     for i, p in enumerate(paths):
         fp_parts.append(f"d{i}={file_fingerprint(p)}")
     fp = "|".join(fp_parts)
@@ -641,7 +645,7 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
         "phased_cascade": True,
         "bigram_mapping_files": [p.name for p in paths],
         "taxonomy_categories_file": TAXONOMY_PATH.name,
-        "items_file": ITEMS_PATH.name,
+        "items_file": str(items_fp.relative_to(ROOT)),
         "cascade_fingerprint": fp,
         "match_rules": [
             "Phased cascade: each mapping is applied in order; only items still unmatched are considered at the next depth.",
@@ -665,8 +669,40 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
     print(f"Split artifacts: {split_dir}", flush=True)
 
 
+def _load_items_list() -> tuple[list[dict], Path]:
+    """Return (items, path_used_for_fingerprint)."""
+    args = _match_items_args
+    if getattr(args, "items_json", None):
+        ip = Path(args.items_json).expanduser().resolve()
+        if not ip.is_file():
+            raise SystemExit(f"Not found: {ip}")
+        blob = json.loads(ip.read_text(encoding="utf-8"))
+        if isinstance(blob, list):
+            items = blob
+        elif isinstance(blob, dict):
+            items = blob.get("items") or blob.get("unmatched_items") or []
+        else:
+            items = []
+        if not isinstance(items, list):
+            raise SystemExit("items-json must contain a list or object with items/unmatched_items")
+        return [x for x in items if isinstance(x, dict)], ip
+    items = json.loads(ITEMS_PATH.read_text(encoding="utf-8"))
+    if not isinstance(items, list):
+        raise SystemExit(f"Expected array in {ITEMS_PATH}")
+    return items, ITEMS_PATH
+
+
+_match_items_args: argparse.Namespace | None = None
+
+
 def main() -> None:
+    global _match_items_args
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--items-json",
+        metavar="PATH",
+        help="JSON list of items (e.g. unmatched_after_step1.json). Default: full raw-prod-items file.",
+    )
     parser.add_argument("--no-resume", action="store_true", help="Disable checkpoint resume.")
     parser.add_argument("--checkpoint-every", type=int, default=300, help="Save progress every N items.")
     parser.add_argument("--mapping", help="Path to a 1.1*-bigram_categories_mapping*.json file (skips interactive selection).")
@@ -688,6 +724,7 @@ def main() -> None:
         help="Disable tqdm progress bars (phased cascade scans per mapping file).",
     )
     args = parser.parse_args()
+    _match_items_args = args
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 

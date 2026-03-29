@@ -4,7 +4,7 @@ Step 1.5
 Deduplicate and normalize matched/unmatched item lists from step 1.4 (or compatible JSON).
 
 Matched rows: one normalized row per item id. If duplicates exist, keep the row with highest
-precedence: manual_bigram_1_3 > llm_1_4 > step-1.2 bigram.
+precedence: manual_similar_title_1_6 > manual_bigram_1_3 > llm_1_4 > step-1.2 bigram.
 
 Unmatched rows: one row per id; then drop any id that appears in the deduped matched list.
 
@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
-STEP14_OUT = ROOT / "step-1.4" / "outputs"
+STEP14_OUT = ROOT / "step-3-llm-match-unmatched" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 DEFAULT_TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
@@ -67,8 +67,10 @@ def timestamp() -> str:
 
 
 def match_row_tier(row: dict) -> int:
-    """Higher wins on duplicate id."""
+    """Higher wins on duplicate id. Step-1 similar-title manual is highest."""
     s = row.get("source")
+    if s == "manual_similar_title_1_6":
+        return 4
     if s == "manual_bigram_1_3":
         return 3
     if s == "llm_1_4":
@@ -90,6 +92,19 @@ def normalize_matched_row(row: dict) -> dict:
     title = row.get("title") or ""
     subtitle = row.get("subtitle") or ""
     source = row.get("source")
+
+    if source == "manual_similar_title_1_6":
+        leaf_path = row.get("leaf_path") or ""
+        leaf_slug = row.get("leaf_slug") or _leaf_slug_from_path(leaf_path)
+        return {
+            "id": iid,
+            "title": title,
+            "subtitle": subtitle,
+            "leaf_path": leaf_path,
+            "leaf_slug": leaf_slug,
+            "leaf_display_name": row.get("leaf_display_name") or "",
+            "method": "interactive_similar_title_group",
+        }
 
     if source == "manual_bigram_1_3":
         leaf_path = row.get("leaf_path") or ""

@@ -42,8 +42,8 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import is_catch_all_bucket_slug
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-1.2" / "outputs"
-OUTDIR = ROOT / "step-1.3" / "outputs"
+STEP12_OUT = ROOT / "step-2-match-items-bigrams" / "outputs"
+OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100
 PREVIEW_ITEMS_MAX = 12

@@ -25,7 +25,7 @@ import json
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
-from typing import Set
+from typing import Iterable, Set
 
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
@@ -116,18 +116,40 @@ def save_checkpoint(path: Path, fingerprint: str, next_index: int, title_counts:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--items-json",
+        metavar="PATH",
+        help="Optional JSON: top-level array of items, or object with 'items' / 'unmatched_items' "
+        "(e.g. unmatched_after_step1.json). When set, keyword counts use only these items.",
+    )
     parser.add_argument("--no-resume", action="store_true", help="Disable checkpoint resume.")
     parser.add_argument("--checkpoint-every", type=int, default=2000, help="Save progress every N items.")
     args = parser.parse_args()
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    with ITEMS_PATH.open("r", encoding="utf-8") as f:
-        items = json.load(f)
-    if not isinstance(items, list):
-        raise SystemExit(f"Expected top-level array in {ITEMS_PATH}")
+    if args.items_json:
+        ip = Path(args.items_json).expanduser().resolve()
+        if not ip.is_file():
+            raise SystemExit(f"Not found: {ip}")
+        blob = json.loads(ip.read_text(encoding="utf-8"))
+        if isinstance(blob, list):
+            items = blob
+        elif isinstance(blob, dict):
+            items = blob.get("items") or blob.get("unmatched_items") or []
+        else:
+            items = []
+        if not isinstance(items, list):
+            raise SystemExit("items-json must contain a list or object with items/unmatched_items")
+        items_path_for_fp = ip
+    else:
+        items_path_for_fp = ITEMS_PATH
+        with ITEMS_PATH.open("r", encoding="utf-8") as f:
+            items = json.load(f)
+        if not isinstance(items, list):
+            raise SystemExit(f"Expected top-level array in {ITEMS_PATH}")
 
-    fp = file_fingerprint(ITEMS_PATH)
+    fp = file_fingerprint(items_path_for_fp)
     ckpt = checkpoint_path(fp)
     start_index, title_counts, subtitle_counts = load_checkpoint(ckpt, fp, no_resume=args.no_resume)
 
@@ -146,8 +168,9 @@ def main() -> None:
 
     payload = {
         "version": "1.0",
-        "source_file": ITEMS_PATH.name,
+        "source_file": items_path_for_fp.name,
         "total_items": len(items),
+        "items_subset": bool(args.items_json),
         "rules": {
             "min_word_length": MIN_WORD_LEN,
             "letters_only_no_digits": True,

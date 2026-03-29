@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """
-Step 1.6 (aggregate)
-Build groups of unmatched items whose titles are pairwise similar (default: min ratio 0.9).
+Step 1.1 — Build similar-title groups (aggregate)
+Cluster items whose titles are pairwise similar (default: min ratio 0.9).
 
-- Input: latest step-1.5 unmatched_deduped.json (or --input).
+- Input: source-files/raw-prod-items-non-deleted.json (default) or --input (JSON array of items).
 - Blocking: only compare titles in the same bucket (first letter-token + length bucket).
 - Clustering: clique — every pair in a group has similarity >= threshold. Within each block,
   repeatedly take the largest maximal clique in the remaining induced subgraph until no clique
   reaches min_group_size.
-- Output: step-1.6/outputs/<run_id>/unmatched_similar_title_groups.json
+- Output: step-1-build-similar-groups/outputs/<run_id>/unmatched_similar_title_groups.json
 
 Requires: networkx (maximal clique enumeration).
 """
@@ -25,7 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Sequence, Set, Tuple
 
 ROOT = Path(__file__).resolve().parents[1]
-STEP15_OUT = ROOT / "step-1.5" / "outputs"
+DEFAULT_ITEMS = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 VERSION = "1.6-unmatched-similar-title-groups"
@@ -76,12 +76,6 @@ def master_title_for_group(titles: Sequence[str]) -> str:
     shortest = min((t for t in titles if isinstance(t, str)), key=len, default="")
     return shortest.strip() or lcp
 
-
-def find_latest_unmatched_deduped() -> Path | None:
-    cands = list(STEP15_OUT.glob("**/unmatched_deduped.json"))
-    if not cands:
-        return None
-    return max(cands, key=lambda p: p.stat().st_mtime)
 
 
 def maximal_cliques_networkx(adj: Dict[int, Set[int]]) -> List[Set[int]]:
@@ -195,6 +189,7 @@ def run_aggregate(
             ungrouped.append(valid[i])
 
     stats = {
+        "items_in": n,
         "unmatched_items_in": n,
         "groups_emitted": len(out_groups),
         "items_in_groups": sum(g["item_count"] for g in out_groups),
@@ -208,11 +203,11 @@ def run_aggregate(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Build unmatched similar-title groups (1.6).")
+    parser = argparse.ArgumentParser(description="Build similar-title groups from production items (step 1.1).")
     parser.add_argument(
         "--input",
         metavar="PATH",
-        help="Path to unmatched_deduped.json (default: newest under step-1.5/outputs/).",
+        help=f"Path to JSON array of items (default: {DEFAULT_ITEMS.name}).",
     )
     parser.add_argument(
         "--min-similarity",
@@ -230,14 +225,17 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    in_path = Path(args.input).expanduser().resolve() if args.input else find_latest_unmatched_deduped()
-    if not in_path or not in_path.is_file():
-        raise SystemExit(f"No unmatched_deduped.json found. Pass --input or add step-1.5 outputs.")
+    in_path = Path(args.input).expanduser().resolve() if args.input else DEFAULT_ITEMS
+    if not in_path.is_file():
+        raise SystemExit(f"Input not found: {in_path}")
 
     data = json.loads(in_path.read_text(encoding="utf-8"))
-    raw = data.get("unmatched_items")
+    if isinstance(data, list):
+        raw = data
+    else:
+        raw = data.get("unmatched_items")
     if not isinstance(raw, list):
-        raise SystemExit("Expected unmatched_items array.")
+        raise SystemExit("Expected a JSON array of items, or an object with unmatched_items array.")
 
     min_sim = float(args.min_similarity)
     if not 0.0 < min_sim <= 1.0:
@@ -255,7 +253,8 @@ def main() -> None:
         "version": VERSION,
         "run_id": ts,
         "output_dir": str(run_dir.resolve()),
-        "source_unmatched_deduped": str(in_path.resolve()),
+        "source_items_catalog": str(in_path.resolve()),
+        "source_unmatched_deduped": None,
         "similarity_metric": "difflib.SequenceMatcher.ratio on normalized titles (lowercase, collapsed whitespace)",
         "stats": stats,
         "groups": groups,

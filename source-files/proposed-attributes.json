@@ -1,0 +1,6065 @@
+{
+  "_notes": {
+    "keep_in_sync": "When you change category slugs or hierarchy in categories_v1.json, update _category_attributes paths here and add entries to units if new unit symbols are needed. Keys are slash-separated slug chains under each top-level branch (materials, tools & gear, services) — e.g. power_tools/drills_and_drivers — not the JSON wrapper name; depth is unbounded.",
+    "elevation_rule": "Attributes are placed at the highest node where ALL children share them. If only some children share an attribute, it lives on those specific children.",
+    "unit_required": "true means a unit must be selected when setting the value (e.g. length=12, unit=ft). false means it is a free-text or unitless value.",
+    "value_type": "number | text | boolean"
+  },
+  "units": {
+    "%": {
+      "symbol": "%",
+      "name": "Percent",
+      "description": "Percentage value (moisture content, slope, elongation, etc.)",
+      "value_type": "number"
+    },
+    "A": {
+      "symbol": "A",
+      "name": "Amperes",
+      "description": "Electrical current",
+      "value_type": "number"
+    },
+    "AWG": {
+      "symbol": "AWG",
+      "name": "American Wire Gauge",
+      "description": "Wire conductor size",
+      "value_type": "number"
+    },
+    "BTU": {
+      "symbol": "BTU",
+      "name": "BTU",
+      "description": "British Thermal Unit — heat output",
+      "value_type": "number"
+    },
+    "L": {
+      "symbol": "L",
+      "name": "Liter",
+      "description": "Metric liquid volume",
+      "value_type": "number"
+    },
+    "MPa": {
+      "symbol": "MPa",
+      "name": "Megapascal",
+      "description": "Metric pressure or strength",
+      "value_type": "number"
+    },
+    "PSI": {
+      "symbol": "PSI",
+      "name": "Pounds per Square Inch",
+      "description": "Pressure or compressive strength",
+      "value_type": "number"
+    },
+    "R": {
+      "symbol": "R",
+      "name": "R-Value",
+      "description": "Thermal resistance rating (dimensionless number)",
+      "value_type": "number"
+    },
+    "V": {
+      "symbol": "V",
+      "name": "Volts",
+      "description": "Electrical potential",
+      "value_type": "number"
+    },
+    "W": {
+      "symbol": "W",
+      "name": "Watts",
+      "description": "Electrical power",
+      "value_type": "number"
+    },
+    "cc": {
+      "symbol": "cc",
+      "name": "Cubic Centimeters",
+      "description": "Engine displacement",
+      "value_type": "number"
+    },
+    "cm": {
+      "symbol": "cm",
+      "name": "Centimeter",
+      "description": "Metric linear dimension",
+      "value_type": "number"
+    },
+    "color": {
+      "symbol": "color",
+      "name": "Color",
+      "description": "Product color / blend (facet)",
+      "value_type": "text"
+    },
+    "cord": {
+      "symbol": "cord",
+      "name": "Cord",
+      "description": "Standard firewood cord (4×4×8 ft)",
+      "value_type": "number"
+    },
+    "ct": {
+      "symbol": "ct",
+      "name": "Count",
+      "description": "Pieces per package",
+      "value_type": "number"
+    },
+    "cuft": {
+      "symbol": "cuft",
+      "name": "Cubic Foot",
+      "description": "Volume (bags, soil, concrete yield)",
+      "value_type": "number"
+    },
+    "cuyd": {
+      "symbol": "cuyd",
+      "name": "Cubic Yard",
+      "description": "Bulk volume (concrete, aggregates)",
+      "value_type": "number"
+    },
+    "finish": {
+      "symbol": "finish",
+      "name": "Finish",
+      "description": "Surface finish (facet)",
+      "value_type": "text"
+    },
+    "fl oz": {
+      "symbol": "fl oz",
+      "name": "Fluid Ounce",
+      "description": "US fluid ounce for cartridge, tube, and pail volume",
+      "value_type": "number"
+    },
+    "ft": {
+      "symbol": "ft",
+      "name": "Foot",
+      "description": "Linear stock length",
+      "value_type": "number"
+    },
+    "g": {
+      "symbol": "g",
+      "name": "Gram",
+      "description": "Small mass (fasteners, small parts)",
+      "value_type": "number"
+    },
+    "gal": {
+      "symbol": "gal",
+      "name": "Gallon",
+      "description": "US liquid volume (pails, stain, fuel)",
+      "value_type": "number"
+    },
+    "grade": {
+      "symbol": "grade",
+      "name": "Grade",
+      "description": "Lumber grade, steel grade, or quality grade (facet)",
+      "value_type": "text"
+    },
+    "hr": {
+      "symbol": "hr",
+      "name": "Hours",
+      "description": "Dry time, cure time",
+      "value_type": "number"
+    },
+    "in": {
+      "symbol": "in",
+      "name": "Inch",
+      "description": "Linear dimension (thickness, width, nominal sizes)",
+      "value_type": "number"
+    },
+    "kg": {
+      "symbol": "kg",
+      "name": "Kilogram",
+      "description": "Metric mass",
+      "value_type": "number"
+    },
+    "lbs": {
+      "symbol": "lbs",
+      "name": "Pounds",
+      "description": "Weight in pounds",
+      "value_type": "number"
+    },
+    "m": {
+      "symbol": "m",
+      "name": "Meter",
+      "description": "Metric linear length or height",
+      "value_type": "number"
+    },
+    "material": {
+      "symbol": "material",
+      "name": "Material",
+      "description": "Material composition (facet)",
+      "value_type": "text"
+    },
+    "mil": {
+      "symbol": "mil",
+      "name": "Mil",
+      "description": "Thousandths of an inch — poly sheeting, wear layers, film",
+      "value_type": "number"
+    },
+    "min": {
+      "symbol": "min",
+      "name": "Minutes",
+      "description": "Working time, set time, pot life",
+      "value_type": "number"
+    },
+    "ml": {
+      "symbol": "ml",
+      "name": "Milliliter",
+      "description": "Small liquid volume",
+      "value_type": "number"
+    },
+    "mm": {
+      "symbol": "mm",
+      "name": "Millimeter",
+      "description": "Metric linear dimension",
+      "value_type": "number"
+    },
+    "mph": {
+      "symbol": "mph",
+      "name": "Miles Per Hour",
+      "description": "Wind speed rating",
+      "value_type": "number"
+    },
+    "oz": {
+      "symbol": "oz",
+      "name": "Ounce",
+      "description": "US customary weight (avoirdupois)",
+      "value_type": "number"
+    },
+    "pk": {
+      "symbol": "pk",
+      "name": "Pack",
+      "description": "Package count or pack size",
+      "value_type": "number"
+    },
+    "pt": {
+      "symbol": "pt",
+      "name": "Pint",
+      "description": "US liquid volume",
+      "value_type": "number"
+    },
+    "qt": {
+      "symbol": "qt",
+      "name": "Quart",
+      "description": "US liquid volume",
+      "value_type": "number"
+    },
+    "rpm": {
+      "symbol": "rpm",
+      "name": "RPM",
+      "description": "Revolutions per minute",
+      "value_type": "number"
+    },
+    "sqft": {
+      "symbol": "sqft",
+      "name": "Square Foot",
+      "description": "Area coverage (flooring, rolls, pallets)",
+      "value_type": "number"
+    },
+    "sqin": {
+      "symbol": "sqin",
+      "name": "Square Inch",
+      "description": "Small surface area",
+      "value_type": "number"
+    },
+    "sqm": {
+      "symbol": "sqm",
+      "name": "Square Meter",
+      "description": "Metric area",
+      "value_type": "number"
+    },
+    "ton": {
+      "symbol": "ton",
+      "name": "Ton",
+      "description": "Large weight (US ton unless noted on product)",
+      "value_type": "number"
+    },
+    "yd": {
+      "symbol": "yd",
+      "name": "Yard",
+      "description": "Fabric, rope, or bulk linear measure",
+      "value_type": "number"
+    },
+    "°C": {
+      "symbol": "°C",
+      "name": "Degrees Celsius",
+      "description": "Temperature rating",
+      "value_type": "number"
+    },
+    "°F": {
+      "symbol": "°F",
+      "name": "Degrees Fahrenheit",
+      "description": "Temperature rating",
+      "value_type": "number"
+    }
+  },
+  "_category_attributes": {
+    "abrasives_and_surface_prep": [
+      {
+        "key": "grit",
+        "label": "Grit",
+        "description": "Abrasive grit rating",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "backing",
+        "label": "Backing",
+        "description": "Paper, cloth, film backing",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "abrasive_type",
+        "label": "Abrasive Type",
+        "description": "Aluminum oxide, silicon carbide, ceramic, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Sheet length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Sheet width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "abrasives_and_surface_prep/grinding_discs": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Wheel or disc diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "arbor",
+        "label": "Arbor",
+        "description": "Arbor hole size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "abrasives_and_surface_prep/wire_wheels": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Wheel or disc diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "arbor",
+        "label": "Arbor",
+        "description": "Arbor hole size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "brooms_and_cleaning_tools": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Head width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "bristle_material",
+        "label": "Bristle Material",
+        "description": "Poly, tampico, wire, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "brooms_and_cleaning_tools/floor_tools": [
+      {
+        "key": "blade_length",
+        "label": "Blade Length",
+        "description": "Scraper blade length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Scraper blade width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "brooms_and_cleaning_tools/scrapers": [
+      {
+        "key": "blade_length",
+        "label": "Blade Length",
+        "description": "Scraper blade length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Scraper blade width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/brick_block_and_cmu": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Nominal unit length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal unit width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Nominal unit height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per unit",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/brick_block_and_cmu/brick": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Brick color / blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/brick_block_and_cmu/split_face_block": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Block color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/brick_block_and_cmu/thin_brick": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Thin brick face thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Brick color / blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/concrete_mix_and_bagged_cement": [
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight per bag",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "yield",
+        "label": "Yield",
+        "description": "Cubic feet of mixed material per bag",
+        "unit_symbol": "cuft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/concrete_mix_and_bagged_cement/anchoring_cement": [
+      {
+        "key": "compressive_strength",
+        "label": "Compressive Strength",
+        "description": "PSI at full cure",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "working_time",
+        "label": "Working Time",
+        "description": "Time before material sets",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/concrete_mix_and_bagged_cement/hydraulic_and_specialty_cement": [
+      {
+        "key": "set_time",
+        "label": "Initial Set Time",
+        "description": "Time to initial set under water pressure",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/concrete_mix_and_bagged_cement/ready_mix_concrete": [
+      {
+        "key": "compressive_strength",
+        "label": "Compressive Strength",
+        "description": "PSI at 28 days",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "set_time",
+        "label": "Initial Set Time",
+        "description": "Time to initial set (min)",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/concrete_pavers": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Paver face length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Paver face width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Paver thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Sq ft per pallet",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Paver color blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Surface finish (tumbled, smooth, etc.)",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/coping_and_capstones": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Coping/cap length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Coping/cap width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/coping_and_capstones/concrete_capstones": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per cap",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/coping_and_capstones/natural_stone_coping": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Stone thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Stone type (bluestone, limestone)",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/coping_and_capstones/pool_and_wall_coping": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Coping thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "profile",
+        "label": "Profile",
+        "description": "Coping profile (camelback, flat, bullnose)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/firepit_and_outdoor_kitchen_systems": [
+      {
+        "key": "system_name",
+        "label": "System Name",
+        "description": "Compatible wall system (e.g. Cambridge, Verona, OE Wall)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/firepit_and_outdoor_kitchen_systems/fireplace_kits": [
+      {
+        "key": "opening_width",
+        "label": "Opening Width",
+        "description": "Firebox opening width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "opening_height",
+        "label": "Opening Height",
+        "description": "Firebox opening height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/masonry_veneer_and_thin_products": [
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet per box or pallet",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/masonry_veneer_and_thin_products/cobblestone_and_cobble_edging": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Individual piece length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Individual piece width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/masonry_veneer_and_thin_products/ledgestone_and_stacked_stone": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Stone color blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "thickness",
+        "label": "Piece Thickness",
+        "description": "Stone face piece thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/mortar_grout_and_thinset": [
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight per bag",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet of coverage per bag",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/mortar_grout_and_thinset/grout": [
+      {
+        "key": "joint_width",
+        "label": "Joint Width",
+        "description": "Recommended grout joint width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Grout color name",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/mortar_grout_and_thinset/masonry_mortar": [
+      {
+        "key": "mortar_type",
+        "label": "Mortar Type",
+        "description": "ASTM type (S, N, M)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/mortar_grout_and_thinset/self_leveling_underlayment": [
+      {
+        "key": "pour_depth_max",
+        "label": "Max Pour Depth",
+        "description": "Maximum single pour thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/mortar_grout_and_thinset/thinset_mortar": [
+      {
+        "key": "polymer_modified",
+        "label": "Polymer Modified",
+        "description": "Whether mortar contains polymer additive",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "boolean"
+      }
+    ],
+    "concrete_cement_and_masonry/pattern_paver_collections": [
+      {
+        "key": "collection_name",
+        "label": "Collection Name",
+        "description": "Named product collection (e.g. Cumberland, Imperial Brown)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Color blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/pigments_and_colorants": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Target concrete / mortar color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight of pigment per container",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/retaining_wall_systems": [
+      {
+        "key": "system_name",
+        "label": "System Name",
+        "description": "Wall system brand/line (e.g. Cambridge, Verona, Sigma)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/retaining_wall_systems/corner_and_cap_units": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per unit",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/retaining_wall_systems/geogrid_reinforcement": [
+      {
+        "key": "width",
+        "label": "Roll Width",
+        "description": "Geogrid roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Roll Length",
+        "description": "Geogrid roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "strength_class",
+        "label": "Strength Class",
+        "description": "Tensile strength series (e.g. 5-Series)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/retaining_wall_systems/wall_adhesive_and_accessories": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container volume",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/retaining_wall_systems/wall_blocks": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Block face length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Block depth/setback",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Block height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per block",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Block color blend",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/sand_and_aggregates": [
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight per bag or super sack",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/sand_and_aggregates/polymeric_sand": [
+      {
+        "key": "joint_width_max",
+        "label": "Max Joint Width",
+        "description": "Maximum joint width this product is rated for",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/stone_pavers": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Paver face length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Paver face width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Paver thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Sq ft per pallet",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "stone_type",
+        "label": "Stone Type",
+        "description": "e.g. travertine, limestone, bluestone, flagstone",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Stone color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Surface finish (honed, brushed, tumbled, etc.)",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "irregular_shape",
+        "label": "Irregular Shape",
+        "description": "True if random/irregular pieces rather than cut dimensions",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "boolean"
+      }
+    ],
+    "concrete_cement_and_masonry/stucco_and_plaster": [
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight per bag",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet of coverage per bag",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/stucco_and_plaster/stucco_finish_plaster": [
+      {
+        "key": "set_time",
+        "label": "Set Time",
+        "description": "Initial set time",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/stucco_and_plaster/stucco_base_and_finish": [
+      {
+        "key": "coat_type",
+        "label": "Coat Type",
+        "description": "Application coat (scratch, brown, finish)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "concrete_cement_and_masonry/tile_setting_accessories/expansion_joint_material": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Joint width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Strip length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Joint thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/tile_setting_accessories/setting_material_and_mastic": [
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per container",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "concrete_cement_and_masonry/tile_setting_accessories/tile_spacers_and_wedges": [
+      {
+        "key": "size",
+        "label": "Spacer Size",
+        "description": "Joint width (e.g. 1/16\", 1/8\", 3/16\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Pieces per bag",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/backer_products": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll or strip length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/backer_products/flat_backer_strip": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Strip width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/backer_products/round_backer_rod": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Rod diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/caulks": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Cartridge or tube size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Caulk color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "construction_adhesives_and_sealants/caulks/fire_barrier_caulks": [
+      {
+        "key": "fire_rating",
+        "label": "Fire Rating",
+        "description": "UL fire resistance rating (e.g. 3-hour)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "construction_adhesives_and_sealants/epoxy_anchor_systems/adhesive_anchor_capsules": [
+      {
+        "key": "rod_diameter",
+        "label": "Rod Diameter",
+        "description": "Compatible threaded rod or rebar diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "embedment_depth",
+        "label": "Embedment Depth",
+        "description": "Required embedment depth in substrate",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "working_time",
+        "label": "Working Time",
+        "description": "Time before capsule sets",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/epoxy_anchor_systems/general_construction_adhesives": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per container",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/expanding_foam": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Can size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gap_width_max",
+        "label": "Max Gap Width",
+        "description": "Maximum gap width the foam is rated for",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/sealants/polyurethane_sealants": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Sausage or cartridge size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Sealant color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "application_temp_min",
+        "label": "Min Application Temp",
+        "description": "Lowest temp at which product can be applied",
+        "unit_symbol": "°F",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "construction_adhesives_and_sealants/silicone_sealants": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Cartridge size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Sealant color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "construction_adhesives_and_sealants/wood_fillers": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size (Part A + B combined)",
+        "unit_symbol": "qt",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "cutting_tools_and_blades": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Blade or wheel outer diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "cutting_tools_and_blades/diamond_blades": [
+      {
+        "key": "arbor",
+        "label": "Arbor",
+        "description": "Arbor hole size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "dry_wet",
+        "label": "Dry/Wet",
+        "description": "Dry, wet, or combo cut",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "cutting_tools_and_blades/diamond_cup_wheels": [
+      {
+        "key": "arbor",
+        "label": "Arbor",
+        "description": "Arbor hole size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grit",
+        "label": "Grit",
+        "description": "Segment grit (soft, hard, medium bond)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "cutting_tools_and_blades/turbo_continuous_rim_saw_blades": [
+      {
+        "key": "arbor",
+        "label": "Arbor",
+        "description": "Arbor hole size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "dry_wet",
+        "label": "Dry/Wet",
+        "description": "Dry, wet, or combo cut",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/balusters_and_infill": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Baluster length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Baluster color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/balusters_and_infill/metal_balusters": [
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Metal type (aluminum, steel, iron)",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Surface finish (powder coat, etc.)",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/composite_decking_boards": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Deck board color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/deck_fasteners_and_hardware/composite_deck_screws": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Screw length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Count per box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/deck_fasteners_and_hardware/hidden_fasteners": [
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Pieces per bag/box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/deck_fasteners_and_hardware/joist_tape": [
+      {
+        "key": "tape_width",
+        "label": "Tape Width",
+        "description": "Joist tape roll width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/deck_gate_kits/deck_gate_kit_products": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Gate opening width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Gate opening height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/deck_railing_systems": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Rail section length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Rail system height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Rail color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/deck_trim": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Trim/fascia board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Trim/fascia board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/deck_trim/composite_trim": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Trim color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/fascia_and_frame_boards": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Trim/fascia board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Trim/fascia board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "decking/fascia_and_frame_boards/fascia_boards": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Fascia board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Fascia board color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/pvc_decking_boards": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Deck board color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "decking/stair_components/stair_risers": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Riser length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Riser width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Riser thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Riser color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "dimensional_lumber_and_composites": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board or stud length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/cedar_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/douglas_fir_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Nominal board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Lumber grade (e.g. #2, Select, FOHC)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "dimensional_lumber_and_composites/kiln_dried_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "moisture_content",
+        "label": "Moisture Content",
+        "description": "Kiln-dried moisture %",
+        "unit_symbol": "%",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/kiln_dried_lumber/scaffold_plank": [
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Scaffold plank grade (e.g. LVL, #1)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "load_rating",
+        "label": "Load Rating",
+        "description": "Working load limit",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/precut_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/precut_lumber/precut_studs": [
+      {
+        "key": "precut_length",
+        "label": "Precut Length",
+        "description": "Exact precut dimension (e.g. 92-5/8\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/pressure_treated_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Nominal thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "treatment_retention",
+        "label": "Treatment Level",
+        "description": "Preservative retention (e.g. .15, .40)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "dimensional_lumber_and_composites/pressure_treated_lumber/pt_above_ground": [
+      {
+        "key": "hazard_class",
+        "label": "Hazard Class",
+        "description": "Use category (UC3B)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "dimensional_lumber_and_composites/pressure_treated_lumber/pt_ground_contact": [
+      {
+        "key": "hazard_class",
+        "label": "Hazard Class",
+        "description": "Use category (UC4A, UC4B, UC4C)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "post_length",
+        "label": "Post Length",
+        "description": "Post length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Post diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "dimensional_lumber_and_composites/spruce_pine_fir": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Nominal board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Lumber grade",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "dimensional_lumber_and_composites/surfaced_lumber": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "doors/door_hardware/silicone_window_door": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Cartridge size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Sealant color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "doors/door_hardware/window_sill_trim": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Sill trim length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Sill trim width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "doors/exterior_doors": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Door width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Door height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Door thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Door material (stainless steel, etc.)",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "doors/temporary_construction_barriers/zip_wall_systems": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Film roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "film_thickness",
+        "label": "Film Thickness",
+        "description": "Poly film thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/drywall_screws_and_fasteners": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Screw length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Screw gauge (e.g. #6, #8)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Count per box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/drywall_sheets_and_panels": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Panel width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Panel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Panel thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/drywall_sheets_and_panels/standard_gypsum_board": [
+      {
+        "key": "fire_rating",
+        "label": "Fire Rating",
+        "description": "UL fire resistance rating (e.g. Type X = 1 hr)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "drywall_and_accessories/joint_compound_and_finishing": [
+      {
+        "key": "bag_weight",
+        "label": "Bag Weight",
+        "description": "Weight per bag",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "set_time",
+        "label": "Set Time",
+        "description": "Setting time in minutes (fast-set)",
+        "unit_symbol": "min",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/metal_framing": [
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Steel gauge (e.g. 20, 25)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Section length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/metal_framing/metal_studs": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Stud width (web)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "flange",
+        "label": "Flange",
+        "description": "Flange width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/metal_framing/metal_track": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Track width (to match stud)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "flange",
+        "label": "Flange",
+        "description": "Flange height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/tape_corner_bead_and_trim": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Bead or tape section length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/tape_corner_bead_and_trim/mesh_and_paper_tape": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tape width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "drywall_and_accessories/tape_corner_bead_and_trim/metal_corner_bead": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nose-to-edge width of each flange",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/junction_boxes_and_accessories/access_panels": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Panel rough opening width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Panel rough opening height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/junction_boxes_and_accessories/electrical_connectors": [
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "Compatible wire gauge range",
+        "unit_symbol": "AWG",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/power_distribution": [
+      {
+        "key": "amperage",
+        "label": "Amperage",
+        "description": "Current rating",
+        "unit_symbol": "A",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "outlet_count",
+        "label": "Outlet Count",
+        "description": "Number of outlets",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/power_distribution/extension_cords_electrical": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Cord length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "Cord wire gauge",
+        "unit_symbol": "AWG",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/wire_and_cable": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Wire or tape length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/wire_and_cable/building_wire": [
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "AWG gauge (e.g. 12, 14)",
+        "unit_symbol": "AWG",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "conductors",
+        "label": "Conductors",
+        "description": "Number of conductors (e.g. 2, 3)",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "ampacity",
+        "label": "Ampacity",
+        "description": "Current carrying capacity",
+        "unit_symbol": "A",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "electrical/wire_and_cable/electrical_tape": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tape width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "temperature_rating",
+        "label": "Temperature Rating",
+        "description": "Max service temp",
+        "unit_symbol": "°F",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fastening_tools": [
+      {
+        "key": "nail_size",
+        "label": "Nail Size",
+        "description": "Compatible nail gauge and length",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "operating_pressure",
+        "label": "Operating Pressure",
+        "description": "Recommended operating pressure",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fastening_tools/screw_guns": [
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Battery voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fastening_tools/staplers_and_tackers": [
+      {
+        "key": "staple_size",
+        "label": "Staple Size",
+        "description": "Staple crown and leg size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/fence_gates": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Gate opening width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Gate opening height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/fencing_tools_and_accessories/fence_stays_and_clips": [
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Pieces per bag",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/fencing_tools_and_accessories/post_pounders": [
+      {
+        "key": "diameter_max",
+        "label": "Max Post Diameter",
+        "description": "Largest post size the pounder accommodates",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Pounder weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/horse_non_climb_fencing": [
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Fence height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "mesh_opening",
+        "label": "Mesh Opening",
+        "description": "Mesh opening size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/livestock_panels": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Panel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Panel height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/livestock_panels/corral_panels_flat_iron": [
+      {
+        "key": "rail_count",
+        "label": "Rail Count",
+        "description": "Number of horizontal rails (e.g. 5-rail)",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/livestock_panels/hog_panels": [
+      {
+        "key": "mesh_opening",
+        "label": "Mesh Opening",
+        "description": "Mesh opening size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/split_rail_fencing": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Rail or post length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/split_rail_fencing/split_rail_posts": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Post diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "post_type",
+        "label": "Post Type",
+        "description": "Line post, corner post, or end post",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "fencing/split_rail_fencing/split_rails": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Rail diameter at butt end",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/welded_wire_fencing": [
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Fence height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "mesh_opening",
+        "label": "Mesh Opening",
+        "description": "Mesh opening size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "Wire diameter gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "fencing/wire_fencing": [
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Fence height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll or spool length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight_per_foot",
+        "label": "Weight Per Foot",
+        "description": "Steel weight (e.g. 1.25 lb)",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "fencing/wire_fencing/barbed_wire": [
+      {
+        "key": "strand_count",
+        "label": "Strand Count",
+        "description": "Number of strands (2-strand, 4-strand)",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "barb_spacing",
+        "label": "Barb Spacing",
+        "description": "Distance between barbs",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "flooring/flooring_trim_and_transitions/flooring_protection": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Film roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Film roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "flooring/luxury_vinyl_plank": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Plank length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Plank width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Plank thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wear_layer",
+        "label": "Wear Layer",
+        "description": "Wear layer thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Plank color/finish",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "flooring/tile_flooring": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tile length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tile width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Tile thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "flooring/wood_flooring": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Flooring grade (Select, #1 Common, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "framing_materials/framing_lumber": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Member length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Nominal thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Lumber grade",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "framing_materials/i_joists_and_rim_board": [
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Joist or rim board depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Member length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "framing_materials/i_joists_and_rim_board/i_joists": [
+      {
+        "key": "flange_width",
+        "label": "Flange Width",
+        "description": "Top/bottom chord width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "series",
+        "label": "Series",
+        "description": "Manufacturer series (e.g. AJS30, TJI 110)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "framing_materials/masonry_joint_reinforcement": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Reinforcement width (to fit wall thickness)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Section length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "Side and cross rod gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/bolts_nuts_and_threaded_rod": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Nominal diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Steel, stainless, zinc",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Zinc, hot-dip galvanized, plain",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/bolts_nuts_and_threaded_rod/hex_head_bolts": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Bolt length under head",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "general_fasteners_and_hardware/bolts_nuts_and_threaded_rod/threaded_rod": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Rod length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "general_fasteners_and_hardware/chain_and_rigging": [
+      {
+        "key": "size",
+        "label": "Size",
+        "description": "Chain link or shackle diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "working_load_limit",
+        "label": "Working Load Limit",
+        "description": "Maximum safe working load",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Steel grade / type",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/nails_and_spikes": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Nail length (penny size or inches)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Wire gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Weight per box/carton",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "general_fasteners_and_hardware/nails_and_spikes/cap_nails": [
+      {
+        "key": "cap_diameter",
+        "label": "Cap Diameter",
+        "description": "Plastic or steel cap diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "general_fasteners_and_hardware/nails_and_spikes/common_nails": [
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Bright, galvanized, stainless, etc.",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/nails_and_spikes/spiral_and_ring_shank_nails": [],
+    "general_fasteners_and_hardware/screws": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Screw length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Screw gauge (e.g. #8, #10, #12)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/screws/general_coarse_thread_screws": [
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Count per box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Screw surface treatment",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "general_fasteners_and_hardware/screws/wood_and_sheet_metal_screws": [
+      {
+        "key": "drive_type",
+        "label": "Drive Type",
+        "description": "Phillips, Star/Torx, Square, Flat",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "head_type",
+        "label": "Head Type",
+        "description": "Flat, pan, hex, wafer, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Zinc, hot-dip galvanized, stainless",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "hand_tools/chisels": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tool length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Blade or tip width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hand_tools/hammers": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Head weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "handle_material",
+        "label": "Handle Material",
+        "description": "Wood, fiberglass, steel",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "hand_tools/mallets": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Head weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "handle_material",
+        "label": "Handle Material",
+        "description": "Wood, fiberglass, steel",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "hand_tools/pry_bars": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tool length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Blade or tip width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hand_tools/wrenches_and_pliers": [
+      {
+        "key": "jaw_capacity",
+        "label": "Jaw Capacity",
+        "description": "Maximum opening",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tool length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hvac/ductwork_and_registers/duct_tape": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tape width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "temperature_rating",
+        "label": "Temperature Rating",
+        "description": "Max service temp",
+        "unit_symbol": "°F",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hvac/ductwork_and_registers/flexible_duct": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Duct inside diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Duct length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hvac/ductwork_and_registers/flue_pipe": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Pipe inside diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pipe section length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Sheet metal gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "hvac/heating_systems/radiant_floor_heating": [
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Heated floor area",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Operating voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wattage",
+        "label": "Total Wattage",
+        "description": "System total wattage",
+        "unit_symbol": "W",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "hvac/ventilation/masonry_weep_vents": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Vent width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Vent height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Vent depth (wall thickness fit)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "insulation/batt_insulation": [
+      {
+        "key": "r_value",
+        "label": "R-Value",
+        "description": "Thermal resistance rating",
+        "unit_symbol": "R",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Installed thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Batt or roll width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "facing_type",
+        "label": "Facing Type",
+        "description": "Kraft, foil, unfaced, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Fiberglass, mineral wool, etc.",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "insulation/rigid_foam_board": [
+      {
+        "key": "r_value",
+        "label": "R-Value",
+        "description": "Thermal resistance rating",
+        "unit_symbol": "R",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "insulation/rigid_foam_board/xps_rigid_foam": [
+      {
+        "key": "compressive_strength",
+        "label": "Compressive Strength",
+        "description": "PSI rating (load capacity)",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "insulation/spray_foam": [
+      {
+        "key": "volume",
+        "label": "Can Volume",
+        "description": "Aerosol can size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "insulation/vapor_and_moisture_barriers/liquid_applied_air_barrier": [
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per pail",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "application_rate",
+        "label": "Application Rate",
+        "description": "Wet film application rate",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "dry_time",
+        "label": "Dry Time",
+        "description": "Touch-dry time",
+        "unit_symbol": "hr",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "kitchen_and_bath/interior_cabinetry/cabinet_trim_lumber": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Trim length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Trim width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Trim thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "kitchen_and_bath/outdoor_grills_and_appliances": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Appliance width (cut-out or overall)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "btu",
+        "label": "BTU",
+        "description": "Total heat output",
+        "unit_symbol": "BTU",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "cooking_area",
+        "label": "Cooking Area",
+        "description": "Primary cooking surface area",
+        "unit_symbol": "sqin",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "kitchen_and_bath/outdoor_kitchen_cabinets": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Cabinet width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Cabinet height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Cabinet depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Cabinet material",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "kitchen_and_bath/waterproofing_wet_area_products/waterproofing_membrane": [
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per pail",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Film Thickness",
+        "description": "Dry film thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "masonry_and_concrete_tools": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Blade or body length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Blade or body width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "masonry_and_concrete_tools/edgers": [
+      {
+        "key": "radius",
+        "label": "Radius",
+        "description": "Jointer groove radius",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "masonry_and_concrete_tools/floats": [
+      {
+        "key": "handle_type",
+        "label": "Handle Type",
+        "description": "Wood, foam, rubber, polyurethane",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "masonry_and_concrete_tools/jointers": [
+      {
+        "key": "radius",
+        "label": "Radius",
+        "description": "Jointer groove radius",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "masonry_and_concrete_tools/trowels": [
+      {
+        "key": "trowel_type",
+        "label": "Trowel Type",
+        "description": "Brick, pool, margin, gauging, finishing, inside corner",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "measuring_and_layout/chalk_lines": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Line or reel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "measuring_and_layout/levels": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Level body length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "description": "Torpedo, 4-foot, 6-foot, line level, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "measuring_and_layout/mason_line": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Line or reel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "measuring_and_layout/squares_and_rafter_tools": [
+      {
+        "key": "blade_length",
+        "label": "Blade Length",
+        "description": "Long blade length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "measuring_and_layout/tape_measures": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tape length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Tape width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "metals_and_metal_fabrication/angle_iron": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Stock length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "e.g. A36",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "leg_size",
+        "label": "Leg Size",
+        "description": "Leg dimensions (e.g. 2\"×2\", 3\"×3\")",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Leg thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "metals_and_metal_fabrication/metal_accessories_and_fittings/cee_and_zee_purlin": [
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Purlin web depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Purlin length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Steel gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/metal_accessories_and_fittings/end_caps_and_plugs": [
+      {
+        "key": "size",
+        "label": "Size",
+        "description": "Tube OD the cap fits",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Plastic, rubber, steel",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/pipe": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pipe length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Nominal pipe diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "schedule",
+        "label": "Schedule",
+        "description": "Wall thickness schedule (e.g. SCH 40, SCH 80)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/rectangular_tubing": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Stock length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wall_thickness",
+        "label": "Wall Thickness",
+        "description": "Tube wall thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "e.g. A500, A513",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/sheet_and_plate": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Sheet/plate width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Sheet/plate length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Material thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "e.g. 1095, A36, A569",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/square_tubing": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Stock length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wall_thickness",
+        "label": "Wall Thickness",
+        "description": "Tube wall thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "e.g. A500, A513, A36",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "metals_and_metal_fabrication/structural_channel": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Stock length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "e.g. A36",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "web_height",
+        "label": "Web Height",
+        "description": "Channel web (depth) height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "flange_width",
+        "label": "Flange Width",
+        "description": "Flange width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Web/flange thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/buckets_and_containers": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container volume",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Count per pack",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/cleaning_and_maintenance/ice_melt_and_treatment": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Bag weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "effective_temp",
+        "label": "Effective Temp",
+        "description": "Lowest effective temperature",
+        "unit_symbol": "°F",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/cleaning_and_maintenance/lubricants_and_greases": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container volume",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/cleaning_and_maintenance/solvents_and_cleaners": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "flash_point",
+        "label": "Flash Point",
+        "description": "Flash point temp",
+        "unit_symbol": "°F",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/safety_and_ppe/eye_and_face_protection": [
+      {
+        "key": "ansi_rating",
+        "label": "ANSI Rating",
+        "description": "Z87.1 impact rating",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "type",
+        "label": "Type",
+        "description": "Safety glasses, goggles, face shield",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "other/safety_and_ppe/fall_protection": [
+      {
+        "key": "capacity",
+        "label": "Capacity",
+        "description": "Maximum user weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Lanyard Length",
+        "description": "Lanyard or rope grab length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "other/safety_and_ppe/hand_protection": [
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Glove material (leather, nitrile, latex, etc.)",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "size",
+        "label": "Size",
+        "description": "Glove size (S, M, L, XL, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "other/safety_and_ppe/head_protection": [
+      {
+        "key": "class",
+        "label": "Class",
+        "description": "ANSI electrical class (E, G, C)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "style",
+        "label": "Style",
+        "description": "Cap style, full brim, etc.",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "other/safety_and_ppe/high_visibility_clothing": [
+      {
+        "key": "size",
+        "label": "Size",
+        "description": "Garment size (S/M/L/XL/2XL)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "ansi_class",
+        "label": "ANSI Class",
+        "description": "Hi-vis class (1, 2, 3)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "other/safety_and_ppe/respiratory_protection": [
+      {
+        "key": "filter_type",
+        "label": "Filter Type",
+        "description": "Filter class (N95, P100, OV/R95, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "protection_level",
+        "label": "Protection Level",
+        "description": "NIOSH protection rating",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "outdoor_power_equipment/chainsaws": [
+      {
+        "key": "bar_length",
+        "label": "Bar Length",
+        "description": "Guide bar length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "engine_cc",
+        "label": "Engine Size",
+        "description": "Engine displacement",
+        "unit_symbol": "cc",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/concrete_coatings": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per gallon",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/concrete_coatings/elastomeric_coatings": [
+      {
+        "key": "elongation",
+        "label": "Elongation",
+        "description": "Film elongation at break",
+        "unit_symbol": "%",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/concrete_coatings/heavy_duty_paint": [
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Paint color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "paint_and_stain/exterior_paint": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per gallon",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Paint color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Sheen (flat, satin, semi-gloss, gloss)",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "paint_and_stain/paint_applicator_supplies/mini_roller_sleeves": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roller width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "nap_thickness",
+        "label": "Nap Thickness",
+        "description": "Nap / pile thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/paint_applicator_supplies/paint_brushes": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Brush width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "bristle_type",
+        "label": "Bristle Type",
+        "description": "Nylon, polyester, natural, chip",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "paint_and_stain/paint_applicator_supplies/roller_frames": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Frame width (matches sleeve)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/paint_applicator_supplies/roller_sleeves": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roller width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "nap_thickness",
+        "label": "Nap Thickness",
+        "description": "Nap / pile thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/wood_preservatives": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per gallon",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "paint_and_stain/wood_stains": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per gallon",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Stain color name",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "paint_and_stain/wood_stains/exterior_wood_stains": [
+      {
+        "key": "drying_time",
+        "label": "Drying Time",
+        "description": "Dry time between coats",
+        "unit_symbol": "hr",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/gravel_and_aggregate": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per bag or ton",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet per bag at 2\" depth",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "stone_size",
+        "label": "Stone Size",
+        "description": "Aggregate diameter or grade",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Stone length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Stone width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Stone thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/irrigation_and_hoses": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Hose or soaker length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Inner diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/irrigation_and_hoses/garden_hoses": [
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Hose material (rubber, vinyl, etc.)",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "pressure_rating",
+        "label": "Pressure Rating",
+        "description": "Max working pressure",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/landscape_fabric_and_ground_cover": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/landscape_fabric_and_ground_cover/artificial_grass": [
+      {
+        "key": "pile_height",
+        "label": "Pile Height",
+        "description": "Grass blade height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "backing",
+        "label": "Backing",
+        "description": "Backing material",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "plants_and_landscaping/landscape_fabric_and_ground_cover/woven_landscape_fabric": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Fabric weight (oz per sq yd)",
+        "unit_symbol": "oz",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/outdoor_structures": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Structure length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Structure width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Structure height",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plants_and_landscaping/sand": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Weight per bag or super sack",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per bag at 1\" depth",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plumbing/pipes_and_fittings": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Nominal pipe or fitting diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "PVC, ABS, cast iron, etc.",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "plumbing/pipes_and_fittings/pvc_pipes_and_fittings": [
+      {
+        "key": "schedule",
+        "label": "Schedule",
+        "description": "Wall thickness (SCH 40, SCH 80, DWV)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pipe length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plumbing/plumbing_tools": [
+      {
+        "key": "jaw_capacity",
+        "label": "Jaw Capacity",
+        "description": "Maximum pipe or nut size the tool handles",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tool overall length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plumbing/plumbing_tools/tubing_levels": [
+      {
+        "key": "tubing_length",
+        "label": "Tubing Length",
+        "description": "Supported tubing length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "inner_diameter",
+        "label": "Inner Diameter",
+        "description": "Tubing inner diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "plumbing/valves_and_controls": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Port/pipe diameter the valve fits",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "power_tools/breakers_and_demolition": [
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Tool weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "power_tools/drills_and_drivers": [
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Battery voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "chuck_size",
+        "label": "Chuck Size",
+        "description": "Chuck diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "power_tools/grinders": [
+      {
+        "key": "disc_size",
+        "label": "Disc Size",
+        "description": "Wheel or disc diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "power_tools/polishers": [
+      {
+        "key": "disc_size",
+        "label": "Disc Size",
+        "description": "Wheel or disc diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "power_tools/saws": [
+      {
+        "key": "blade_diameter",
+        "label": "Blade Diameter",
+        "description": "Saw blade diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "voltage",
+        "label": "Voltage",
+        "description": "Battery or motor voltage",
+        "unit_symbol": "V",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "rebar_and_reinforcement/rebar_accessories/rebar_benders_and_cutters": [
+      {
+        "key": "bar_capacity",
+        "label": "Bar Capacity",
+        "description": "Maximum bar size (e.g. up to #8)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "rebar_and_reinforcement/rebar_accessories/rebar_caps": [
+      {
+        "key": "bar_size",
+        "label": "Bar Size",
+        "description": "Compatible bar sizes (e.g. #3–#6, #7–#9)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "rebar_and_reinforcement/rebar_accessories/tie_wire_and_twisters": [
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Wire gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Coil or spool weight",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "rebar_and_reinforcement/standard_rebar": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Bar diameter (or # size e.g. #4 = 1/2\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Bar length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "steel_grade",
+        "label": "Steel Grade",
+        "description": "ASTM grade (e.g. Grade 40, Grade 60)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "coating",
+        "label": "Coating",
+        "description": "Epoxy, galvanized, or none",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "rebar_and_reinforcement/wire_lath/diamond_wire_lath": [
+      {
+        "key": "self_furring",
+        "label": "Self-Furring",
+        "description": "Has dimpled self-furring pattern",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "boolean"
+      }
+    ],
+    "rebar_and_reinforcement/wire_mesh": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Sheet or roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Sheet or roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "wire_gauge",
+        "label": "Wire Gauge",
+        "description": "Wire diameter gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "mesh_opening",
+        "label": "Mesh Opening",
+        "description": "Grid opening size",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/flashing_and_termination": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Flashing width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll or coil length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/flashing_and_termination/metal_drip_edge": [
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Aluminum, galvanized, stainless",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Metal gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "roofing_materials/flashing_and_termination/peel_and_stick_flashing": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Membrane thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/roof_coatings_and_sealants": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Container size",
+        "unit_symbol": "gal",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Coverage per gallon",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/roof_coatings_and_sealants/aluminum_roof_coatings": [
+      {
+        "key": "dry_time",
+        "label": "Dry Time",
+        "description": "Touch-dry time",
+        "unit_symbol": "hr",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "reflectivity",
+        "label": "Reflectivity",
+        "description": "Solar reflectance %",
+        "unit_symbol": "%",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/roof_coatings_and_sealants/silicone_roof_coatings": [
+      {
+        "key": "dry_time",
+        "label": "Dry Time",
+        "description": "Touch-dry time",
+        "unit_symbol": "hr",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "elongation",
+        "label": "Elongation",
+        "description": "Elongation at break",
+        "unit_symbol": "%",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/roofing_fasteners_and_tools/rafter_squares": [
+      {
+        "key": "blade_length",
+        "label": "Blade Length",
+        "description": "Long blade length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/roofing_fasteners_and_tools/roofing_nails": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Nail length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Wire gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Weight per box",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Hot-dip galvanized, stainless, etc.",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "roofing_materials/shingles_and_underlayment": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet per roll",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "roofing_materials/shingles_and_underlayment/modified_bitumen_torch_down": [
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Membrane thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sheathing/oriented_strand_board/osb_standard": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Panel width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Panel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Panel thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "span_rating",
+        "label": "Span Rating",
+        "description": "APA span rating (e.g. 24/16)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sheathing/oriented_strand_board/osb_variable": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Panel width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Panel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Panel thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "span_rating",
+        "label": "Span Rating",
+        "description": "APA span rating (e.g. 24/16)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sheathing/plywood_sheathing": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Panel width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Panel length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Panel thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "APA grade (e.g. CDX, Marine, A-B)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sheathing/plywood_sheathing/cdx_plywood": [
+      {
+        "key": "exposure_rating",
+        "label": "Exposure Rating",
+        "description": "APA exposure (Exposure 1, Exterior)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sheathing/plywood_sheathing/marine_and_premium_plywood": [
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species (Birch, Douglas Fir, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sheathing/sheathing_fasteners_and_accessories/cap_nails_sheathing": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Nail length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "cap_diameter",
+        "label": "Cap Diameter",
+        "description": "Plastic cap diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Count per box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sheathing/sheathing_fasteners_and_accessories/osb_adhesive_brushes": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Brush width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "siding/fiber_cement_siding": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Plank length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Plank width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Plank thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "siding/natural_edge_and_rustic_siding": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board face width (nominal)",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "siding/siding_caulks_and_sealants": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Cartridge size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Caulk color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "siding/wood_siding_boards": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "siding/wood_siding_boards/kiln_dried_pine_siding": [
+      {
+        "key": "moisture_content",
+        "label": "Moisture Content",
+        "description": "KD moisture percentage",
+        "unit_symbol": "%",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "siding/wood_siding_boards/s1s2e_cedar_siding": [
+      {
+        "key": "grade",
+        "label": "Grade",
+        "description": "Cedar siding grade (Clear, #2, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "site_and_rigging_tools/bungee_cords": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Strap or bungee length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "load_rating",
+        "label": "Load Rating",
+        "description": "Working load limit",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Strap width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "site_and_rigging_tools/cable_pullers_and_come_alongs": [
+      {
+        "key": "capacity",
+        "label": "Capacity",
+        "description": "Pulling capacity",
+        "unit_symbol": "ton",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "cable_length",
+        "label": "Cable Length",
+        "description": "Wire rope length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "site_and_rigging_tools/ladders": [
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Ladder working height",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "load_rating",
+        "label": "Load Rating",
+        "description": "Max load (Type rating)",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Fiberglass, aluminum",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "site_and_rigging_tools/ratchet_straps": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Strap or bungee length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "load_rating",
+        "label": "Load Rating",
+        "description": "Working load limit",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Strap width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sitework_and_drainage/drainage_pipe_and_fittings": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Inside diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sitework_and_drainage/drainage_pipe_and_fittings/perforated_drain_pipe": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pipe or coil length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "perforation_pattern",
+        "label": "Perforation Pattern",
+        "description": "Single-wall, double-wall, slotted",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "sitework_and_drainage/drainage_pipe_and_fittings/solid_flexible_drain_pipe": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pipe or coil length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sitework_and_drainage/erosion_control/silt_fence": [
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Fence height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "sitework_and_drainage/geotextile_fabric": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "weight",
+        "label": "Weight",
+        "description": "Fabric weight (oz per sq yd)",
+        "unit_symbol": "oz",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/hurricane_and_seismic_straps": [
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Galvanized, ZMAX, stainless",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "gauge",
+        "label": "Gauge",
+        "description": "Steel gauge",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "structural_fasteners_and_connectors/hurricane_and_seismic_straps/hurricane_ties": [
+      {
+        "key": "load_capacity",
+        "label": "Load Capacity",
+        "description": "Uplift load capacity",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/hurricane_and_seismic_straps/strap_and_angle_connectors": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Strap width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Coil length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/hurricane_and_seismic_straps/tension_and_tiedown_connectors": [
+      {
+        "key": "load_capacity",
+        "label": "Load Capacity",
+        "description": "Tension load capacity",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/joist_hangers_and_beam_connectors/joist_hangers": [
+      {
+        "key": "joist_width",
+        "label": "Joist Width",
+        "description": "Compatible joist or beam width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "joist_depth",
+        "label": "Joist Depth",
+        "description": "Compatible joist or beam depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "load_capacity",
+        "label": "Load Capacity",
+        "description": "Allowable download capacity",
+        "unit_symbol": "lbs",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Galvanized, ZMAX, stainless, etc.",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "structural_fasteners_and_connectors/post_bases_and_caps": [
+      {
+        "key": "post_size",
+        "label": "Post Size",
+        "description": "Compatible post size (e.g. 4×4, 6×6)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "finish",
+        "label": "Finish",
+        "description": "Galvanized, ZMAX, stainless",
+        "unit_symbol": "finish",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "structural_fasteners_and_connectors/structural_screws_and_bolts/concrete_anchors": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Anchor diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Anchor length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "concrete_strength",
+        "label": "Min Concrete PSI",
+        "description": "Minimum concrete strength for use",
+        "unit_symbol": "PSI",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/structural_screws_and_bolts/lag_screws": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Lag screw diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Lag screw length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/structural_screws_and_bolts/powder_actuated_fasteners": [
+      {
+        "key": "caliber",
+        "label": "Caliber",
+        "description": "Powder load caliber (.27, .22, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "pin_length",
+        "label": "Pin Length",
+        "description": "Drive pin length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "quantity",
+        "label": "Quantity",
+        "description": "Pins or strips per box",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "structural_fasteners_and_connectors/structural_screws_and_bolts/sds_structural_screws": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Screw diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Screw length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "timber_logs_and_specialty_wood/firewood": [
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species (mesquite, oak, pine, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "piece_length",
+        "label": "Piece Length",
+        "description": "Individual piece length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "timber_logs_and_specialty_wood/firewood/firewood_bulk": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Order volume (cubic feet, cord, SUV load)",
+        "unit_symbol": "cuft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "timber_logs_and_specialty_wood/firewood/firewood_bundles": [
+      {
+        "key": "bundle_count",
+        "label": "Bundle Count",
+        "description": "Number of bundles per order",
+        "unit_symbol": "ct",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "timber_logs_and_specialty_wood/glulam_beams": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Beam length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Beam width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Beam depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/hand_peeled_and_milled_logs": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Log length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter_min",
+        "label": "Small-End Dia.",
+        "description": "Small-end diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter_max",
+        "label": "Large-End Dia.",
+        "description": "Large-end diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Tree species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/hardwood_boards_and_rough_cut": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Board length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Board width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Board thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/heavy_timbers": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Timber length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Nominal width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Nominal thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/mantels_and_decorative_wood/decorative_slabs_and_rounds": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Slab or round diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Piece thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/mantels_and_decorative_wood/wood_mantels": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Mantel shelf length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Mantel shelf depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Mantel overall height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/post_and_beam_products": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Member length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "timber_logs_and_specialty_wood/post_and_beam_products/hand_hewn_beams": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Beam face width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "depth",
+        "label": "Depth",
+        "description": "Beam depth",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/reclaimed_wood": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Member length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Member width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Member thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Original wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/slabs_and_live_edge": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Slab length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width_min",
+        "label": "Min Width",
+        "description": "Narrowest point width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "width_max",
+        "label": "Max Width",
+        "description": "Widest point width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Slab thickness",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Wood species",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "timber_logs_and_specialty_wood/specialty_poles": [
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Pole length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Butt diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "species",
+        "label": "Species",
+        "description": "Juniper or cedar",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "tool_bits_and_accessories/bit_holders": [
+      {
+        "key": "drive_size",
+        "label": "Drive Size",
+        "description": "Hex drive size (e.g. 1/4\", 3/8\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "magnetic",
+        "label": "Magnetic",
+        "description": "Has magnetic tip",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "boolean"
+      }
+    ],
+    "tool_bits_and_accessories/drill_bits": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Bit diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Bit overall length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "HSS, carbide, cobalt",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "tool_bits_and_accessories/nut_setters": [
+      {
+        "key": "drive_size",
+        "label": "Drive Size",
+        "description": "Hex drive size (e.g. 1/4\", 3/8\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "magnetic",
+        "label": "Magnetic",
+        "description": "Has magnetic tip",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "boolean"
+      }
+    ],
+    "tool_bits_and_accessories/sds_max_bits": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Bit cutting diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Overall bit length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "tool_bits_and_accessories/sds_plus_bits": [
+      {
+        "key": "diameter",
+        "label": "Diameter",
+        "description": "Bit cutting diameter",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Overall bit length",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "weatherproofing_house_wrap/building_wraps": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "coverage",
+        "label": "Coverage",
+        "description": "Square feet per roll",
+        "unit_symbol": "sqft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "weatherproofing_house_wrap/flashing_and_sealing_tapes": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tape width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "weatherproofing_house_wrap/poly_sheeting": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Film thickness in mil",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "weatherproofing_house_wrap/shrink_wrap": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Film thickness",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "weatherproofing_house_wrap/tarps": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Tarp width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Tarp length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "material",
+        "label": "Material",
+        "description": "Poly, canvas, mesh",
+        "unit_symbol": "material",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "weatherproofing_house_wrap/tarps/fire_retardant_tarps": [
+      {
+        "key": "fire_rating",
+        "label": "Fire Rating",
+        "description": "FR classification (NFPA 701, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "weatherproofing_house_wrap/vapor_barriers": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Roll width",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "length",
+        "label": "Length",
+        "description": "Roll length",
+        "unit_symbol": "ft",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "thickness",
+        "label": "Thickness",
+        "description": "Film thickness in mil",
+        "unit_symbol": "mil",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "windows/glass_windows/glass_block": [
+      {
+        "key": "size",
+        "label": "Size",
+        "description": "Block face dimensions (e.g. 6\"×6\", 8\"×8\")",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "pattern",
+        "label": "Pattern",
+        "description": "Glass pattern (clear, wavy, diamond, etc.)",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "windows/window_hardware/window_cleaning_tools": [
+      {
+        "key": "blade_width",
+        "label": "Blade Width",
+        "description": "Squeegee blade width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      }
+    ],
+    "windows/window_hardware/window_sealants": [
+      {
+        "key": "volume",
+        "label": "Volume",
+        "description": "Cartridge size",
+        "unit_symbol": "fl oz",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "color",
+        "label": "Color",
+        "description": "Sealant color",
+        "unit_symbol": "color",
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ],
+    "windows/windows_vinyl": [
+      {
+        "key": "width",
+        "label": "Width",
+        "description": "Rough opening width",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "height",
+        "label": "Height",
+        "description": "Rough opening height",
+        "unit_symbol": "in",
+        "unit_required": true,
+        "value_type": "number"
+      },
+      {
+        "key": "glazing",
+        "label": "Glazing",
+        "description": "Single, double, triple pane",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      },
+      {
+        "key": "frame_material",
+        "label": "Frame Material",
+        "description": "Vinyl, aluminum, wood",
+        "unit_symbol": null,
+        "unit_required": false,
+        "value_type": "text"
+      }
+    ]
+  }
+}

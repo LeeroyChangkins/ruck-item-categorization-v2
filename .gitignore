@@ -1,0 +1,17 @@
+.DS_Store
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+env/
+.env
+*.tmp
+
+# Large generated pipeline artifacts (regenerate with step scripts)
+**/outputs/
+**/checkpoints/
+
+# Optional local exports
+final-output/
+final-output*.zip

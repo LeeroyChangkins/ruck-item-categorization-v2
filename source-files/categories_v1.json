@@ -1,0 +1,2888 @@
+{
+  "materials": {
+    "display_name": "Materials",
+    "subcategories": [
+      {
+        "slug": "concrete_cement_and_masonry",
+        "display_name": "Concrete, Cement & Masonry",
+        "drill_down_recommended": true,
+        "subcategories": [
+          {
+            "slug": "concrete_mix_and_bagged_cement",
+            "display_name": "Concrete Mix & Bagged Cement",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "ready_mix_concrete",
+                "display_name": "Ready-Mix Concrete"
+              },
+              {
+                "slug": "anchoring_cement",
+                "display_name": "Anchoring & Non-Shrink Cement"
+              },
+              {
+                "slug": "hydraulic_and_specialty_cement",
+                "display_name": "Hydraulic & Specialty Cement"
+              }
+            ]
+          },
+          {
+            "slug": "mortar_grout_and_thinset",
+            "display_name": "Mortar, Grout & Thinset",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "thinset_mortar",
+                "display_name": "Thinset Mortar"
+              },
+              {
+                "slug": "grout",
+                "display_name": "Grout"
+              },
+              {
+                "slug": "masonry_mortar",
+                "display_name": "Masonry Mortar (Type S, N, M)"
+              },
+              {
+                "slug": "self_leveling_underlayment",
+                "display_name": "Self-Leveling Underlayment"
+              }
+            ]
+          },
+          {
+            "slug": "brick_block_and_cmu",
+            "display_name": "Brick, Block & CMU",
+            "drill_down_recommended": true,
+            "subcategories": [
+              {
+                "slug": "standard_cmu",
+                "display_name": "Standard CMU"
+              },
+              {
+                "slug": "lightweight_block",
+                "display_name": "Lightweight Block"
+              },
+              {
+                "slug": "split_face_block",
+                "display_name": "Split Face Block"
+              },
+              {
+                "slug": "bond_beam_block",
+                "display_name": "Bond Beam Block"
+              },
+              {
+                "slug": "brick",
+                "display_name": "Brick"
+              },
+              {
+                "slug": "thin_brick",
+                "display_name": "Thin Brick & Brick Veneer"
+              }
+            ]
+          },
+          {
+            "slug": "concrete_pavers",
+            "display_name": "Concrete Pavers",
+            "drill_down_recommended": true,
+            "subcategories": []
+          },
+          {
+            "slug": "stone_pavers",
+            "display_name": "Natural Stone Pavers",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "pattern_paver_collections",
+            "display_name": "Pattern Paver Collections",
+            "drill_down_recommended": true,
+            "subcategories": []
+          },
+          {
+            "slug": "retaining_wall_systems",
+            "display_name": "Retaining Wall Systems",
+            "drill_down_recommended": true,
+            "subcategories": [
+              {
+                "slug": "wall_blocks",
+                "display_name": "Wall Blocks"
+              },
+              {
+                "slug": "corner_and_cap_units",
+                "display_name": "Corner & Cap Units"
+              },
+              {
+                "slug": "column_kits",
+                "display_name": "Column Kits & Pier Caps"
+              },
+              {
+                "slug": "geogrid_reinforcement",
+                "display_name": "Geogrid Reinforcement"
+              },
+              {
+                "slug": "wall_adhesive_and_accessories",
+                "display_name": "Wall Adhesive & Accessories"
+              }
+            ]
+          },
+          {
+            "slug": "coping_and_capstones",
+            "display_name": "Coping & Capstones",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pool_and_wall_coping",
+                "display_name": "Pool & Wall Coping"
+              },
+              {
+                "slug": "concrete_capstones",
+                "display_name": "Concrete Capstones & Column Caps"
+              },
+              {
+                "slug": "natural_stone_coping",
+                "display_name": "Natural Stone Coping"
+              }
+            ]
+          },
+          {
+            "slug": "masonry_veneer_and_thin_products",
+            "display_name": "Masonry Veneer & Thin Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "ledgestone_and_stacked_stone",
+                "display_name": "Ledgestone & Stacked Stone"
+              },
+              {
+                "slug": "cobblestone_and_cobble_edging",
+                "display_name": "Cobblestone & Cobble Edging"
+              }
+            ]
+          },
+          {
+            "slug": "stucco_and_plaster",
+            "display_name": "Stucco & Plaster",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "stucco_base_and_finish",
+                "display_name": "Stucco Base & Finish Coat"
+              },
+              {
+                "slug": "stucco_finish_plaster",
+                "display_name": "Finish Plaster"
+              },
+              {
+                "slug": "floor_mud",
+                "display_name": "Floor Mud & Sand Mix"
+              }
+            ]
+          },
+          {
+            "slug": "sand_and_aggregates",
+            "display_name": "Sand & Aggregates",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "masons_sand",
+                "display_name": "Mason's Sand"
+              },
+              {
+                "slug": "polymeric_sand",
+                "display_name": "Polymeric Sand & Joint Sand"
+              },
+              {
+                "slug": "paver_sand",
+                "display_name": "Paver Sand & Bedding Sand"
+              }
+            ]
+          },
+          {
+            "slug": "pigments_and_colorants",
+            "display_name": "Pigments & Colorants",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cement_pigment",
+                "display_name": "Cement & Concrete Pigment"
+              }
+            ]
+          },
+          {
+            "slug": "tile_setting_accessories",
+            "display_name": "Tile Setting Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "tile_spacers_and_wedges",
+                "display_name": "Tile Spacers & Wedges"
+              },
+              {
+                "slug": "setting_material_and_mastic",
+                "display_name": "Setting Material & Mastic"
+              },
+              {
+                "slug": "expansion_joint_material",
+                "display_name": "Expansion Joint Material"
+              }
+            ]
+          },
+          {
+            "slug": "firepit_and_outdoor_kitchen_systems",
+            "display_name": "Firepit & Outdoor Kitchen Systems",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "firepit_kits",
+                "display_name": "Firepit Kits"
+              },
+              {
+                "slug": "outdoor_kitchen_wall_systems",
+                "display_name": "Outdoor Kitchen Wall Systems"
+              },
+              {
+                "slug": "fireplace_kits",
+                "display_name": "Fireplace Kits"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "timber_logs_and_specialty_wood",
+        "display_name": "Timber, Logs & Specialty Wood",
+        "drill_down_recommended": true,
+        "subcategories": [
+          {
+            "slug": "hand_peeled_and_milled_logs",
+            "display_name": "Logs",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "hand_peeled_logs",
+                "display_name": "Hand Peeled Logs"
+              },
+              {
+                "slug": "milled_and_peeled_logs",
+                "display_name": "Milled & Peeled Logs"
+              },
+              {
+                "slug": "raw_logs",
+                "display_name": "Raw Logs"
+              }
+            ]
+          },
+          {
+            "slug": "heavy_timbers",
+            "display_name": "Structural Timbers",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "slabs_and_live_edge",
+            "display_name": "Slabs & Live Edge",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "reclaimed_wood",
+            "display_name": "Reclaimed Wood",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "reclaimed_timbers",
+                "display_name": "Reclaimed Timbers"
+              }
+            ]
+          },
+          {
+            "slug": "glulam_beams",
+            "display_name": "Glulam Beams",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "glulam_standard",
+                "display_name": "Standard Glulam Beams"
+              }
+            ]
+          },
+          {
+            "slug": "firewood",
+            "display_name": "Firewood",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "firewood_hardwood",
+                "display_name": "Hardwood Firewood"
+              },
+              {
+                "slug": "firewood_softwood",
+                "display_name": "Softwood Firewood"
+              },
+              {
+                "slug": "firewood_bundles",
+                "display_name": "Firewood Bundles & Small Quantities"
+              },
+              {
+                "slug": "firewood_bulk",
+                "display_name": "Firewood Bulk"
+              }
+            ]
+          },
+          {
+            "slug": "specialty_poles",
+            "display_name": "Poles & Posts",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "lodge_poles",
+                "display_name": "Lodge Poles"
+              },
+              {
+                "slug": "teepee_poles",
+                "display_name": "Teepee Poles"
+              }
+            ]
+          },
+          {
+            "slug": "post_and_beam_products",
+            "display_name": "Post & Beam Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "post_beam_kits",
+                "display_name": "Post & Beam Kits & Packages"
+              },
+              {
+                "slug": "hand_hewn_beams",
+                "display_name": "Hand Hewn Beams"
+              }
+            ]
+          },
+          {
+            "slug": "hardwood_boards_and_rough_cut",
+            "display_name": "Boards & Rough Cut Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "full_dimension_boards",
+                "display_name": "Full-Dimension Boards"
+              },
+              {
+                "slug": "rough_cut_douglas_fir_boards",
+                "display_name": "Rough Cut Douglas Fir Boards"
+              },
+              {
+                "slug": "mixed_hardwood_boards",
+                "display_name": "Mixed Hardwood Boards"
+              }
+            ]
+          },
+          {
+            "slug": "mantels_and_decorative_wood",
+            "display_name": "Mantels & Decorative Wood",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "wood_mantels",
+                "display_name": "Wood Mantels"
+              },
+              {
+                "slug": "decorative_slabs_and_rounds",
+                "display_name": "Decorative Slabs & Wood Rounds"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "dimensional_lumber_and_composites",
+        "display_name": "Dimensional Lumber & Composites",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "douglas_fir_lumber",
+            "display_name": "Douglas Fir Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "df_number2_common",
+                "display_name": "DF #2 Common Boards"
+              },
+              {
+                "slug": "df_select_fohc",
+                "display_name": "DF Select & FOHC"
+              },
+              {
+                "slug": "df_framing",
+                "display_name": "DF Framing Lumber"
+              }
+            ]
+          },
+          {
+            "slug": "spruce_pine_fir",
+            "display_name": "Spruce-Pine-Fir (SPF)",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "spf_framing",
+                "display_name": "SPF Framing Lumber"
+              },
+              {
+                "slug": "pine_boards",
+                "display_name": "Pine Boards"
+              }
+            ]
+          },
+          {
+            "slug": "pressure_treated_lumber",
+            "display_name": "Pressure Treated Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pt_ground_contact",
+                "display_name": "Ground Contact Treated"
+              },
+              {
+                "slug": "pt_above_ground",
+                "display_name": "Above Ground Treated"
+              }
+            ]
+          },
+          {
+            "slug": "cedar_lumber",
+            "display_name": "Cedar Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cedar_boards",
+                "display_name": "Cedar Boards"
+              }
+            ]
+          },
+          {
+            "slug": "surfaced_lumber",
+            "display_name": "Surfaced Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "s4s_lumber",
+                "display_name": "S4S (4 sides surfaced)"
+              },
+              {
+                "slug": "s1s2e_lumber",
+                "display_name": "S1S2E (1 side, 2 edges surfaced)"
+              }
+            ]
+          },
+          {
+            "slug": "precut_lumber",
+            "display_name": "Pre-Cut Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "precut_studs",
+                "display_name": "Pre-Cut Studs"
+              }
+            ]
+          },
+          {
+            "slug": "kiln_dried_lumber",
+            "display_name": "Kiln Dried Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "kd_boards",
+                "display_name": "Kiln Dried Boards"
+              },
+              {
+                "slug": "scaffold_plank",
+                "display_name": "Scaffold Plank"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "decking",
+        "display_name": "Decking",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "composite_decking_boards",
+            "display_name": "Composite Decking Boards",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "pvc_decking_boards",
+            "display_name": "PVC Decking Boards",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pvc_decking_premium",
+                "display_name": "Premium PVC Collections"
+              }
+            ]
+          },
+          {
+            "slug": "deck_trim",
+            "display_name": "Deck Trim",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "composite_trim",
+                "display_name": "Composite Trim (all sizes)"
+              },
+              {
+                "slug": "starter_boards",
+                "display_name": "Starter Boards"
+              }
+            ]
+          },
+          {
+            "slug": "fascia_and_frame_boards",
+            "display_name": "Fascia & Frame Boards",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "fascia_boards",
+                "display_name": "Fascia Boards"
+              },
+              {
+                "slug": "picture_frame_boards",
+                "display_name": "Picture Frame Boards"
+              }
+            ]
+          },
+          {
+            "slug": "deck_railing_systems",
+            "display_name": "Deck Railing Systems",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "balusters_and_infill",
+            "display_name": "Balusters & Infill",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "metal_balusters",
+                "display_name": "Metal Balusters"
+              }
+            ]
+          },
+          {
+            "slug": "deck_gate_kits",
+            "display_name": "Deck Gate Kits",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "deck_gate_kit_products",
+                "display_name": "Deck Gate Kits"
+              }
+            ]
+          },
+          {
+            "slug": "deck_fasteners_and_hardware",
+            "display_name": "Deck Fasteners & Hardware",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "composite_deck_screws",
+                "display_name": "Composite Deck Screws"
+              },
+              {
+                "slug": "hidden_fasteners",
+                "display_name": "Hidden Fasteners"
+              },
+              {
+                "slug": "joist_tape",
+                "display_name": "Joist Tape"
+              }
+            ]
+          },
+          {
+            "slug": "stair_components",
+            "display_name": "Stair Components",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "stair_risers",
+                "display_name": "Stair Risers"
+              },
+              {
+                "slug": "stair_rail_kits",
+                "display_name": "Stair Rail Kits"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "fencing",
+        "display_name": "Fencing",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "wire_fencing",
+            "display_name": "Wire Fencing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "barbed_wire",
+                "display_name": "Barbed Wire"
+              },
+              {
+                "slug": "field_fence",
+                "display_name": "Field Fence"
+              },
+              {
+                "slug": "high_tensile_solid_lock",
+                "display_name": "High Tensile Solid Lock"
+              }
+            ]
+          },
+          {
+            "slug": "horse_non_climb_fencing",
+            "display_name": "Horse & Non-Climb Fencing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "non_climb_galvanized",
+                "display_name": "Non-Climb Fence"
+              },
+              {
+                "slug": "non_climb_black",
+                "display_name": "Non-Climb Fence"
+              }
+            ]
+          },
+          {
+            "slug": "welded_wire_fencing",
+            "display_name": "Welded Wire Fencing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "welded_wire_galvanized",
+                "display_name": "Welded Wire Fence"
+              },
+              {
+                "slug": "deer_and_rabbit_fence",
+                "display_name": "Deer & Rabbit Fence"
+              }
+            ]
+          },
+          {
+            "slug": "livestock_panels",
+            "display_name": "Livestock Panels",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cattle_panels",
+                "display_name": "Cattle Panels"
+              },
+              {
+                "slug": "hog_panels",
+                "display_name": "Hog Panels"
+              },
+              {
+                "slug": "corral_panels_flat_iron",
+                "display_name": "Flat Iron Corral Panels"
+              },
+              {
+                "slug": "corral_panels_mesh_filled",
+                "display_name": "Mesh-Filled Corral Panels"
+              }
+            ]
+          },
+          {
+            "slug": "split_rail_fencing",
+            "display_name": "Split Rail Fencing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "split_rails",
+                "display_name": "Split Rails"
+              },
+              {
+                "slug": "split_rail_posts",
+                "display_name": "Split Rail Posts"
+              }
+            ]
+          },
+          {
+            "slug": "fence_gates",
+            "display_name": "Fence Gates",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "round_corner_mesh_gates",
+                "display_name": "Round Corner Mesh Gates"
+              },
+              {
+                "slug": "square_corner_mesh_gates",
+                "display_name": "Square Corner Mesh Gates"
+              },
+              {
+                "slug": "five_rail_gates",
+                "display_name": "5-Rail Square Corner Gates"
+              }
+            ]
+          },
+          {
+            "slug": "fencing_tools_and_accessories",
+            "display_name": "Fencing Tools & Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "post_pounders",
+                "display_name": "Post Pounders"
+              },
+              {
+                "slug": "fence_stays_and_clips",
+                "display_name": "Fence Stays & Clips"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "metals_and_metal_fabrication",
+        "display_name": "Metals & Metal Fabrication",
+        "drill_down_recommended": true,
+        "subcategories": [
+          {
+            "slug": "square_tubing",
+            "display_name": "Square Tubing",
+            "drill_down_recommended": true,
+            "subcategories": [
+              {
+                "slug": "square_tubing_stock",
+                "display_name": "Square Tubing"
+              }
+            ]
+          },
+          {
+            "slug": "rectangular_tubing",
+            "display_name": "Rectangular Tubing",
+            "drill_down_recommended": true,
+            "subcategories": [
+              {
+                "slug": "rectangular_tubing_stock",
+                "display_name": "Rectangular Tubing"
+              }
+            ]
+          },
+          {
+            "slug": "angle_iron",
+            "display_name": "Angle Iron",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "structural_channel",
+            "display_name": "Structural Channel",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "sheet_and_plate",
+            "display_name": "Sheet & Plate",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "carbon_steel_sheet_1095",
+                "display_name": "1095 Annealed Carbon Steel Sheet"
+              },
+              {
+                "slug": "steel_plate",
+                "display_name": "Steel Plate"
+              }
+            ]
+          },
+          {
+            "slug": "pipe",
+            "display_name": "Pipe",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "sch40_pipe",
+                "display_name": "Schedule 40 Pipe"
+              }
+            ]
+          },
+          {
+            "slug": "metal_accessories_and_fittings",
+            "display_name": "Metal Accessories & Fittings",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "end_caps_and_plugs",
+                "display_name": "End Caps, Square Caps & Domed Caps"
+              },
+              {
+                "slug": "cee_and_zee_purlin",
+                "display_name": "CEE & ZEE Purlin"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "general_fasteners_and_hardware",
+        "display_name": "General Fasteners & Hardware",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "screws",
+            "display_name": "Screws",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "panel_and_lap_screws",
+                "display_name": "Panel & Lap Screws"
+              },
+              {
+                "slug": "wood_and_sheet_metal_screws",
+                "display_name": "Wood & Metal Screws"
+              },
+              {
+                "slug": "general_coarse_thread_screws",
+                "display_name": "Coarse Thread General Screws"
+              }
+            ]
+          },
+          {
+            "slug": "nails_and_spikes",
+            "display_name": "Nails & Spikes",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "common_nails",
+                "display_name": "Common Nails"
+              },
+              {
+                "slug": "duplex_and_double_head_nails",
+                "display_name": "Duplex & Double Head Nails"
+              },
+              {
+                "slug": "cap_nails",
+                "display_name": "Cap Nails"
+              },
+              {
+                "slug": "spiral_and_ring_shank_nails",
+                "display_name": "Spiral & Ring Shank Nails"
+              }
+            ]
+          },
+          {
+            "slug": "bolts_nuts_and_threaded_rod",
+            "display_name": "Bolts, Nuts & Threaded Rod",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "hex_head_bolts",
+                "display_name": "Hex Bolts"
+              },
+              {
+                "slug": "nuts_and_washers",
+                "display_name": "Nuts & Washers"
+              },
+              {
+                "slug": "threaded_rod",
+                "display_name": "Threaded Rod"
+              }
+            ]
+          },
+          {
+            "slug": "hinges_and_latches",
+            "display_name": "Hinges & Latches",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "gate_hinges",
+                "display_name": "Gate Hinges"
+              }
+            ]
+          },
+          {
+            "slug": "chain_and_rigging",
+            "display_name": "Chain & Rigging Hardware",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "chain",
+                "display_name": "Chain"
+              },
+              {
+                "slug": "shackles_and_connectors",
+                "display_name": "Shackles & Rigging Connectors"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "paint_and_stain",
+        "display_name": "Paint & Stain",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "wood_stains",
+            "display_name": "Wood Stains",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "log_and_timber_stains",
+                "display_name": "Log & Timber Stains"
+              },
+              {
+                "slug": "exterior_wood_stains",
+                "display_name": "Exterior Wood Stains"
+              }
+            ]
+          },
+          {
+            "slug": "wood_preservatives",
+            "display_name": "Wood Preservatives",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "borate_preservatives",
+                "display_name": "Borate Preservatives"
+              }
+            ]
+          },
+          {
+            "slug": "concrete_coatings",
+            "display_name": "Concrete Coatings",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "heavy_duty_paint",
+                "display_name": "Heavy Duty Paint"
+              },
+              {
+                "slug": "elastomeric_coatings",
+                "display_name": "Elastomeric Coatings"
+              },
+              {
+                "slug": "self_leveling_primer",
+                "display_name": "Self-Leveling Primer"
+              }
+            ]
+          },
+          {
+            "slug": "exterior_paint",
+            "display_name": "Exterior Paint",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "utility_paint",
+                "display_name": "Utility Paint"
+              }
+            ]
+          },
+          {
+            "slug": "paint_applicator_supplies",
+            "display_name": "Paint Applicator Supplies",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "roller_sleeves",
+                "display_name": "Roller Sleeves"
+              },
+              {
+                "slug": "mini_roller_sleeves",
+                "display_name": "Mini Roller Sleeves"
+              },
+              {
+                "slug": "roller_frames",
+                "display_name": "Roller Frames"
+              },
+              {
+                "slug": "paint_brushes",
+                "display_name": "Paint Brushes"
+              },
+              {
+                "slug": "paint_trays_and_accessories",
+                "display_name": "Paint Trays & Accessories"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "construction_adhesives_and_sealants",
+        "display_name": "Construction Adhesives & Sealants",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "sealants",
+            "display_name": "Sealants",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "polyurethane_sealants",
+                "display_name": "Polyurethane Sealants"
+              },
+              {
+                "slug": "self_leveling_sealants",
+                "display_name": "Self-Leveling Sealants"
+              }
+            ]
+          },
+          {
+            "slug": "silicone_sealants",
+            "display_name": "Silicone Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "silicone_clear",
+                "display_name": "Clear Silicone"
+              },
+              {
+                "slug": "silicone_colored",
+                "display_name": "Colored Silicone"
+              }
+            ]
+          },
+          {
+            "slug": "caulks",
+            "display_name": "Caulks",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "log_home_chinking_caulk",
+                "display_name": "Log Home & Chinking Caulk"
+              },
+              {
+                "slug": "general_caulks",
+                "display_name": "General Purpose Caulks"
+              },
+              {
+                "slug": "fire_barrier_caulks",
+                "display_name": "Fire Barrier Caulks"
+              }
+            ]
+          },
+          {
+            "slug": "backer_products",
+            "display_name": "Backer Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "round_backer_rod",
+                "display_name": "Round Backer Rod"
+              },
+              {
+                "slug": "flat_backer_strip",
+                "display_name": "Flat Backer Strip"
+              }
+            ]
+          },
+          {
+            "slug": "wood_fillers",
+            "display_name": "Wood Fillers",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "epoxy_pigments",
+            "display_name": "Epoxy Pigments",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "expanding_foam",
+            "display_name": "Expanding Foam",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "minimal_expanding_foam",
+                "display_name": "Minimal Expanding Foam"
+              },
+              {
+                "slug": "maximal_expanding_foam",
+                "display_name": "Maximal Expanding Foam"
+              }
+            ]
+          },
+          {
+            "slug": "epoxy_anchor_systems",
+            "display_name": "Epoxy Anchor Systems",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "adhesive_anchor_capsules",
+                "display_name": "Adhesive Anchor Capsules"
+              },
+              {
+                "slug": "general_construction_adhesives",
+                "display_name": "General Construction Adhesives"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "drywall_and_accessories",
+        "display_name": "Drywall & Accessories",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "drywall_sheets_and_panels",
+            "display_name": "Drywall Sheets & Panels",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "standard_gypsum_board",
+                "display_name": "Standard Gypsum Board"
+              },
+              {
+                "slug": "glass_mat_sheathing",
+                "display_name": "Glass Mat Sheathing"
+              },
+              {
+                "slug": "cement_and_fiber_boards",
+                "display_name": "Cement and Fiber Boards"
+              }
+            ]
+          },
+          {
+            "slug": "metal_framing",
+            "display_name": "Metal Framing (Light Gauge Steel)",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "metal_studs",
+                "display_name": "Metal Studs"
+              },
+              {
+                "slug": "metal_track",
+                "display_name": "Metal Track"
+              },
+              {
+                "slug": "metal_framing_accessories",
+                "display_name": "Angles, Furring Channel & Clips"
+              }
+            ]
+          },
+          {
+            "slug": "joint_compound_and_finishing",
+            "display_name": "Joint Compound & Finishing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "fast_setting_compound",
+                "display_name": "Fast-Setting Compounds"
+              },
+              {
+                "slug": "drywall_finish_plaster",
+                "display_name": "Finish Plaster"
+              }
+            ]
+          },
+          {
+            "slug": "tape_corner_bead_and_trim",
+            "display_name": "Tape, Corner Bead & Trim",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "metal_corner_bead",
+                "display_name": "Metal Corner Bead"
+              },
+              {
+                "slug": "expansion_bead",
+                "display_name": "Expansion Bead"
+              },
+              {
+                "slug": "mesh_and_paper_tape",
+                "display_name": "Mesh Tape & Paperless Tape"
+              }
+            ]
+          },
+          {
+            "slug": "drywall_screws_and_fasteners",
+            "display_name": "Drywall Screws & Fasteners",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "drywall_coarse_thread_screws",
+                "display_name": "Coarse Thread Screws"
+              },
+              {
+                "slug": "fine_thread_screws",
+                "display_name": "Fine Thread Screws"
+              },
+              {
+                "slug": "cement_board_screws",
+                "display_name": "Cement Board Screws"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "rebar_and_reinforcement",
+        "display_name": "Rebar & Reinforcement",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "standard_rebar",
+            "display_name": "Standard Rebar",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "epoxy_coated_rebar",
+            "display_name": "Epoxy Coated Rebar",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "wire_mesh",
+            "display_name": "Wire Mesh",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "wire_lath",
+            "display_name": "Wire Lath",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "diamond_wire_lath",
+                "display_name": "Diamond Wire Lath"
+              }
+            ]
+          },
+          {
+            "slug": "rebar_accessories",
+            "display_name": "Rebar Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "rebar_benders_and_cutters",
+                "display_name": "Rebar Benders & Cutters"
+              },
+              {
+                "slug": "tie_wire_and_twisters",
+                "display_name": "Tie Wire & Twisters"
+              },
+              {
+                "slug": "rebar_caps",
+                "display_name": "Rebar Caps"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "roofing_materials",
+        "display_name": "Roofing Materials",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "shingles_and_underlayment",
+            "display_name": "Roof Shingles & Underlayment",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "modified_bitumen_torch_down",
+                "display_name": "Torch Down Roofing"
+              },
+              {
+                "slug": "roof_felt_and_paper",
+                "display_name": "Roof Felt & Paper"
+              },
+              {
+                "slug": "roof_fabric",
+                "display_name": "Roof Fabric & Reinforcing Mesh"
+              }
+            ]
+          },
+          {
+            "slug": "roof_coatings_and_sealants",
+            "display_name": "Roof Coatings",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "aluminum_roof_coatings",
+                "display_name": "Metal Roof Coatings"
+              },
+              {
+                "slug": "silicone_roof_coatings",
+                "display_name": "Silicone Roof Coatings"
+              },
+              {
+                "slug": "emulsion_and_tar_coatings",
+                "display_name": "Emulsion & Tar-Based Coatings"
+              }
+            ]
+          },
+          {
+            "slug": "flashing_and_termination",
+            "display_name": "Flashing & Termination",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "peel_and_stick_flashing",
+                "display_name": "Peel & Stick Flashing"
+              },
+              {
+                "slug": "metal_drip_edge",
+                "display_name": "Metal Drip Edge & Stainless Steel"
+              },
+              {
+                "slug": "termination_bars",
+                "display_name": "Termination Bars"
+              }
+            ]
+          },
+          {
+            "slug": "roofing_fasteners_and_tools",
+            "display_name": "Roofing Fasteners & Tools",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "roofing_nails",
+                "display_name": "Roofing Nails & Cap Nails"
+              },
+              {
+                "slug": "shingle_shovels",
+                "display_name": "Shingle Shovels"
+              },
+              {
+                "slug": "rafter_squares",
+                "display_name": "Rafter & Carpenter Squares"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "insulation",
+        "display_name": "Insulation",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "batt_insulation",
+            "display_name": "Batt Insulation",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "insulation_batts",
+                "display_name": "Insulation Batts & Rolls"
+              }
+            ]
+          },
+          {
+            "slug": "rigid_foam_board",
+            "display_name": "Rigid Foam Board",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "poly_foam_sheathing",
+                "display_name": "Poly Foam Sheathing"
+              },
+              {
+                "slug": "xps_rigid_foam",
+                "display_name": "XPS Rigid Foam Board"
+              }
+            ]
+          },
+          {
+            "slug": "spray_foam",
+            "display_name": "Spray Foam",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "fill_and_seal_foam",
+                "display_name": "Fill & Seal Foam"
+              },
+              {
+                "slug": "foam_applicator_guns",
+                "display_name": "Foam Applicator Guns"
+              }
+            ]
+          },
+          {
+            "slug": "vapor_and_moisture_barriers",
+            "display_name": "Vapor & Moisture Barriers",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "liquid_applied_air_barrier",
+                "display_name": "Liquid-Applied Air & Vapor Barrier"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "weatherproofing_house_wrap",
+        "display_name": "Weatherproofing & House Wrap",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "building_wraps",
+            "display_name": "Building Wraps",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "building_wrap",
+                "display_name": "Building Wrap"
+              },
+              {
+                "slug": "reinforced_building_paper",
+                "display_name": "Reinforced Building Paper"
+              }
+            ]
+          },
+          {
+            "slug": "flashing_and_sealing_tapes",
+            "display_name": "Flashing and Sealing Tapes",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "butyl_tape",
+                "display_name": "Butyl Tape"
+              },
+              {
+                "slug": "deck_joist_tape",
+                "display_name": "Deck Joist Tape"
+              }
+            ]
+          },
+          {
+            "slug": "vapor_barriers",
+            "display_name": "Vapor Barriers",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "poly_sheeting",
+            "display_name": "Poly Sheeting",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "string_reinforced_poly",
+                "display_name": "String Reinforced Poly Sheeting"
+              }
+            ]
+          },
+          {
+            "slug": "tarps",
+            "display_name": "Tarps",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "poly_tarps",
+                "display_name": "Poly Tarps"
+              },
+              {
+                "slug": "fire_retardant_tarps",
+                "display_name": "Fire Retardant Tarps"
+              }
+            ]
+          },
+          {
+            "slug": "shrink_wrap",
+            "display_name": "Shrink Wrap",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "shrink_wrap_rolls",
+                "display_name": "Shrink Wrap Rolls"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "structural_fasteners_and_connectors",
+        "display_name": "Structural Fasteners & Connectors",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "joist_hangers_and_beam_connectors",
+            "display_name": "Joist Hangers & Beam Connectors",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "joist_hangers",
+                "display_name": "Joist Hangers"
+              },
+              {
+                "slug": "wall_reinforcement",
+                "display_name": "Wall Reinforcement"
+              }
+            ]
+          },
+          {
+            "slug": "post_bases_and_caps",
+            "display_name": "Post Bases & Caps",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "post_bases",
+                "display_name": "Post Bases"
+              },
+              {
+                "slug": "deck_rail_post_hardware",
+                "display_name": "Deck Rail Post Hardware"
+              }
+            ]
+          },
+          {
+            "slug": "hurricane_and_seismic_straps",
+            "display_name": "Hurricane & Seismic Straps",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "hurricane_ties",
+                "display_name": "Hurricane Ties"
+              },
+              {
+                "slug": "tension_and_tiedown_connectors",
+                "display_name": "Tension & Tiedown Connectors"
+              },
+              {
+                "slug": "strap_and_angle_connectors",
+                "display_name": "Strap & Angle Connectors"
+              }
+            ]
+          },
+          {
+            "slug": "structural_screws_and_bolts",
+            "display_name": "Structural Screws & Bolts",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "sds_structural_screws",
+                "display_name": "SDS Structural Screws"
+              },
+              {
+                "slug": "lag_screws",
+                "display_name": "Lag Screws"
+              },
+              {
+                "slug": "concrete_anchors",
+                "display_name": "Concrete Anchors"
+              },
+              {
+                "slug": "powder_actuated_fasteners",
+                "display_name": "Powder-Actuated Fasteners"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "sitework_and_drainage",
+        "display_name": "Sitework & Drainage",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "drainage_pipe_and_fittings",
+            "display_name": "Drainage Pipe & Fittings",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "solid_flexible_drain_pipe",
+                "display_name": "Flexible Solid Drain Pipe"
+              },
+              {
+                "slug": "perforated_drain_pipe",
+                "display_name": "Perforated Drain Pipe"
+              },
+              {
+                "slug": "drain_fittings",
+                "display_name": "Drain Fittings"
+              },
+              {
+                "slug": "downspout_adapters",
+                "display_name": "Downspout Adapters"
+              }
+            ]
+          },
+          {
+            "slug": "geotextile_fabric",
+            "display_name": "Geotextile Fabric",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "woven_geotextile",
+                "display_name": "Woven Geotextile"
+              },
+              {
+                "slug": "non_woven_geotextile",
+                "display_name": "Non-Woven Geotextile"
+              },
+              {
+                "slug": "spun_bond_geotextile",
+                "display_name": "Spun Bond Geotextile"
+              }
+            ]
+          },
+          {
+            "slug": "erosion_control",
+            "display_name": "Erosion Control",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "silt_fence",
+                "display_name": "Silt Fence"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "plants_and_landscaping",
+        "display_name": "Plants & Landscaping",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "gravel_and_aggregate",
+            "display_name": "Gravel & Aggregate",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pea_gravel",
+                "display_name": "Pea Gravel"
+              },
+              {
+                "slug": "crushed_stone",
+                "display_name": "Crushed Stone"
+              }
+            ]
+          },
+          {
+            "slug": "sand",
+            "display_name": "Sand",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "bagged_sand",
+                "display_name": "Bagged Sand"
+              }
+            ]
+          },
+          {
+            "slug": "limestone_products",
+            "display_name": "Limestone Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "limestone_treads_and_caps",
+                "display_name": "Limestone Treads & Caps"
+              },
+              {
+                "slug": "french_limestone_tile",
+                "display_name": "French Limestone Tile"
+              }
+            ]
+          },
+          {
+            "slug": "cobblestone_edging",
+            "display_name": "Cobblestone Edging",
+            "drill_down_recommended": false,
+            "subcategories": []
+          },
+          {
+            "slug": "landscape_fabric_and_ground_cover",
+            "display_name": "Landscape Fabric & Artificial Grass",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "woven_landscape_fabric",
+                "display_name": "Woven Landscape Fabric"
+              },
+              {
+                "slug": "artificial_grass",
+                "display_name": "Artificial Grass"
+              }
+            ]
+          },
+          {
+            "slug": "irrigation_and_hoses",
+            "display_name": "Irrigation & Hoses",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "garden_hoses",
+                "display_name": "Garden Hoses"
+              },
+              {
+                "slug": "soaker_hoses",
+                "display_name": "Soaker Hoses"
+              },
+              {
+                "slug": "hose_nozzles_and_fittings",
+                "display_name": "Hose Nozzles & Fittings"
+              }
+            ]
+          },
+          {
+            "slug": "outdoor_structures",
+            "display_name": "Outdoor Structure Kits",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pavilion_kits",
+                "display_name": "Pavilion Kits"
+              },
+              {
+                "slug": "pergola_kits",
+                "display_name": "Pergola Kits"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "electrical",
+        "display_name": "Electrical",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "wire_and_cable",
+            "display_name": "Wire & Cable",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "building_wire",
+                "display_name": "Building Wire"
+              },
+              {
+                "slug": "electrical_tape",
+                "display_name": "Electrical Tape"
+              }
+            ]
+          },
+          {
+            "slug": "power_distribution",
+            "display_name": "Power Distribution",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "power_strips",
+                "display_name": "Power Strips",
+                "drill_down_recommended": false,
+                "subcategories": []
+              },
+              {
+                "slug": "power_adapters",
+                "display_name": "Power Adapters",
+                "drill_down_recommended": false,
+                "subcategories": []
+              },
+              {
+                "slug": "gfci_devices",
+                "display_name": "GFCI Devices"
+              },
+              {
+                "slug": "extension_cords_electrical",
+                "display_name": "Extension Cords"
+              }
+            ]
+          },
+          {
+            "slug": "junction_boxes_and_accessories",
+            "display_name": "Junction Boxes & Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "access_panels",
+                "display_name": "Access Panels"
+              },
+              {
+                "slug": "electrical_connectors",
+                "display_name": "Electrical Connectors"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "flooring",
+        "display_name": "Flooring",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "luxury_vinyl_plank",
+            "display_name": "Luxury Vinyl Plank (LVP)",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "lvp_standard_collections",
+                "display_name": "Standard LVP Collections"
+              }
+            ]
+          },
+          {
+            "slug": "wood_flooring",
+            "display_name": "Wood Flooring",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "red_oak_flooring",
+                "display_name": "Red Oak Flooring"
+              },
+              {
+                "slug": "white_oak_flooring",
+                "display_name": "White Oak Flooring"
+              },
+              {
+                "slug": "walnut_and_mixed_hardwood_flooring",
+                "display_name": "Walnut & Mixed Hardwood Flooring"
+              }
+            ]
+          },
+          {
+            "slug": "tile_flooring",
+            "display_name": "Tile Flooring",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "granite_tile",
+                "display_name": "Granite Floor Tiles"
+              },
+              {
+                "slug": "tile_setting_for_floors",
+                "display_name": "Tile Setting for Floors"
+              }
+            ]
+          },
+          {
+            "slug": "flooring_trim_and_transitions",
+            "display_name": "Flooring Trim & Transitions",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "flooring_installation_tools",
+                "display_name": "Flooring Installation Tools"
+              },
+              {
+                "slug": "flooring_protection",
+                "display_name": "Flooring Protection Film"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "siding",
+        "display_name": "Siding",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "natural_edge_and_rustic_siding",
+            "display_name": "Rustic Siding",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "bark_on_natural_edge_siding",
+                "display_name": "Bark-On Natural Edge Siding"
+              },
+              {
+                "slug": "hand_peeled_natural_edge_siding",
+                "display_name": "Hand Peeled Natural Edge Siding"
+              },
+              {
+                "slug": "rough_cut_siding_boards",
+                "display_name": "Rough Cut Siding Boards"
+              }
+            ]
+          },
+          {
+            "slug": "wood_siding_boards",
+            "display_name": "Wood Siding Boards",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "s1s2e_cedar_siding",
+                "display_name": "S1S2E Cedar Siding"
+              },
+              {
+                "slug": "kiln_dried_pine_siding",
+                "display_name": "Kiln Dried Pine Siding Boards"
+              },
+              {
+                "slug": "incense_cedar_siding",
+                "display_name": "Incense Cedar Boards"
+              }
+            ]
+          },
+          {
+            "slug": "fiber_cement_siding",
+            "display_name": "Fiber Cement Siding",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "fiber_cement_blades",
+                "display_name": "Fiber Cement Cutting Blades"
+              }
+            ]
+          },
+          {
+            "slug": "siding_caulks_and_sealants",
+            "display_name": "Siding Caulks & Sealants",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "log_home_caulk_for_siding",
+                "display_name": "Log Home Caulk"
+              },
+              {
+                "slug": "general_siding_caulk",
+                "display_name": "General Siding Caulk"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "kitchen_and_bath",
+        "display_name": "Kitchen & Bath",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "outdoor_kitchen_cabinets",
+            "display_name": "Outdoor Kitchen Cabinets",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "fa_veneer_cabinets",
+                "display_name": "FA Veneer Cabinets"
+              }
+            ]
+          },
+          {
+            "slug": "outdoor_kitchen_kits",
+            "display_name": "Outdoor Kitchen Kits",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "olde_english_kitchen_kits",
+                "display_name": "Olde English Kitchen Kits"
+              }
+            ]
+          },
+          {
+            "slug": "outdoor_grills_and_appliances",
+            "display_name": "Outdoor Grills & Appliances",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "grill_door_drawer_combos",
+                "display_name": "Grill Door & Drawer Combos"
+              }
+            ]
+          },
+          {
+            "slug": "waterproofing_wet_area_products",
+            "display_name": "Waterproofing & Wet Area Products",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "waterproofing_membrane",
+                "display_name": "Waterproofing Membrane & Drains"
+              }
+            ]
+          },
+          {
+            "slug": "interior_cabinetry",
+            "display_name": "Interior Cabinetry",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cabinet_trim_lumber",
+                "display_name": "Cabinet & Trim Lumber"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "plumbing",
+        "display_name": "Plumbing",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "pipes_and_fittings",
+            "display_name": "Pipes & Fittings",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pvc_pipes_and_fittings",
+                "display_name": "PVC Pipes & Fittings"
+              }
+            ]
+          },
+          {
+            "slug": "valves_and_controls",
+            "display_name": "Valves & Controls",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "angle_valves",
+                "display_name": "Angle Valves & Keys"
+              }
+            ]
+          },
+          {
+            "slug": "plumbing_tools",
+            "display_name": "Plumbing Tools",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "pipe_wrenches",
+                "display_name": "Pipe Wrenches"
+              },
+              {
+                "slug": "adjustable_wrenches",
+                "display_name": "Adjustable Wrenches"
+              },
+              {
+                "slug": "tubing_levels",
+                "display_name": "Tubing Levels"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "hvac",
+        "display_name": "HVAC",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "heating_systems",
+            "display_name": "Heating Systems & Equipment",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "radiant_floor_heating",
+                "display_name": "Radiant Floor Heating"
+              }
+            ]
+          },
+          {
+            "slug": "ductwork_and_registers",
+            "display_name": "Ductwork & Registers",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "flexible_duct",
+                "display_name": "Flexible Duct"
+              },
+              {
+                "slug": "flue_pipe",
+                "display_name": "Flue Pipe"
+              },
+              {
+                "slug": "duct_tape",
+                "display_name": "Duct Tape"
+              }
+            ]
+          },
+          {
+            "slug": "ventilation",
+            "display_name": "Ventilation",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "masonry_weep_vents",
+                "display_name": "Masonry Weep Vents"
+              },
+              {
+                "slug": "pergola_fans",
+                "display_name": "Pergola Fans",
+                "drill_down_recommended": false,
+                "subcategories": []
+              },
+              {
+                "slug": "bioclimatic_pergolas",
+                "display_name": "Bioclimatic Pergolas",
+                "drill_down_recommended": false,
+                "subcategories": []
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "framing_materials",
+        "display_name": "Framing Materials",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "framing_lumber",
+            "display_name": "Framing Lumber",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "douglas_fir_framing",
+                "display_name": "Douglas Fir Framing & Posts"
+              }
+            ]
+          },
+          {
+            "slug": "i_joists_and_rim_board",
+            "display_name": "I-Joists and Rim Boards",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "i_joists",
+                "display_name": "I-Joists"
+              }
+            ]
+          },
+          {
+            "slug": "masonry_joint_reinforcement",
+            "display_name": "Masonry Joint Reinforcement",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "masonry_truss_wire",
+                "display_name": "Masonry Truss Wire"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "sheathing",
+        "display_name": "Sheathing",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "oriented_strand_board",
+            "display_name": "Oriented Strand Board (OSB)",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "osb_standard",
+                "display_name": "Standard OSB Panels"
+              },
+              {
+                "slug": "osb_variable",
+                "display_name": "Specialty OSB Panels"
+              }
+            ]
+          },
+          {
+            "slug": "plywood_sheathing",
+            "display_name": "Plywood Sheathing",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cdx_plywood",
+                "display_name": "CDX Plywood Panels"
+              },
+              {
+                "slug": "marine_and_premium_plywood",
+                "display_name": "Marine & Premium Plywood Panels"
+              }
+            ]
+          },
+          {
+            "slug": "sheathing_fasteners_and_accessories",
+            "display_name": "Sheathing Fasteners & Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "cap_nails_sheathing",
+                "display_name": "Cap Nails for Sheathing"
+              },
+              {
+                "slug": "osb_adhesive_brushes",
+                "display_name": "OSB Adhesive Brushes"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "doors",
+        "display_name": "Doors",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "exterior_doors",
+            "display_name": "Exterior Doors",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "outdoor_kitchen_doors",
+                "display_name": "Outdoor Kitchen Doors"
+              }
+            ]
+          },
+          {
+            "slug": "interior_doors",
+            "display_name": "Interior Doors",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "mailbox_doors",
+                "display_name": "Mailbox Doors"
+              }
+            ]
+          },
+          {
+            "slug": "temporary_construction_barriers",
+            "display_name": "Temporary Construction Barriers",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "zip_wall_systems",
+                "display_name": "Zip Wall Systems"
+              }
+            ]
+          },
+          {
+            "slug": "door_hardware",
+            "display_name": "Door Hardware",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "silicone_window_door",
+                "display_name": "Silicone Sealants for Windows & Doors"
+              },
+              {
+                "slug": "window_sill_trim",
+                "display_name": "Window Sill & Threshold Trim"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "windows",
+        "display_name": "Windows",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "windows_vinyl",
+            "display_name": "Windows - Vinyl",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "vinyl_retrofit_windows",
+                "display_name": "Vinyl Retrofit Windows"
+              }
+            ]
+          },
+          {
+            "slug": "glass_windows",
+            "display_name": "Glass Windows",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "glass_block",
+                "display_name": "Glass Block"
+              }
+            ]
+          },
+          {
+            "slug": "window_hardware",
+            "display_name": "Window Hardware & Accessories",
+            "drill_down_recommended": false,
+            "subcategories": [
+              {
+                "slug": "window_sealants",
+                "display_name": "Window Sealants"
+              },
+              {
+                "slug": "window_cleaning_tools",
+                "display_name": "Window Cleaning Tools"
+              }
+            ]
+          },
+          {
+            "slug": "other",
+            "display_name": "Other",
+            "drill_down_recommended": false,
+            "subcategories": []
+          }
+        ]
+      },
+      {
+        "slug": "miscellaneous",
+        "display_name": "Miscellaneous",
+        "drill_down_recommended": false,
+        "subcategories": []
+      }
+    ]
+  },
+  "tools_and_gear": {
+    "display_name": "Tools & Gear",
+    "subcategories": [
+      {
+        "slug": "power_tools",
+        "display_name": "Power Tools",
+        "drill_down_recommended": true,
+        "subcategories": [
+          {
+            "slug": "drills_and_drivers",
+            "display_name": "Drills & Drivers"
+          },
+          {
+            "slug": "saws",
+            "display_name": "Saws"
+          },
+          {
+            "slug": "breakers_and_demolition",
+            "display_name": "Breakers & Demolition"
+          },
+          {
+            "slug": "grinders",
+            "display_name": "Grinders",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "polishers",
+            "display_name": "Polishers",
+            "drill_down_recommended": false
+          }
+        ]
+      },
+      {
+        "slug": "outdoor_power_equipment",
+        "display_name": "Outdoor Power Equipment",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "chainsaws",
+            "display_name": "Chainsaws"
+          },
+          {
+            "slug": "leaf_blowers",
+            "display_name": "Leaf Blowers"
+          },
+          {
+            "slug": "grass_trimmers",
+            "display_name": "Grass Trimmers"
+          },
+          {
+            "slug": "ope_accessories",
+            "display_name": "OPE Accessories"
+          }
+        ]
+      },
+      {
+        "slug": "masonry_and_concrete_tools",
+        "display_name": "Masonry & Concrete Tools",
+        "drill_down_recommended": true,
+        "subcategories": [
+          {
+            "slug": "trowels",
+            "display_name": "Trowels"
+          },
+          {
+            "slug": "floats",
+            "display_name": "Floats"
+          },
+          {
+            "slug": "screeds",
+            "display_name": "Screeds"
+          },
+          {
+            "slug": "jointers",
+            "display_name": "Jointers",
+            "subcategories": [],
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "edgers",
+            "display_name": "Edgers",
+            "subcategories": [],
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "groovers",
+            "display_name": "Groovers",
+            "subcategories": [],
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "mixing_tools",
+            "display_name": "Mixing Tools"
+          }
+        ]
+      },
+      {
+        "slug": "cutting_tools_and_blades",
+        "display_name": "Cutting Tools & Blades",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "diamond_blades",
+            "display_name": "Diamond Blades"
+          },
+          {
+            "slug": "turbo_continuous_rim_saw_blades",
+            "display_name": "Turbo & Continuous Rim Saw Blades"
+          },
+          {
+            "slug": "diamond_cup_wheels",
+            "display_name": "Diamond Cup Wheels & Grinding Discs"
+          },
+          {
+            "slug": "reciprocating_saw_blades",
+            "display_name": "Reciprocating Saw Blades"
+          },
+          {
+            "slug": "circular_saw_blades",
+            "display_name": "Circular Saw Blades"
+          }
+        ]
+      },
+      {
+        "slug": "measuring_and_layout",
+        "display_name": "Measuring & Layout",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "levels",
+            "display_name": "Levels"
+          },
+          {
+            "slug": "squares_and_rafter_tools",
+            "display_name": "Squares & Rafter Tools"
+          },
+          {
+            "slug": "chalk_lines",
+            "display_name": "Chalk Lines"
+          },
+          {
+            "slug": "mason_line",
+            "display_name": "Mason Line"
+          },
+          {
+            "slug": "tape_measures",
+            "display_name": "Tape Measures"
+          }
+        ]
+      },
+      {
+        "slug": "hand_tools",
+        "display_name": "Hand Tools",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "hammers",
+            "display_name": "Hammers"
+          },
+          {
+            "slug": "mallets",
+            "display_name": "Mallets"
+          },
+          {
+            "slug": "chisels",
+            "display_name": "Chisels"
+          },
+          {
+            "slug": "pry_bars",
+            "display_name": "Pry Bars"
+          },
+          {
+            "slug": "wrenches_and_pliers",
+            "display_name": "Wrenches & Pliers"
+          },
+          {
+            "slug": "woodworking_tools",
+            "display_name": "Woodworking Tools"
+          }
+        ]
+      },
+      {
+        "slug": "fastening_tools",
+        "display_name": "Fastening Tools",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "staplers_and_tackers",
+            "display_name": "Staplers & Hammer Tackers"
+          },
+          {
+            "slug": "screw_guns",
+            "display_name": "Screw Guns & Drywall Drivers"
+          }
+        ]
+      },
+      {
+        "slug": "tool_bits_and_accessories",
+        "display_name": "Tool Bits & Accessories",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "sds_plus_bits",
+            "display_name": "SDS Plus Bits"
+          },
+          {
+            "slug": "sds_max_bits",
+            "display_name": "SDS Max Bits"
+          },
+          {
+            "slug": "bit_holders",
+            "display_name": "Bit Holders",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "nut_setters",
+            "display_name": "Nut Setters",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "magnetic_tips",
+            "display_name": "Magnetic Tips",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "drill_bits",
+            "display_name": "Drill Bits"
+          }
+        ]
+      },
+      {
+        "slug": "abrasives_and_surface_prep",
+        "display_name": "Abrasives & Surface Prep",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "wire_wheels",
+            "display_name": "Wire Wheels",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "grinding_discs",
+            "display_name": "Grinding Discs",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "sanding_sponges_and_blocks",
+            "display_name": "Sanding Sponges & Blocks"
+          }
+        ]
+      },
+      {
+        "slug": "site_and_rigging_tools",
+        "display_name": "Site & Rigging Tools",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "ladders",
+            "display_name": "Ladders"
+          },
+          {
+            "slug": "cable_pullers_and_come_alongs",
+            "display_name": "Cable Pullers & Come-Alongs"
+          },
+          {
+            "slug": "ratchet_straps",
+            "display_name": "Ratchet Straps"
+          },
+          {
+            "slug": "bungee_cords",
+            "display_name": "Bungee Cords"
+          }
+        ]
+      },
+      {
+        "slug": "brooms_and_cleaning_tools",
+        "display_name": "Brooms, Brushes & Cleaning Tools",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "brooms",
+            "display_name": "Brooms"
+          },
+          {
+            "slug": "brushes",
+            "display_name": "Brushes"
+          },
+          {
+            "slug": "scrapers",
+            "display_name": "Scrapers",
+            "drill_down_recommended": false
+          },
+          {
+            "slug": "floor_tools",
+            "display_name": "Floor Tools",
+            "drill_down_recommended": false
+          }
+        ]
+      },
+      {
+        "slug": "safety_and_ppe",
+        "display_name": "Safety & PPE",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "head_protection",
+            "display_name": "Head Protection"
+          },
+          {
+            "slug": "eye_and_face_protection",
+            "display_name": "Eye & Face Protection"
+          },
+          {
+            "slug": "hand_protection",
+            "display_name": "Hand Protection"
+          },
+          {
+            "slug": "respiratory_protection",
+            "display_name": "Respiratory Protection"
+          },
+          {
+            "slug": "fall_protection",
+            "display_name": "Fall Protection"
+          },
+          {
+            "slug": "high_visibility_clothing",
+            "display_name": "High-Visibility Clothing"
+          },
+          {
+            "slug": "site_safety_equipment",
+            "display_name": "Site Safety Equipment"
+          }
+        ]
+      },
+      {
+        "slug": "cleaning_and_maintenance",
+        "display_name": "Cleaning & Maintenance",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "solvents_and_cleaners",
+            "display_name": "Solvents & Cleaners"
+          },
+          {
+            "slug": "lubricants_and_greases",
+            "display_name": "Lubricants & Greases"
+          },
+          {
+            "slug": "ice_melt_and_treatment",
+            "display_name": "Ice Melt & Treatment"
+          }
+        ]
+      },
+      {
+        "slug": "buckets_and_containers",
+        "display_name": "Buckets & Containers",
+        "drill_down_recommended": false,
+        "subcategories": []
+      },
+      {
+        "slug": "gas_cans",
+        "display_name": "Gas Cans",
+        "drill_down_recommended": false,
+        "subcategories": []
+      },
+      {
+        "slug": "waste_disposal",
+        "display_name": "Waste Disposal",
+        "drill_down_recommended": false,
+        "subcategories": []
+      },
+      {
+        "slug": "shop_and_facility_supplies",
+        "display_name": "Shop & Facility Supplies",
+        "drill_down_recommended": false,
+        "subcategories": []
+      },
+      {
+        "slug": "other",
+        "display_name": "Other",
+        "drill_down_recommended": false,
+        "subcategories": []
+      }
+    ]
+  },
+  "services": {
+    "display_name": "Services",
+    "subcategories": [
+      {
+        "slug": "mill_and_fabrication_services",
+        "display_name": "Mill & Fabrication Services",
+        "drill_down_recommended": false,
+        "subcategories": [
+          {
+            "slug": "lumber_and_log_cutting_fees",
+            "display_name": "Lumber & Log Cutting Fees"
+          },
+          {
+            "slug": "specialty_machine_cutting_fees",
+            "display_name": "Specialty Machine Cutting Fees"
+          }
+        ]
+      },
+      {
+        "slug": "other",
+        "display_name": "Other",
+        "drill_down_recommended": false,
+        "subcategories": []
+      }
+    ]
+  }
+}

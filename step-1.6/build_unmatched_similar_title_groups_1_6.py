@@ -1,0 +1,282 @@
+#!/usr/bin/env python3
+"""
+Step 1.6 (aggregate)
+Build groups of unmatched items whose titles are pairwise similar (default: min ratio 0.9).
+
+- Input: latest step-1.5 unmatched_deduped.json (or --input).
+- Blocking: only compare titles in the same bucket (first letter-token + length bucket).
+- Clustering: clique — every pair in a group has similarity >= threshold. Within each block,
+  repeatedly take the largest maximal clique in the remaining induced subgraph until no clique
+  reaches min_group_size.
+- Output: step-1.6/outputs/<run_id>/unmatched_similar_title_groups.json
+
+Requires: networkx (maximal clique enumeration).
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import re
+from collections import defaultdict
+from datetime import datetime
+from difflib import SequenceMatcher
+from pathlib import Path
+from typing import Any, Dict, List, Sequence, Set, Tuple
+
+ROOT = Path(__file__).resolve().parents[1]
+STEP15_OUT = ROOT / "step-1.5" / "outputs"
+OUTDIR = Path(__file__).resolve().parent / "outputs"
+
+VERSION = "1.6-unmatched-similar-title-groups"
+
+
+def timestamp() -> str:
+    return datetime.now().strftime("%Y%m%d_%H%M%S")
+
+
+def normalize_title(s: str) -> str:
+    t = (s or "").lower().strip()
+    t = re.sub(r"\s+", " ", t)
+    return t
+
+
+def first_token(norm: str) -> str:
+    parts = re.findall(r"[a-z0-9]+", norm)
+    return parts[0] if parts else "__empty__"
+
+
+def blocking_key(norm: str) -> Tuple[str, int]:
+    """(first token, length bucket) — only titles in the same bucket are compared."""
+    ft = first_token(norm)
+    lb = len(norm) // 8 if norm else 0
+    return (ft, lb)
+
+
+def sim_ratio(a: str, b: str) -> float:
+    if a == b:
+        return 1.0
+    return SequenceMatcher(None, a, b).ratio()
+
+
+def master_title_for_group(titles: Sequence[str]) -> str:
+    """Readable label: longest common prefix of normalized titles, else shortest original."""
+    norms = [normalize_title(t) for t in titles if isinstance(t, str)]
+    if not norms:
+        return ""
+    if len(norms) == 1:
+        return titles[0] if titles else norms[0]
+    m = min(len(s) for s in norms)
+    i = 0
+    while i < m and len({s[i] for s in norms}) == 1:
+        i += 1
+    lcp = norms[0][:i].strip()
+    if len(lcp) >= 4:
+        return lcp
+    shortest = min((t for t in titles if isinstance(t, str)), key=len, default="")
+    return shortest.strip() or lcp
+
+
+def find_latest_unmatched_deduped() -> Path | None:
+    cands = list(STEP15_OUT.glob("**/unmatched_deduped.json"))
+    if not cands:
+        return None
+    return max(cands, key=lambda p: p.stat().st_mtime)
+
+
+def maximal_cliques_networkx(adj: Dict[int, Set[int]]) -> List[Set[int]]:
+    import networkx as nx
+
+    verts = list(adj.keys())
+    G = nx.Graph()
+    G.add_nodes_from(verts)
+    for u in verts:
+        for v in adj.get(u, ()):
+            if u < v:
+                G.add_edge(u, v)
+    return [set(c) for c in nx.find_cliques(G)]
+
+
+def induced_subgraph(adj: Dict[int, Set[int]], remaining: Set[int]) -> Dict[int, Set[int]]:
+    return {u: (adj[u] & remaining) for u in remaining}
+
+
+def iterative_clique_cover_on_bucket(
+    sub_adj: Dict[int, Set[int]],
+    min_group_size: int,
+) -> List[Set[int]]:
+    """
+    Repeatedly take the largest maximal clique in the remaining induced subgraph until
+    no clique has size >= min_group_size.
+    """
+    remaining: Set[int] = set(sub_adj.keys())
+    groups: List[Set[int]] = []
+    while len(remaining) >= min_group_size:
+        sub = induced_subgraph(sub_adj, remaining)
+        max_cliques = maximal_cliques_networkx(sub)
+        candidates = [set(c) for c in max_cliques if len(c) >= min_group_size]
+        if not candidates:
+            break
+        best = max(candidates, key=len)
+        groups.append(best)
+        remaining -= best
+    return groups
+
+
+def run_aggregate(
+    items: List[dict],
+    min_sim: float,
+    min_group_size: int,
+) -> Tuple[List[dict], List[dict], Dict[str, Any]]:
+    """
+    Returns (group_payloads, ungrouped_items, stats_extra).
+    """
+    # index items by position in list for stable ids
+    norms: List[str] = []
+    valid: List[dict] = []
+    for it in items:
+        if not isinstance(it, dict):
+            continue
+        iid = it.get("id")
+        if not isinstance(iid, str) or not iid:
+            continue
+        title = it.get("title") or ""
+        if not isinstance(title, str):
+            title = str(title)
+        norms.append(normalize_title(title))
+        valid.append(it)
+
+    n = len(valid)
+    buckets: Dict[Tuple[str, int], List[int]] = defaultdict(list)
+    for i in range(n):
+        buckets[blocking_key(norms[i])].append(i)
+
+    group_id_counter = 0
+    out_groups: List[dict] = []
+    used_global: Set[int] = set()
+
+    for _bk, idxs in sorted(buckets.items(), key=lambda x: (x[0][0], x[0][1])):
+        if len(idxs) < min_group_size:
+            continue
+        sub_adj: Dict[int, Set[int]] = {i: set() for i in idxs}
+        for i, ii in enumerate(idxs):
+            for j in range(i + 1, len(idxs)):
+                ia, ib = idxs[i], idxs[j]
+                if sim_ratio(norms[ia], norms[ib]) >= min_sim:
+                    sub_adj[ia].add(ib)
+                    sub_adj[ib].add(ia)
+
+        groups = iterative_clique_cover_on_bucket(sub_adj, min_group_size)
+        for g in groups:
+            g_items = [valid[i] for i in sorted(g)]
+            titles = [str(it.get("title") or "") for it in g_items]
+            gid = f"g_{group_id_counter:06d}"
+            group_id_counter += 1
+            out_groups.append(
+                {
+                    "group_id": gid,
+                    "master_title": master_title_for_group(titles),
+                    "item_count": len(g_items),
+                    "items": [
+                        {
+                            "id": it.get("id"),
+                            "title": it.get("title") or "",
+                            "subtitle": it.get("subtitle") or "",
+                        }
+                        for it in g_items
+                    ],
+                }
+            )
+            used_global |= g
+
+    ungrouped: List[dict] = []
+    for i in range(n):
+        if i not in used_global:
+            ungrouped.append(valid[i])
+
+    stats = {
+        "unmatched_items_in": n,
+        "groups_emitted": len(out_groups),
+        "items_in_groups": sum(g["item_count"] for g in out_groups),
+        "items_ungrouped": len(ungrouped),
+        "min_similarity": min_sim,
+        "min_group_size": min_group_size,
+        "blocking": "first_alpha_numeric_token + floor(len(normalized_title)/8)",
+        "clustering": "clique (iterative largest maximal clique on remaining induced subgraph)",
+    }
+    return out_groups, ungrouped, stats
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description="Build unmatched similar-title groups (1.6).")
+    parser.add_argument(
+        "--input",
+        metavar="PATH",
+        help="Path to unmatched_deduped.json (default: newest under step-1.5/outputs/).",
+    )
+    parser.add_argument(
+        "--min-similarity",
+        type=float,
+        default=0.9,
+        metavar="R",
+        help="Minimum pairwise title similarity ratio [0,1] (default: 0.9).",
+    )
+    parser.add_argument(
+        "--min-group-size",
+        type=int,
+        default=5,
+        metavar="N",
+        help="Emit only groups with at least N items (default: 5).",
+    )
+    args = parser.parse_args()
+
+    in_path = Path(args.input).expanduser().resolve() if args.input else find_latest_unmatched_deduped()
+    if not in_path or not in_path.is_file():
+        raise SystemExit(f"No unmatched_deduped.json found. Pass --input or add step-1.5 outputs.")
+
+    data = json.loads(in_path.read_text(encoding="utf-8"))
+    raw = data.get("unmatched_items")
+    if not isinstance(raw, list):
+        raise SystemExit("Expected unmatched_items array.")
+
+    min_sim = float(args.min_similarity)
+    if not 0.0 < min_sim <= 1.0:
+        raise SystemExit("--min-similarity must be in (0, 1].")
+    min_gs = max(2, int(args.min_group_size))
+
+    groups, ungrouped, stats = run_aggregate(raw, min_sim, min_gs)
+
+    ts = timestamp()
+    run_dir = OUTDIR / ts
+    run_dir.mkdir(parents=True, exist_ok=False)
+    out_path = run_dir / "unmatched_similar_title_groups.json"
+
+    payload = {
+        "version": VERSION,
+        "run_id": ts,
+        "output_dir": str(run_dir.resolve()),
+        "source_unmatched_deduped": str(in_path.resolve()),
+        "similarity_metric": "difflib.SequenceMatcher.ratio on normalized titles (lowercase, collapsed whitespace)",
+        "stats": stats,
+        "groups": groups,
+        "ungrouped_items": [
+            {
+                "id": it.get("id"),
+                "title": it.get("title") or "",
+                "subtitle": it.get("subtitle") or "",
+            }
+            for it in ungrouped
+            if isinstance(it, dict)
+        ],
+    }
+
+    out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    print(f"Wrote {out_path.relative_to(ROOT)}")
+    print(
+        f"Groups: {stats['groups_emitted']}  Items in groups: {stats['items_in_groups']}  "
+        f"Ungrouped: {stats['items_ungrouped']}"
+    )
+
+
+if __name__ == "__main__":
+    main()

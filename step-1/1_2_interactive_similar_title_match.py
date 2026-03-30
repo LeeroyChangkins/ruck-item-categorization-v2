@@ -639,6 +639,165 @@ def master_title_clipboard_actions(master_title: str, which: str) -> None:
             )
 
 
+def _make_slug(name: str) -> str:
+    """Slugify a display name: lowercase, non-alphanumeric runs → underscore, trim underscores."""
+    s = re.sub(r"[^a-z0-9]+", "_", name.lower().strip())
+    return s.strip("_")
+
+
+def interact_insert_new_category(
+    categories: dict,
+    taxonomy_path: Path,
+) -> Dict[str, str] | None:
+    """
+    Interactive wizard to create a new leaf category in the taxonomy.
+
+    Navigation rules:
+      - Level 0 (master: materials / tools_and_gear / services): select only, no creation.
+      - Level 1 (tier-1 nodes under master): navigate only, no creation.
+      - Level 2+ (tier-2 and deeper): [c] create new category here, [b] back.
+
+    On creation:
+      - Slugifies the display name and checks for uniqueness among siblings.
+      - Inserts the new node into the in-memory `categories` dict (mutates caller's dict).
+      - Writes categories_v1.json immediately (atomic via .tmp).
+
+    Returns the new leaf's row dict (leaf_path, leaf_slug, display_name, _hay),
+    or None if the user cancelled at any point.
+    """
+    ROOT_KEYS = ("materials", "tools_and_gear", "services")
+
+    # ── Level 0: pick master ───────────────────────────────────────────────────
+    roots = [
+        (k, categories[k].get("display_name") or k)
+        for k in ROOT_KEYS
+        if isinstance(categories.get(k), dict)
+    ]
+    print("\n  ── Insert new category ───────────────────────────────────────────")
+    print("  Select master category:")
+    for i, (k, dn) in enumerate(roots, 1):
+        print(f"    [{i}]  {dn}  ({k})")
+    print("    [Enter]  cancel")
+    while True:
+        r = input("  → ").strip()
+        if not r:
+            print("  Cancelled.")
+            return None
+        if r.isdigit() and 1 <= int(r) <= len(roots):
+            root_key, _ = roots[int(r) - 1]
+            break
+        print("  Enter a number or Enter to cancel.")
+
+    # ── Level 1+: navigate the tree ───────────────────────────────────────────
+    node_stack: List[dict] = [categories[root_key]]
+    slug_stack: List[str] = [root_key]
+
+    while True:
+        current = node_stack[-1]
+        current_path = "/".join(slug_stack)
+        depth = len(slug_stack)  # 1 = at root node, 2 = inside tier-1, etc.
+        can_create = depth >= 2
+
+        children = [
+            c for c in (current.get("subcategories") or [])
+            if isinstance(c, dict) and c.get("slug")
+        ]
+
+        print(f"\n  /{current_path}/")
+        if children:
+            for i, child in enumerate(children, 1):
+                n_sub = sum(
+                    1 for c in (child.get("subcategories") or [])
+                    if isinstance(c, dict) and c.get("slug")
+                )
+                dn = child.get("display_name") or child["slug"]
+                tag = f"({n_sub} sub)" if n_sub else "[leaf]"
+                print(f"    [{i:3}]  {child['slug']}  —  {dn}  {tag}")
+        else:
+            print("    (no subcategories yet)")
+
+        if can_create:
+            print(f"    [c]    Create new category under /{current_path}/")
+        back_target = "/".join(slug_stack[:-1]) if len(slug_stack) > 1 else "root selection"
+        print(f"    [b]    Back  (→ /{back_target}/)")
+        print("    [Enter] Cancel")
+
+        sel = input("  → ").strip()
+
+        if not sel:
+            print("  Cancelled.")
+            return None
+
+        if sel.lower() == "b":
+            if len(slug_stack) == 1:
+                # Back to root selection — restart the whole wizard
+                return interact_insert_new_category(categories, taxonomy_path)
+            node_stack.pop()
+            slug_stack.pop()
+            continue
+
+        if sel.lower() == "c" and can_create:
+            existing_slugs = {
+                c["slug"] for c in children
+                if isinstance(c, dict) and c.get("slug")
+            }
+            while True:
+                name = input(f"\n  Display name for new category under /{current_path}/: ").strip()
+                if not name:
+                    print("  Cancelled.")
+                    return None
+                slug = _make_slug(name)
+                if not slug:
+                    print("  Could not generate a valid slug from that name — try again.")
+                    continue
+                if slug in existing_slugs:
+                    print(f"  Error: slug '{slug}' already exists at this level. Use a different name.")
+                    continue
+                new_path = f"{current_path}/{slug}"
+                print(f"\n  Will create:  {new_path}")
+                print(f"  Display name: {name!r}")
+                confirm = input("  Confirm? [Y/n] ").strip().lower()
+                if confirm in ("n", "no"):
+                    print("  Discarded — try again.")
+                    continue
+                break
+
+            new_node: dict = {"slug": slug, "display_name": name, "subcategories": []}
+            if not isinstance(current.get("subcategories"), list):
+                current["subcategories"] = []
+            current["subcategories"].append(new_node)
+
+            # Write to file immediately (atomic)
+            tmp = taxonomy_path.with_suffix(".json.tmp")
+            tmp.write_text(
+                json.dumps(categories, indent=2, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+            )
+            tmp.replace(taxonomy_path)
+            print(f"  Saved → {taxonomy_path.name}  ({new_path})")
+
+            hay = f"{new_path} {slug} {name}".lower()
+            return {
+                "leaf_path": new_path,
+                "leaf_slug": slug,
+                "display_name": name,
+                "_hay": hay,
+            }
+
+        if sel.isdigit():
+            n = int(sel)
+            if 1 <= n <= len(children):
+                child = children[n - 1]
+                node_stack.append(child)
+                slug_stack.append(child["slug"])
+                continue
+            print("  Out of range.")
+            continue
+
+        opts = "[c] / " if can_create else ""
+        print(f"  Enter a number, {opts}[b], or Enter to cancel.")
+
+
 def yn_prompt(prompt: str, default: bool = True) -> bool:
     hint = "Y/n" if default else "y/N"
     while True:
@@ -736,8 +895,8 @@ def main() -> None:
 
     print(
         f"\n{len(groups)} group(s), {len(search_rows)} leaves for search ({len(other_rows)} catch-all via [o] only). "
-        "[Enter]=skip | [o] Other buckets | [x] unknown | [p] preview | [c] copy | "
-        "[s] Google Images | else substring searches leaves.\n"
+        "[Enter]=skip | [o] Other | [x] unknown | [i] insert new category | [p] preview | "
+        "[c] copy | [s] Google Images | else substring searches leaves.\n"
     )
 
     for ki, row in enumerate(groups, start=1):
@@ -793,11 +952,37 @@ def main() -> None:
         first_search: str | None = None
         while first_search is None:
             pre = input(
-                "  [Enter] skip | [o] Other | [x] unknown | [p] preview | [c] copy | [s] Google Images | "
-                "or substring: "
+                "  [Enter] skip | [o] Other | [x] unknown | [i] insert category | "
+                "[p] preview | [c] copy | [s] Google Images | or substring: "
             ).strip()
             if not pre:
                 first_search = ""
+            elif pre.lower() == "i":
+                new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
+                if new_leaf is not None:
+                    # Rebuild leaf lists so the new category is searchable
+                    raw_rows[:] = collect_leaf_rows(categories)
+                    other_rows[:] = collect_other_bucket_leaves(raw_rows)
+                    search_rows[:] = [r for r in raw_rows if not is_catch_all_bucket_slug(r.get("leaf_slug"))]
+                    print(f"  New leaf available: {new_leaf['leaf_path']}")
+                    if yn_prompt(f"  Assign this group to '{new_leaf['leaf_path']}'?", default=True):
+                        n_assigned = assign_group_to_leaf(
+                            gid=gid,
+                            master_title=master_title,
+                            items_in_group=items_in_group,
+                            chosen=new_leaf,
+                            out_path=out_path,
+                            groups_path=groups_path,
+                            group_assignments=group_assignments,
+                            unknown_groups=unknown_groups,
+                            item_matches=item_matches,
+                            done_g=done_g,
+                            already_matched_ids=already_matched_ids,
+                            assignment_extra={"inserted_by_user": True},
+                        )
+                        print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
+                        first_search = "__assigned__"
+                continue
             elif pre.lower() == "o":
                 kind, chosen_other = interact_pick_other_leaf(other_rows)
                 if kind == "skip":
@@ -870,8 +1055,34 @@ def main() -> None:
                 nq = ""
                 while True:
                     nq = input(
-                        "  Search ([o] Other | [c] copy | [s] Google Images) or substring; blank=skip group: "
+                        "  Search ([o] Other | [i] insert | [c] copy | [s] Google Images) or substring; blank=skip group: "
                     ).strip()
+                    if nq.lower() == "i":
+                        new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
+                        if new_leaf is not None:
+                            raw_rows[:] = collect_leaf_rows(categories)
+                            other_rows[:] = collect_other_bucket_leaves(raw_rows)
+                            search_rows[:] = [r for r in raw_rows if not is_catch_all_bucket_slug(r.get("leaf_slug"))]
+                            print(f"  New leaf available: {new_leaf['leaf_path']}")
+                            if yn_prompt(f"  Assign this group to '{new_leaf['leaf_path']}'?", default=True):
+                                n_assigned = assign_group_to_leaf(
+                                    gid=gid,
+                                    master_title=master_title,
+                                    items_in_group=items_in_group,
+                                    chosen=new_leaf,
+                                    out_path=out_path,
+                                    groups_path=groups_path,
+                                    group_assignments=group_assignments,
+                                    unknown_groups=unknown_groups,
+                                    item_matches=item_matches,
+                                    done_g=done_g,
+                                    already_matched_ids=already_matched_ids,
+                                    assignment_extra={"inserted_by_user": True},
+                                )
+                                print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
+                                advance_group = True
+                        nq = ""
+                        break
                     if nq.lower() == "o":
                         kind, chosen_other = interact_pick_other_leaf(other_rows)
                         if kind == "skip":
@@ -935,8 +1146,8 @@ def main() -> None:
                     print(f"        {dn}")
 
             sel = input(
-                "  [#] assign | [o] Other | [text] narrow | [n]/[n <text>] search | [c] copy | [s] Google Images | "
-                "[Enter] skip: "
+                "  [#] assign | [o] Other | [i] insert category | [text] narrow | "
+                "[n]/[n <text>] search | [c] copy | [s] Google Images | [Enter] skip: "
             ).strip()
 
             if not sel:
@@ -944,6 +1155,34 @@ def main() -> None:
 
             if sel.lower() in ("c", "s"):
                 master_title_clipboard_actions(master_title, sel)
+                continue
+
+            if sel.lower() == "i":
+                new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
+                if new_leaf is not None:
+                    raw_rows[:] = collect_leaf_rows(categories)
+                    other_rows[:] = collect_other_bucket_leaves(raw_rows)
+                    search_rows[:] = [r for r in raw_rows if not is_catch_all_bucket_slug(r.get("leaf_slug"))]
+                    hits = filter_leaves(search_rows, first_search) if first_search else hits
+                    print(f"  New leaf available: {new_leaf['leaf_path']}")
+                    if yn_prompt(f"  Assign this group to '{new_leaf['leaf_path']}'?", default=True):
+                        n_assigned = assign_group_to_leaf(
+                            gid=gid,
+                            master_title=master_title,
+                            items_in_group=items_in_group,
+                            chosen=new_leaf,
+                            out_path=out_path,
+                            groups_path=groups_path,
+                            group_assignments=group_assignments,
+                            unknown_groups=unknown_groups,
+                            item_matches=item_matches,
+                            done_g=done_g,
+                            already_matched_ids=already_matched_ids,
+                            assignment_extra={"inserted_by_user": True},
+                        )
+                        print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
+                        advance_group = True
+                        break
                 continue
 
             if sel.lower() == "o":

@@ -19,6 +19,8 @@ import argparse
 import json
 import re
 import sys
+import threading
+import time
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
@@ -164,6 +166,7 @@ def run_aggregate(
     group_id_counter = 0
     out_groups: List[dict] = []
     used_global: Set[int] = set()
+    items_analyzed = 0  # cumulative items in fully-processed buckets
 
     bucket_list = sorted(buckets.items(), key=lambda x: (x[0][0], x[0][1]))
     use_bk_pbar = show_progress and sys.stderr.isatty() and len(bucket_list) > 0
@@ -176,21 +179,39 @@ def run_aggregate(
             unit="bucket",
             file=sys.stderr,
             dynamic_ncols=True,
-            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} buckets [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
         )
+
     def _set_bucket_status(msg: str) -> None:
+        """Update postfix; always prefixes current items_analyzed/n so the counter is always visible."""
         if bk_pbar:
-            bk_pbar.set_postfix_str(msg, refresh=True)
+            bk_pbar.set_postfix_str(f"items {items_analyzed}/{n}  {msg}", refresh=True)
+
+    # Background thread: force a refresh every second so the elapsed timer keeps ticking
+    # even when the main thread is blocked inside nx.find_cliques().
+    _stop_refresh = threading.Event()
+
+    def _auto_refresh() -> None:
+        while not _stop_refresh.is_set():
+            if bk_pbar:
+                bk_pbar.refresh()
+            time.sleep(1.0)
+
+    _refresh_thread: threading.Thread | None = None
+    if use_bk_pbar:
+        _refresh_thread = threading.Thread(target=_auto_refresh, daemon=True)
+        _refresh_thread.start()
 
     try:
         for _bk, idxs in bk_pbar or bucket_list:
             if len(idxs) < min_group_size:
+                items_analyzed += len(idxs)
                 if bk_pbar:
                     bk_pbar.update(1)
                 continue
             k = len(idxs)
             total_pairs = k * (k - 1) // 2
-            _set_bucket_status(f"comparing pairs · {k} titles · 0%")
+            _set_bucket_status(f"comparing {k} titles · 0/{total_pairs} pairs")
             sub_adj: Dict[int, Set[int]] = {i: set() for i in idxs}
             pair_done = 0
             update_every = max(1, total_pairs // 80) if total_pairs else 1
@@ -205,7 +226,7 @@ def run_aggregate(
                     if bk_pbar and pair_done >= next_report:
                         pct = 100.0 * pair_done / total_pairs if total_pairs else 100.0
                         _set_bucket_status(
-                            f"comparing pairs · {k} titles · {pct:.0f}% ({pair_done}/{total_pairs})"
+                            f"comparing {k} titles · {pair_done}/{total_pairs} pairs ({pct:.0f}%)"
                         )
                         next_report += update_every
 
@@ -234,13 +255,17 @@ def run_aggregate(
                 )
                 used_global |= g
 
+            items_analyzed += len(idxs)
             if bk_pbar:
                 bk_pbar.set_postfix_str(
-                    f"groups={len(out_groups)} bucket_items={len(idxs)} cliques={len(groups)}",
+                    f"items {items_analyzed}/{n}  groups={len(out_groups)}  cliques={len(groups)}",
                     refresh=False,
                 )
                 bk_pbar.update(1)
     finally:
+        if _refresh_thread:
+            _stop_refresh.set()
+            _refresh_thread.join(timeout=2)
         if bk_pbar:
             bk_pbar.close()
 

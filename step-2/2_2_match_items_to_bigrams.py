@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
 """
-Step 1.2
-Match items against bigram mappings and output ranked category suggestions per item.
+Step 2.2 — Match items against bigram mappings and output ranked category suggestions per item.
 
 Reads:
-  - ../source-files/raw-prod-items-non-deleted.json
-  - a bigram mapping JSON from step-1.1/outputs (1.1a or 1.1b), chosen interactively
+  - ../source-files/raw-prod-items-non-deleted.json (or --items-json pool)
+  - a bigram mapping JSON from step-2.1b outputs (1.1a or 1.1b), chosen interactively
 
 Writes (timestamped) to:
   - ./outputs/1.2-bigram_sorted_items_YYYYMMDD_HHMMSS.json
@@ -47,14 +46,13 @@ from taxonomy_cascade import collect_slug_to_path, dedupe_category_slugs, is_cat
 ITEMS_PATH = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 def _mapping_candidate_files() -> List[Path]:
-    out: List[Path] = []
-    for d in (ROOT / "step-2-map-bigrams-taxonomy", ROOT / "step-2-map-bigrams-openai"):
-        if d.is_dir():
-            out.extend(sorted(d.glob("outputs/1.1*-bigram_categories_mapping*.json")))
-    return out
+    d = ROOT / "step-2" / "outputs"
+    if d.is_dir():
+        return sorted(d.glob("1.1*-bigram_categories_mapping*.json"))
+    return []
 
 
-MAPPINGS_DIR = ROOT / "step-2-map-bigrams-taxonomy" / "outputs"  # default scan dir (legacy)
+MAPPINGS_DIR = ROOT / "step-2" / "outputs"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 
@@ -342,7 +340,7 @@ def pick_mapping_file_interactive() -> Path:
     if latest:
         print(f"  1) Use most recent: {latest.relative_to(ROOT)}")
     else:
-        print("  1) (No files under step-2-map-bigrams-*/outputs/)")
+        print("  1) (No files under step-2/outputs/)")
     print("  2) Enter a path manually")
 
     choice = input("> ").strip()
@@ -444,45 +442,86 @@ def run_single_mapping(args: argparse.Namespace) -> None:
 
     cross_side = not args.strict_sides
 
-    for idx in range(start_index, len(items)):
-        item = items[idx]
-        item_id = item.get("id")
-        title = item.get("title") or ""
-        subtitle = item.get("subtitle") or ""
-
-        cat_to_triggers = match_item_triggers(
-            item, cross_side, pair_meta_title, word_to_pairs_title, pair_meta_sub, word_to_pairs_sub
+    n_items = len(items)
+    use_pbar = not args.no_progress and sys.stderr.isatty() and n_items > 0
+    idx_iter = range(start_index, n_items)
+    pbar: tqdm | None = None
+    if use_pbar:
+        pbar = tqdm(
+            idx_iter,
+            total=n_items,
+            initial=start_index,
+            desc="2.2 match items→bigrams",
+            unit="item",
+            file=sys.stderr,
+            dynamic_ncols=True,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
         )
+    try:
+        for idx in pbar or idx_iter:
+            item = items[idx]
+            item_id = item.get("id")
+            title = item.get("title") or ""
+            subtitle = item.get("subtitle") or ""
 
-        if not cat_to_triggers:
-            unmatched_items.append({"id": item_id, "title": title, "subtitle": subtitle})
+            cat_to_triggers = match_item_triggers(
+                item, cross_side, pair_meta_title, word_to_pairs_title, pair_meta_sub, word_to_pairs_sub
+            )
+
+            if not cat_to_triggers:
+                unmatched_items.append({"id": item_id, "title": title, "subtitle": subtitle})
+                if (idx + 1) % args.checkpoint_every == 0:
+                    save_checkpoint(
+                        ckpt,
+                        fp,
+                        next_index=idx + 1,
+                        matched_items=matched_items,
+                        unmatched_items=unmatched_items,
+                    )
+                    if pbar:
+                        pbar.set_postfix_str(
+                            f"ckpt@{idx + 1} matched={len(matched_items)} unmatched={len(unmatched_items)}",
+                            refresh=False,
+                        )
+                    else:
+                        print(f"Checkpoint saved at idx={idx + 1}/{n_items}")
+                elif pbar:
+                    pbar.set_postfix_str(
+                        f"matched={len(matched_items)} unmatched={len(unmatched_items)} last=no_bigram",
+                        refresh=False,
+                    )
+                continue
+
+            category_objs, total_triggered, max_conf = build_category_rows(cat_to_triggers, None)
+
+            matched_items.append(
+                {
+                    "id": item_id,
+                    "title": title,
+                    "subtitle": subtitle,
+                    "total_triggered_bigrams": total_triggered,
+                    "max_confidence": max_conf,
+                    "categories": category_objs,
+                }
+            )
+
             if (idx + 1) % args.checkpoint_every == 0:
-                save_checkpoint(
-                    ckpt,
-                    fp,
-                    next_index=idx + 1,
-                    matched_items=matched_items,
-                    unmatched_items=unmatched_items,
+                save_checkpoint(ckpt, fp, next_index=idx + 1, matched_items=matched_items, unmatched_items=unmatched_items)
+                if pbar:
+                    pbar.set_postfix_str(
+                        f"ckpt@{idx + 1} matched={len(matched_items)} unmatched={len(unmatched_items)}",
+                        refresh=False,
+                    )
+                else:
+                    print(f"Checkpoint saved at idx={idx + 1}/{n_items}")
+            elif pbar:
+                pbar.set_postfix_str(
+                    f"matched={len(matched_items)} unmatched={len(unmatched_items)} last=ok",
+                    refresh=False,
                 )
-                print(f"Checkpoint saved at idx={idx + 1}/{len(items)}")
-            continue
-
-        category_objs, total_triggered, max_conf = build_category_rows(cat_to_triggers, None)
-
-        matched_items.append(
-            {
-                "id": item_id,
-                "title": title,
-                "subtitle": subtitle,
-                "total_triggered_bigrams": total_triggered,
-                "max_confidence": max_conf,
-                "categories": category_objs,
-            }
-        )
-
-        if (idx + 1) % args.checkpoint_every == 0:
-            save_checkpoint(ckpt, fp, next_index=idx + 1, matched_items=matched_items, unmatched_items=unmatched_items)
-            print(f"Checkpoint saved at idx={idx + 1}/{len(items)}")
+    finally:
+        if pbar:
+            pbar.close()
 
     matched_items.sort(key=lambda x: (-x["total_triggered_bigrams"], -x["max_confidence"], x["id"]))
 
@@ -575,13 +614,15 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
         )
 
         use_pbar = not args.no_progress and sys.stderr.isatty() and n_pending > 0
+        short_name = mp.name if len(mp.name) <= 44 else mp.name[:41] + "..."
         pbar = (
             tqdm(
                 total=n_pending,
-                desc=f"1.2 cascade [{phase_i}/{n_maps}]",
+                desc=f"2.2 cascade [{phase_i}/{n_maps}] {short_name}",
                 unit="item",
                 file=sys.stderr,
                 dynamic_ncols=True,
+                bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
             )
             if use_pbar
             else None
@@ -599,6 +640,11 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
                     to_remove.append(idx)
                 if pbar:
                     pbar.update(1)
+                    if pbar.n % 200 == 0 or pbar.n == n_pending:
+                        pbar.set_postfix_str(
+                            f"new_hits={len(to_remove)} scanned={pbar.n}/{n_pending}",
+                            refresh=False,
+                        )
         finally:
             if pbar:
                 pbar.close()

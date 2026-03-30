@@ -1,26 +1,26 @@
 #!/usr/bin/env python3
 """
-Step 1.3
-Interactive manual matching: build bigrams from `unmatched_word_frequencies` in a step-1.2
-split `unmatched_and_keywords.json`, then walk each bigram (>=5 items), search taxonomy leaves,
-and assign a leaf to eligible unmatched items.
+Step 2.3 — Interactive manual bigram → leaf
 
-Bigram → item rule (same-field, like step-1.2 title/subtitle split):
+Build bigrams from `unmatched_word_frequencies` in a step-2.2 split `unmatched_and_keywords.json`,
+then walk each bigram (>=5 items), search taxonomy leaves, and assign a leaf to eligible unmatched items.
+
+Bigram → item rule (same-field, like step-2.2 title/subtitle split):
   Both words appear as letter-tokens in the item title, OR both appear in the subtitle.
   (Not if one word is only in the title and the other only in the subtitle.)
 
 Inputs:
   - source-files/categories_v1.json
-  - step-1.2/outputs/1.2_split_*/unmatched_and_keywords.json (or --input path)
+  - step-2/outputs/1.2_split_*/unmatched_and_keywords.json (or --input path)
 
 Outputs:
-  - step-1.3/outputs/1.3-manual_bigram_matches_YYYYMMDD_HHMMSS.json (or an existing file when
-    resuming). Each file stores `unmatched_keywords_source` pointing at the 1.2 split JSON.
+  - step-2/outputs/1.3-manual_bigram_matches_YYYYMMDD_HHMMSS.json (or an existing file when
+    resuming). Each file stores `unmatched_keywords_source` pointing at the 2.2 split JSON.
 
 Resume:
   - If `--fresh-run` is not set and `--resume-from` is omitted, and a matching prior manual
     file exists, you are prompted: "Resume last session? N items…, M bigrams…" (default yes).
-  - `--fresh-run` always starts a new timestamped file (e.g. full pipeline from step 1.0).
+  - `--fresh-run` always starts a new timestamped file (e.g. full pipeline from step 1.1).
   - `--resume-from PATH` continues that file with no prompt.
   - Progress is saved after each successful assignment or unknown mark (safe to interrupt).
 """
@@ -42,7 +42,7 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import is_catch_all_bucket_slug
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-2-match-items-bigrams" / "outputs"
+STEP12_OUT = ROOT / "step-2" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100
@@ -75,7 +75,7 @@ def tokenize_alpha_preserve(text: str) -> List[str]:
 
 
 def collect_leaf_rows(categories: dict) -> List[Dict[str, str]]:
-    """Leaf = node with no subcategories. Same path convention as step-1.4 all_leaf_paths."""
+    """Leaf = node with no subcategories. Same path convention as step-3 LLM all_leaf_paths."""
     rows: List[Dict[str, str]] = []
     roots = ["materials", "tools_and_gear", "services"]
 
@@ -220,7 +220,7 @@ def newest_unmatched_keywords_file() -> Path | None:
 def find_latest_manual_for_source(out_dir: Path, in_path: Path) -> Path | None:
     """
     Newest 1.3 manual JSON in out_dir whose unmatched_keywords_source resolves to the same
-    path as in_path (the step-1.2 split unmatched_and_keywords.json).
+    path as in_path (the step-2.2 split unmatched_and_keywords.json).
     """
     in_resolved = in_path.resolve()
     best: tuple[float, Path] | None = None
@@ -320,11 +320,11 @@ def load_resumed_state(
 
 def pick_input_interactive() -> Path:
     latest = newest_unmatched_keywords_file()
-    print("Choose unmatched_and_keywords.json (from step-1.2 split folder):")
+    print("Choose unmatched_and_keywords.json (from step-2.2 split folder):")
     if latest:
         print(f"  1) Use most recent: {latest.relative_to(ROOT)}")
     else:
-        print("  1) (none found under step-1.2/outputs/1.2_split_*)")
+        print("  1) (none found under step-2/outputs/1.2_split_*)")
     print("  2) Enter a path manually")
     choice = input("> ").strip()
     if choice == "1" and latest:
@@ -721,7 +721,7 @@ def main() -> None:
                 oshow = str(out_path)
             print(
                 f"\nStarting new manual file: {oshow} "
-                f"(no prior step-1.3 output for this 1.2 split JSON)."
+                f"(no prior step-2.3 output for this 2.2 split JSON)."
             )
 
     print(

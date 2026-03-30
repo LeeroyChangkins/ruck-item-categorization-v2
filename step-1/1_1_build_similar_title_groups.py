@@ -8,7 +8,7 @@ Cluster items whose titles are pairwise similar (default: min ratio 0.9).
 - Clustering: clique — every pair in a group has similarity >= threshold. Within each block,
   repeatedly take the largest maximal clique in the remaining induced subgraph until no clique
   reaches min_group_size.
-- Output: step-1-build-similar-groups/outputs/<run_id>/unmatched_similar_title_groups.json
+- Output: step-1/outputs/<run_id>/unmatched_similar_title_groups.json
 
 Requires: networkx (maximal clique enumeration).
 """
@@ -18,11 +18,14 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from collections import defaultdict
 from datetime import datetime
 from difflib import SequenceMatcher
 from pathlib import Path
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from typing import Any, Callable, Dict, List, Sequence, Set, Tuple
+
+from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_ITEMS = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
@@ -98,6 +101,8 @@ def induced_subgraph(adj: Dict[int, Set[int]], remaining: Set[int]) -> Dict[int,
 def iterative_clique_cover_on_bucket(
     sub_adj: Dict[int, Set[int]],
     min_group_size: int,
+    *,
+    status: Callable[[str], None] | None = None,
 ) -> List[Set[int]]:
     """
     Repeatedly take the largest maximal clique in the remaining induced subgraph until
@@ -105,8 +110,15 @@ def iterative_clique_cover_on_bucket(
     """
     remaining: Set[int] = set(sub_adj.keys())
     groups: List[Set[int]] = []
+    if status:
+        status("tight groups: starting…")
     while len(remaining) >= min_group_size:
+        rnd = len(groups) + 1
+        if status:
+            status(f"tight groups: round {rnd} · {len(remaining)} titles left…")
         sub = induced_subgraph(sub_adj, remaining)
+        if status:
+            status(f"tight groups: analyzing overlaps ({len(remaining)} titles — can take a bit)…")
         max_cliques = maximal_cliques_networkx(sub)
         candidates = [set(c) for c in max_cliques if len(c) >= min_group_size]
         if not candidates:
@@ -114,6 +126,8 @@ def iterative_clique_cover_on_bucket(
         best = max(candidates, key=len)
         groups.append(best)
         remaining -= best
+    if status:
+        status(f"tight groups: done · {len(groups)} group(s) in this bucket")
     return groups
 
 
@@ -121,6 +135,8 @@ def run_aggregate(
     items: List[dict],
     min_sim: float,
     min_group_size: int,
+    *,
+    show_progress: bool = True,
 ) -> Tuple[List[dict], List[dict], Dict[str, Any]]:
     """
     Returns (group_payloads, ungrouped_items, stats_extra).
@@ -149,39 +165,84 @@ def run_aggregate(
     out_groups: List[dict] = []
     used_global: Set[int] = set()
 
-    for _bk, idxs in sorted(buckets.items(), key=lambda x: (x[0][0], x[0][1])):
-        if len(idxs) < min_group_size:
-            continue
-        sub_adj: Dict[int, Set[int]] = {i: set() for i in idxs}
-        for i, ii in enumerate(idxs):
-            for j in range(i + 1, len(idxs)):
-                ia, ib = idxs[i], idxs[j]
-                if sim_ratio(norms[ia], norms[ib]) >= min_sim:
-                    sub_adj[ia].add(ib)
-                    sub_adj[ib].add(ia)
+    bucket_list = sorted(buckets.items(), key=lambda x: (x[0][0], x[0][1]))
+    use_bk_pbar = show_progress and sys.stderr.isatty() and len(bucket_list) > 0
+    bk_pbar: tqdm | None = None
+    if use_bk_pbar:
+        bk_pbar = tqdm(
+            bucket_list,
+            total=len(bucket_list),
+            desc="1.1 similar-title buckets",
+            unit="bucket",
+            file=sys.stderr,
+            dynamic_ncols=True,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
+        )
+    def _set_bucket_status(msg: str) -> None:
+        if bk_pbar:
+            bk_pbar.set_postfix_str(msg, refresh=True)
 
-        groups = iterative_clique_cover_on_bucket(sub_adj, min_group_size)
-        for g in groups:
-            g_items = [valid[i] for i in sorted(g)]
-            titles = [str(it.get("title") or "") for it in g_items]
-            gid = f"g_{group_id_counter:06d}"
-            group_id_counter += 1
-            out_groups.append(
-                {
-                    "group_id": gid,
-                    "master_title": master_title_for_group(titles),
-                    "item_count": len(g_items),
-                    "items": [
-                        {
-                            "id": it.get("id"),
-                            "title": it.get("title") or "",
-                            "subtitle": it.get("subtitle") or "",
-                        }
-                        for it in g_items
-                    ],
-                }
+    try:
+        for _bk, idxs in bk_pbar or bucket_list:
+            if len(idxs) < min_group_size:
+                if bk_pbar:
+                    bk_pbar.update(1)
+                continue
+            k = len(idxs)
+            total_pairs = k * (k - 1) // 2
+            _set_bucket_status(f"comparing pairs · {k} titles · 0%")
+            sub_adj: Dict[int, Set[int]] = {i: set() for i in idxs}
+            pair_done = 0
+            update_every = max(1, total_pairs // 80) if total_pairs else 1
+            next_report = update_every
+            for i, ii in enumerate(idxs):
+                for j in range(i + 1, len(idxs)):
+                    ia, ib = idxs[i], idxs[j]
+                    if sim_ratio(norms[ia], norms[ib]) >= min_sim:
+                        sub_adj[ia].add(ib)
+                        sub_adj[ib].add(ia)
+                    pair_done += 1
+                    if bk_pbar and pair_done >= next_report:
+                        pct = 100.0 * pair_done / total_pairs if total_pairs else 100.0
+                        _set_bucket_status(
+                            f"comparing pairs · {k} titles · {pct:.0f}% ({pair_done}/{total_pairs})"
+                        )
+                        next_report += update_every
+
+            groups = iterative_clique_cover_on_bucket(
+                sub_adj, min_group_size, status=_set_bucket_status if bk_pbar else None
             )
-            used_global |= g
+            for g in groups:
+                g_items = [valid[i] for i in sorted(g)]
+                titles = [str(it.get("title") or "") for it in g_items]
+                gid = f"g_{group_id_counter:06d}"
+                group_id_counter += 1
+                out_groups.append(
+                    {
+                        "group_id": gid,
+                        "master_title": master_title_for_group(titles),
+                        "item_count": len(g_items),
+                        "items": [
+                            {
+                                "id": it.get("id"),
+                                "title": it.get("title") or "",
+                                "subtitle": it.get("subtitle") or "",
+                            }
+                            for it in g_items
+                        ],
+                    }
+                )
+                used_global |= g
+
+            if bk_pbar:
+                bk_pbar.set_postfix_str(
+                    f"groups={len(out_groups)} bucket_items={len(idxs)} cliques={len(groups)}",
+                    refresh=False,
+                )
+                bk_pbar.update(1)
+    finally:
+        if bk_pbar:
+            bk_pbar.close()
 
     ungrouped: List[dict] = []
     for i in range(n):
@@ -223,6 +284,7 @@ def main() -> None:
         metavar="N",
         help="Emit only groups with at least N items (default: 5).",
     )
+    parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bar.")
     args = parser.parse_args()
 
     in_path = Path(args.input).expanduser().resolve() if args.input else DEFAULT_ITEMS
@@ -242,7 +304,7 @@ def main() -> None:
         raise SystemExit("--min-similarity must be in (0, 1].")
     min_gs = max(2, int(args.min_group_size))
 
-    groups, ungrouped, stats = run_aggregate(raw, min_sim, min_gs)
+    groups, ungrouped, stats = run_aggregate(raw, min_sim, min_gs, show_progress=not args.no_progress)
 
     ts = timestamp()
     run_dir = OUTDIR / ts

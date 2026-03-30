@@ -5,7 +5,7 @@ Generate bigram -> T1 parent category mappings by asking an OpenAI model.
 
 Reads:
   - ../source-files/categories_v1.json
-  - ../step-2-extract-keyword-frequencies/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
+  - ../step-2/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
   - ../.env for OPENAI_API_KEY (or environment variable OPENAI_API_KEY)
 
 Writes (timestamped) to:
@@ -42,7 +42,7 @@ if str(ROOT) not in sys.path:
 from taxonomy_cascade import is_catch_all_bucket_slug
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-KEYWORDS_DIR = ROOT / "step-2-extract-keyword-frequencies" / "outputs"
+KEYWORDS_DIR = ROOT / "step-2" / "outputs"
 ENV_PATH = ROOT / ".env"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
@@ -203,7 +203,10 @@ Bigrams:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--keywords", help="Path to 1.0 keyword JSON; defaults to most recent in step-1.0/outputs/")
+    parser.add_argument(
+        "--keywords",
+        help="Path to 1.0 keyword JSON; defaults to most recent in step-2/outputs/",
+    )
     parser.add_argument("--model", default=DEFAULT_MODEL)
     parser.add_argument("--batch-size", type=int, default=100)
     parser.add_argument("--min-confidence", type=float, default=0.85)
@@ -273,10 +276,11 @@ def main() -> None:
             tqdm(
                 total=total_chunks,
                 initial=next_chunk_index,
-                desc=f"1.1b {side} API batches",
+                desc=f"2.1b OpenAI {side}",
                 unit="batch",
                 file=sys.stderr,
                 dynamic_ncols=True,
+                bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
             )
             if use_pbar
             else None

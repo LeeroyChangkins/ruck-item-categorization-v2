@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 """
-Step 1.6 (interactive)
-Assign taxonomy leaves to groups built by build_unmatched_similar_title_groups_1_6.py.
+Step 1.2 — Interactive similar-title groups → taxonomy leaves
 
-UX mirrors step-1.3: search leaves by substring, pick by number, save after each decision.
-Per group: [c] copies master_title; [s] copy + Google Images in Chrome (macOS). [o] lists all taxonomy
-Other leaves (catch-alls); [x] marks unknown without picking Other.
+Assign leaves to groups built by step-1/1_1_build_similar_title_groups.py.
 
-Outputs (new channel, not 1.3 manual):
-  step-1.6/outputs/<run>/1.6-manual_similar_title_<timestamp>.json
-  or --resume-from continues that file.
+UX mirrors step-2.3 (interactive keyword match): search leaves by substring, pick by number, save after each decision.
+Per group: [c] copies master_title; [s] copy + Google Images in Chrome (macOS). [o] lists catch-all
+Other leaves; [x] marks unknown without picking Other.
+
+Outputs (next to the chosen groups JSON, or --resume-from):
+  1.6-manual_similar_title_<timestamp>.json
+  unmatched_after_step1.json (pool for step 2)
 
 Fields: group_assignments, unknown_groups, item_matches (source=manual_similar_title_1_6).
-Also: matched_cumulative (1.0–1.5 matched + 1.6 assigns), unmatched_and_skipped_cumulative (pool
-minus 1.6 assigns, with status per row), sourced from sibling matched_deduped / unmatched_deduped
-of the groups file’s source_unmatched_deduped.
+matched_cumulative / unmatched_and_skipped_cumulative: from full catalog (source_items_catalog) or
+legacy step-1.5 pools when groups file has source_unmatched_deduped.
 """
 
 from __future__ import annotations
@@ -34,15 +34,15 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from taxonomy_cascade import is_catch_all_bucket_slug
+from pipeline_paths import glob_step1_outputs
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP16_OUT = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100
 PREVIEW_ITEMS_MAX = 12
 MANUAL_VERSION = "1.6-manual-similar-title"
 
-# Filled once per main() from sibling 1.5 JSONs; avoids re-reading large matched_deduped on every save.
+# Filled once per main() from groups file (catalog or legacy 1.5 JSONs).
 _step15_dedup_cache: dict | None = None
 
 
@@ -239,16 +239,20 @@ def interact_pick_other_leaf(other_rows: List[Dict[str, str]]) -> tuple[str, Dic
 
 
 def find_latest_groups_file() -> Path | None:
-    cands = list(STEP16_OUT.glob("**/unmatched_similar_title_groups.json"))
+    """Newest unmatched_similar_title_groups.json under step-1/outputs/."""
+    cands = glob_step1_outputs("**/unmatched_similar_title_groups.json")
     if not cands:
         return None
     return max(cands, key=lambda p: p.stat().st_mtime)
 
 
-def find_latest_manual_for_groups_source(out_dir: Path, groups_src: Path) -> Path | None:
+def find_latest_manual_for_groups_source(groups_src: Path) -> Path | None:
+    """
+    Newest 1.6 manual JSON whose groups_source matches groups_src under step-1/outputs/ (resume).
+    """
     gs = groups_src.resolve()
     best: tuple[float, Path] | None = None
-    for p in out_dir.glob("**/1.6-manual_similar_title*.json"):
+    for p in glob_step1_outputs("**/1.6-manual_similar_title*.json"):
         if not p.is_file():
             continue
         try:
@@ -652,7 +656,7 @@ def main() -> None:
     parser.add_argument(
         "--groups",
         metavar="PATH",
-        help="unmatched_similar_title_groups.json (default: newest under step-1-assign-group-leaves/outputs/).",
+        help="unmatched_similar_title_groups.json (default: newest under step-1/outputs/).",
     )
     parser.add_argument("--resume-from", metavar="PATH", help="Continue this 1.6 manual JSON.")
     parser.add_argument("--fresh-run", action="store_true", help="Start a new manual file; no auto-resume.")
@@ -665,7 +669,7 @@ def main() -> None:
     groups_path = Path(args.groups).expanduser().resolve() if args.groups else find_latest_groups_file()
     if not groups_path or not groups_path.is_file():
         raise SystemExit(
-            "No unmatched_similar_title_groups.json. Run build_unmatched_similar_title_groups_1_6.py first."
+            "No unmatched_similar_title_groups.json. Run step-1/1_1_build_similar_title_groups.py first."
         )
 
     init_step15_dedup_cache_from_groups(groups_path)
@@ -706,7 +710,7 @@ def main() -> None:
         out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
         print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
     else:
-        found = find_latest_manual_for_groups_source(STEP16_OUT, groups_path)
+        found = find_latest_manual_for_groups_source(groups_path)
         if found is not None:
             print(f"\nPrevious session: {found.relative_to(ROOT)}")
             if yn_prompt(

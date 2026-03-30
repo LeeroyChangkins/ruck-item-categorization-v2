@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """
-Step 1.4
-LLM match remaining unmatched items to leaf categories (categories_v1).
+Step 3 — LLM match remaining unmatched items to leaf categories (categories_v1).
 
 Inputs:
   - source-files/categories_v1.json (authoritative leaf paths)
-  - step-1.2 split: unmatched_and_keywords.json + matched.json (same folder)
-  - Optional step-1.3 manual JSON: item ids matched manually are excluded from the LLM pool
+  - step-2.2 split: unmatched_and_keywords.json + matched.json (same folder)
+  - Optional step-2.3 manual JSON: item ids matched manually are excluded from the LLM pool
   - .env for OPENAI_API_KEY
 
-Outputs (same timestamp):
-  - step-1.4/outputs/1.4-llm_matched_YYYYMMDD_HHMMSS.json
-  - step-1.4/outputs/1.4-llm_unmatched_YYYYMMDD_HHMMSS.json
+Outputs (same timestamp under step-3/outputs/):
+  - 1.4-llm_matched_YYYYMMDD_HHMMSS.json
+  - 1.4-llm_unmatched_YYYYMMDD_HHMMSS.json
 
 Behavior:
-  - Unmatched pool = unmatched_items from the 1.2 split file, minus ids in 1.3 item_matches
+  - Unmatched pool = unmatched_items from the 2.2 split file, minus ids in 2.3 item_matches
     (if a manual file is provided or auto-discovered).
   - LLM chooses exactly one leaf_path per item; keep predictions with confidence >= min (default 0.9).
-  - matched file: all items matched in step 1.2 (matched.json) + 1.3 item_matches + new LLM assignments.
-  - unmatched file: items still unmatched after 1.3 exclusion and LLM (below threshold or invalid leaf).
+  - matched file: all items matched in step 2.2 (matched.json) + 2.3 item_matches + new LLM assignments.
+  - unmatched file: items still unmatched after 2.3 exclusion and LLM (below threshold or invalid leaf).
 """
 
 from __future__ import annotations
@@ -38,10 +37,12 @@ ROOT = Path(__file__).resolve().parents[1]  # v2/
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
+from tqdm import tqdm
+
 from taxonomy_cascade import leaf_path_is_catch_all_bucket
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-2-match-items-bigrams" / "outputs"
-STEP13_OUT = ROOT / "step-2-interactive-keyword-manual" / "outputs"
+STEP12_OUT = ROOT / "step-2" / "outputs"
+STEP13_OUT = ROOT / "step-2" / "outputs"
 STEP14_OUTDIR = Path(__file__).resolve().parent / "outputs"
 ENV_PATH = ROOT / ".env"
 
@@ -144,11 +145,11 @@ def find_latest_manual_for_source(out_dir: Path, in_path: Path) -> Path | None:
 def pick_inputs_interactive() -> tuple[Path, Optional[Path]]:
     """Return (unmatched_and_keywords path, optional manual 1.3 path)."""
     latest = newest_unmatched_split_file()
-    print("Choose step-1.2 split unmatched_and_keywords.json:")
+    print("Choose step-2.2 split unmatched_and_keywords.json:")
     if latest:
         print(f"  1) Use most recent: {latest.relative_to(ROOT)}")
     else:
-        print("  1) (none found under step-1.2/outputs/1.2_split_*)")
+        print("  1) (none found under step-2/outputs/1.2_split_*)")
     print("  2) Enter a path manually")
     choice = input("> ").strip()
     if choice == "1" and latest:
@@ -168,7 +169,7 @@ def pick_inputs_interactive() -> tuple[Path, Optional[Path]]:
         if use in ("", "y", "yes"):
             manual = found
     else:
-        print("\nNo matching step-1.3 manual file found; all split unmatched items go to the LLM pool.")
+        print("\nNo matching step-2.3 manual file found; all split unmatched items go to the LLM pool.")
 
     return in_path, manual
 
@@ -265,7 +266,7 @@ def main() -> None:
     parser.add_argument(
         "--input",
         metavar="PATH",
-        help="Path to step-1.2 split unmatched_and_keywords.json",
+        help="Path to step-2.2 split unmatched_and_keywords.json",
     )
     parser.add_argument(
         "--manual-13",
@@ -289,6 +290,7 @@ def main() -> None:
         default=1,
         help="Save progress every N LLM batches.",
     )
+    parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bar.")
     args = parser.parse_args()
 
     STEP14_OUTDIR.mkdir(parents=True, exist_ok=True)
@@ -447,38 +449,64 @@ def main() -> None:
 
     start = time.time()
 
-    for batch_index, batch in enumerate(chunked(llm_inputs, args.batch_size), start=0):
-        if batch_index < next_batch_index:
-            continue
-
-        bi = batch_index + 1
-        print(f"Batch {bi}: size={len(batch)} ...")
-        preds = call_llm_for_batch(
-            client=client,
-            model=args.model,
-            leaf_paths=leaf_paths,
-            items_batch=batch,
-            min_conf=args.min_confidence,
+    all_batches = list(chunked(llm_inputs, args.batch_size))
+    total_batches = len(all_batches)
+    use_pbar = not args.no_progress and sys.stderr.isatty() and total_batches > 0
+    batch_range = range(next_batch_index, total_batches)
+    pbar: tqdm | None = None
+    if use_pbar:
+        pbar = tqdm(
+            batch_range,
+            total=total_batches,
+            initial=next_batch_index,
+            desc="3 LLM leaf match",
+            unit="batch",
+            file=sys.stderr,
+            dynamic_ncols=True,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
         )
 
-        for p in preds:
-            if p["confidence"] >= args.min_confidence:
-                kept_by_id[p["id"]] = p
-        kept_total = len(kept_by_id)
+    try:
+        for batch_index in pbar or batch_range:
+            batch = all_batches[batch_index]
+            bi = batch_index + 1
+            if not use_pbar:
+                print(f"Batch {bi}/{total_batches}: size={len(batch)} ...")
+            preds = call_llm_for_batch(
+                client=client,
+                model=args.model,
+                leaf_paths=leaf_paths,
+                items_batch=batch,
+                min_conf=args.min_confidence,
+            )
 
-        if args.checkpoint_every_batch <= 1 or (bi % args.checkpoint_every_batch == 0):
-            tmp = ckpt_path.with_suffix(".tmp")
-            payload = {
-                "fingerprint": base_fp,
-                "next_batch_index": batch_index + 1,
-                "kept_by_id": kept_by_id,
-            }
-            tmp.write_text(json.dumps(payload, indent=0, ensure_ascii=False) + "\n", encoding="utf-8")
-            tmp.replace(ckpt_path)
-            print(f"Checkpoint saved at batch {bi}")
+            for p in preds:
+                if p["confidence"] >= args.min_confidence:
+                    kept_by_id[p["id"]] = p
 
-        if args.sleep_seconds:
-            time.sleep(args.sleep_seconds)
+            if args.checkpoint_every_batch <= 1 or (bi % args.checkpoint_every_batch == 0):
+                tmp = ckpt_path.with_suffix(".tmp")
+                payload = {
+                    "fingerprint": base_fp,
+                    "next_batch_index": batch_index + 1,
+                    "kept_by_id": kept_by_id,
+                }
+                tmp.write_text(json.dumps(payload, indent=0, ensure_ascii=False) + "\n", encoding="utf-8")
+                tmp.replace(ckpt_path)
+                if not use_pbar:
+                    print(f"Checkpoint saved at batch {bi}")
+            if pbar:
+                done_items = min((batch_index + 1) * args.batch_size, len(llm_inputs))
+                pbar.set_postfix_str(
+                    f"items_done={done_items}/{len(llm_inputs)} kept={len(kept_by_id)} batch_sz={len(batch)}",
+                    refresh=False,
+                )
+
+            if args.sleep_seconds:
+                time.sleep(args.sleep_seconds)
+    finally:
+        if pbar:
+            pbar.close()
 
     try:
         if ckpt_path.exists():

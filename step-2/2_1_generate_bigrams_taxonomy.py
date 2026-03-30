@@ -7,7 +7,7 @@ Generate bigram -> T1 parent category mappings (high confidence) using only:
 
 Reads:
   - ../source-files/categories_v1.json
-  - ../step-2-extract-keyword-frequencies/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
+  - ../step-2/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
 
 Writes (timestamped) to:
   - ./outputs/1.1a-bigram_categories_mapping_YYYYMMDD_HHMMSS.json
@@ -42,7 +42,7 @@ from taxonomy_cascade import (
 )
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-KEYWORDS_DIR = ROOT / "step-2-extract-keyword-frequencies" / "outputs"
+KEYWORDS_DIR = ROOT / "step-2" / "outputs"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 
@@ -148,7 +148,10 @@ def generate_bigrams(words: List[str]) -> Iterable[Tuple[str, str]]:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--keywords", help="Path to 1.0 keyword JSON; defaults to most recent in step-1.0/outputs/")
+    parser.add_argument(
+        "--keywords",
+        help="Path to 1.0 keyword JSON; defaults to most recent in step-2/outputs/",
+    )
     parser.add_argument("--min-confidence", type=float, default=DEFAULT_MIN_CONF, help="Keep only mappings >= this confidence")
     parser.add_argument("--no-resume", action="store_true", help="Disable checkpoint resume.")
     parser.add_argument("--checkpoint-every-i", type=int, default=25, help="Checkpoint every N outer i values.")
@@ -248,10 +251,11 @@ def main() -> None:
                 tqdm(
                     total=n,
                     initial=next_i,
-                    desc=f"1.1a d={depth} {side}",
+                    desc=f"2.1b taxonomy bigrams depth={depth} {side}",
                     unit="i",
                     file=sys.stderr,
                     dynamic_ncols=True,
+                    bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
                 )
                 if use_bar
                 else None
@@ -301,7 +305,12 @@ def main() -> None:
                     if pbar:
                         pbar.update(1)
                         if (i + 1) % args.checkpoint_every_i == 0 or (i + 1) == n:
-                            pbar.set_postfix_str(f"kept={len(out)}", refresh=False)
+                            pbar.set_postfix_str(
+                                f"word_i={i + 1}/{n} bigrams_kept={len(out)}",
+                                refresh=False,
+                            )
+                        elif (i + 1) % 5 == 0:
+                            pbar.set_postfix_str(f"i={i + 1}/{n} kept={len(out)}", refresh=False)
             finally:
                 if pbar:
                     pbar.close()

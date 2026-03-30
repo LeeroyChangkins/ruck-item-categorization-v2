@@ -1,7 +1,7 @@
 """
 Shared taxonomy helpers for phased depth-based bigram mapping (T0 → T1 → …).
 
-Used by step-1.1a (multi-depth) and step-1.2 phased matcher (path dedupe).
+Used by step-2.1b taxonomy bigrams (multi-depth) and step-2.2 phased matcher (path dedupe).
 """
 
 from __future__ import annotations

@@ -4,16 +4,17 @@ Master controller for Categorization v2 pipeline.
 
 Flow (high level):
   Step 1 — similar-title grouping (raw catalog)
-    1.1  step-1-build-similar-groups/build_unmatched_similar_title_groups_1_6.py
-    1.2  step-1-assign-group-leaves/interactive_similar_title_match_1_6.py
+    1.1  step-1/1_1_build_similar_title_groups.py
+    1.2  step-1/1_2_interactive_similar_title_match.py
          → unmatched_after_step1.json for step 2
   Step 2 — keywords, bigrams, cascade match, optional manual bigram→leaf
-    2.1a step-2-extract-keyword-frequencies/generate_keywords_1_0.py [--items-json …]
-    2.1b step-2-map-bigrams-taxonomy/… or step-2-map-bigrams-openai/…
-    2.2  step-2-match-items-bigrams/match_items_to_bigrams_1_2.py [--items-json …]
-    2.3  step-2-interactive-keyword-manual/interactive_keyword_match_1_3.py (optional)
-  Step 3 — LLM: step-3-llm-match-unmatched/llm_match_unmatched_1_4.py [--step1-manual …]
-  Step 4 — Dedupe: step-4-dedupe-final-summaries/dedupe_and_cleanup_1_5.py
+    2.1a step-2/2_1_generate_keywords.py [--items-json …]
+    2.1b step-2/2_1_generate_bigrams_taxonomy.py or 2_1_generate_bigrams_openai.py
+    2.2  step-2/2_2_match_items_to_bigrams.py [--items-json …]
+    2.3  step-2/2_3_interactive_keyword_match.py (optional)
+  Step 3 — LLM: step-3/3_llm_match_unmatched.py [--step1-manual …]
+  Step 4 — Dedupe: step-4/4_dedupe_and_summaries.py
+  Step 5 — DB upload: step-5/5_upload_to_db.py (run separately; requires SSM tunnel)
 
 CLI --start-step uses 1.1, 1.2, 2.1, 2.2, 2.3, 3, 4 (first step to run). Legacy aliases:
   1.0→2.1, 1.2→2.2, 1.3→2.3, 1.4→3, 1.5→4. (Old “start at bigrams only” → use --start-step 2.1.)
@@ -34,8 +35,12 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from pipeline_paths import newest_under_step1
 
 ROOT = Path(__file__).resolve().parent
+STEP2_OUT = ROOT / "step-2" / "outputs"
+STEP3_OUT = ROOT / "step-3" / "outputs"
+STEP4_OUT = ROOT / "step-4" / "outputs"
 
 # First sub-step in this order is run; all later sub-steps run too.
 _PIPELINE_ORDER = ("1.1", "1.2", "2.1", "2.2", "2.3", "3", "4")
@@ -124,10 +129,8 @@ def newest_matching(glob_pat: str, folder: Path) -> Path | None:
 
 
 def newest_unmatched_after_step1() -> Path | None:
-    cands = list((ROOT / "step-1-assign-group-leaves").glob("**/unmatched_after_step1.json"))
-    if not cands:
-        return None
-    return max(cands, key=lambda p: p.stat().st_mtime)
+    """Newest unmatched_after_step1.json under step-1/outputs/ (resume-safe)."""
+    return newest_under_step1("**/unmatched_after_step1.json")
 
 
 def _format_duration(seconds: float) -> str:
@@ -202,12 +205,8 @@ def main() -> None:
     print("Inputs:")
     print("  - source-files/categories_v1.json")
     print("  - source-files/raw-prod-items-non-deleted.json")
-    print("Outputs (each step has its own outputs/ folder):")
-    print("  - step-1-build-similar-groups/  step-1-assign-group-leaves/")
-    print("  - step-2-extract-keyword-frequencies/  step-2-map-bigrams-taxonomy/")
-    print("  - step-2-map-bigrams-openai/  step-2-match-items-bigrams/")
-    print("  - step-2-interactive-keyword-manual/  step-3-llm-match-unmatched/")
-    print("  - step-4-dedupe-final-summaries/<run_id>/ (deduped JSON + summaries)")
+    print("Outputs (each step has its own outputs/ folder; timestamped runs under step-1, step-4):")
+    print("  - step-1/outputs/  step-2/outputs/  step-3/outputs/  step-4/outputs/<run_id>/")
 
     cascade_mapping_paths: list[Path] | None = None
 
@@ -245,7 +244,7 @@ def main() -> None:
         "Run step 1.1 — build similar-title groups from the raw production catalog?",
         default=True,
     ):
-        run([py, str(ROOT / "step-1-build-similar-groups" / "build_unmatched_similar_title_groups_1_6.py")])
+        run([py, str(ROOT / "step-1" / "1_1_build_similar_title_groups.py")])
     else:
         print("Skipping step 1.1.")
 
@@ -256,7 +255,7 @@ def main() -> None:
         "Run step 1.2 — interactive matching: similar-title groups → taxonomy leaves?",
         default=True,
     ):
-        cmd_12 = [py, str(ROOT / "step-1-assign-group-leaves" / "interactive_similar_title_match_1_6.py")]
+        cmd_12 = [py, str(ROOT / "step-1" / "1_2_interactive_similar_title_match.py")]
         if sequential_fresh:
             cmd_12.append("--fresh-run")
         run(cmd_12)
@@ -279,7 +278,7 @@ def main() -> None:
         "Run step 2.1a — extract keyword frequencies (optionally limited to step-1 unmatched pool)?",
         default=True,
     ):
-        cmd_kw = [py, str(ROOT / "step-2-extract-keyword-frequencies" / "generate_keywords_1_0.py")]
+        cmd_kw = [py, str(ROOT / "step-2" / "2_1_generate_keywords.py")]
         if ua:
             cmd_kw += ["--items-json", str(ua)]
         if sequential_fresh:
@@ -290,7 +289,7 @@ def main() -> None:
     else:
         print("Skipping step 2.1a.")
 
-    step10_out = ROOT / "step-2-extract-keyword-frequencies" / "outputs"
+    step10_out = STEP2_OUT
     latest_10 = newest_matching("1.0-title_subtitle_keyword_frequencies*.json", step10_out)
     if latest_10:
         print(f"\nMost recent keyword frequency file: {latest_10.relative_to(ROOT)}")
@@ -301,10 +300,7 @@ def main() -> None:
     mapping_path: Path | None = None
     if not run_21:
         print(f"Skipping step 2.1b (bigram mappings) — starting at {start_step}.")
-        step11_out = ROOT / "step-2-map-bigrams-taxonomy" / "outputs"
-        mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", step11_out)
-        if not mapping_path:
-            mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", ROOT / "step-2-map-bigrams-openai" / "outputs")
+        mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", STEP2_OUT)
         if not mapping_path:
             print("No cached bigram mapping; step 2.2 may prompt for a file.")
     else:
@@ -318,7 +314,7 @@ def main() -> None:
         )
 
         if step11_choice == "a":
-            cmd = [py, str(ROOT / "step-2-map-bigrams-taxonomy" / "generate_bigrams_taxonomy_1_1a.py")]
+            cmd = [py, str(ROOT / "step-2" / "2_1_generate_bigrams_taxonomy.py")]
             if latest_10 and yn("Use most recent 2.1a keyword frequency file?", default=True):
                 cmd += ["--keywords", str(latest_10)]
             else:
@@ -355,7 +351,7 @@ def main() -> None:
             elif yn("Start fresh for taxonomy bigrams (no checkpoint resume)?", default=False):
                 cmd.append("--no-resume")
             run(cmd)
-            step11_out = ROOT / "step-2-map-bigrams-taxonomy" / "outputs"
+            step11_out = STEP2_OUT
             if phased and batch_tag:
                 phased_paths = list(step11_out.glob(f"1.1a-bigram_categories_mapping_depth*_{batch_tag}.json"))
                 cascade_mapping_paths = _sort_phased_mapping_paths(phased_paths)
@@ -372,7 +368,7 @@ def main() -> None:
             min_conf = input("Min confidence to keep (default 0.85): ").strip() or "0.85"
             sleep_s = input("Sleep seconds between calls (default 0): ").strip() or "0"
 
-            cmd = [py, str(ROOT / "step-2-map-bigrams-openai" / "generate_bigrams_openai_1_1b.py")]
+            cmd = [py, str(ROOT / "step-2" / "2_1_generate_bigrams_openai.py")]
             if latest_10 and yn("Use most recent 2.1a keyword frequency file?", default=True):
                 cmd += ["--keywords", str(latest_10)]
             else:
@@ -386,14 +382,14 @@ def main() -> None:
                 cmd.append("--no-resume")
             run(cmd)
             cascade_mapping_paths = None
-            mapping_path = newest_matching("1.1b-bigram_categories_mapping*.json", ROOT / "step-2-map-bigrams-openai" / "outputs")
+            mapping_path = newest_matching("1.1b-bigram_categories_mapping*.json", STEP2_OUT)
 
         else:
             cascade_mapping_paths = None
-            step11_out = ROOT / "step-2-map-bigrams-taxonomy" / "outputs"
+            step11_out = STEP2_OUT
             mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", step11_out)
             if not mapping_path:
-                mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", ROOT / "step-2-map-bigrams-openai" / "outputs")
+                mapping_path = newest_matching("1.1*-bigram_categories_mapping*.json", STEP2_OUT)
             print("Using latest bigram mapping for step 2.2.")
 
     if mapping_path:
@@ -405,12 +401,10 @@ def main() -> None:
     if not run_22:
         print(f"Skipping step 2.2 (match items to bigrams) — starting at {start_step}.")
     elif yn("\nRun step 2.2 — match items to bigrams (phased cascade if configured)?", default=True):
-        latest_map = newest_matching("1.1*-bigram_categories_mapping*.json", ROOT / "step-2-map-bigrams-taxonomy" / "outputs")
-        if not latest_map:
-            latest_map = newest_matching("1.1*-bigram_categories_mapping*.json", ROOT / "step-2-map-bigrams-openai" / "outputs")
+        latest_map = newest_matching("1.1*-bigram_categories_mapping*.json", STEP2_OUT)
         if latest_map:
             print(f"Most recent mapping on disk: {latest_map.relative_to(ROOT)}")
-        cmd = [py, str(ROOT / "step-2-match-items-bigrams" / "match_items_to_bigrams_1_2.py")]
+        cmd = [py, str(ROOT / "step-2" / "2_2_match_items_to_bigrams.py")]
         if ua:
             cmd += ["--items-json", str(ua)]
         if cascade_mapping_paths:
@@ -430,11 +424,11 @@ def main() -> None:
     else:
         print("Skipping step 2.2.")
 
-    latest_22 = newest_matching("1.2-bigram_sorted_items*.json", ROOT / "step-2-match-items-bigrams" / "outputs")
+    latest_22 = newest_matching("1.2-bigram_sorted_items*.json", STEP2_OUT)
     if latest_22:
         print(f"\nLatest step 2.2 output: {latest_22.relative_to(ROOT)}")
 
-    latest_kw = newest_matching("**/unmatched_and_keywords.json", ROOT / "step-2-match-items-bigrams" / "outputs")
+    latest_kw = newest_matching("**/unmatched_and_keywords.json", STEP2_OUT)
     if latest_kw:
         print(f"Latest split unmatched_and_keywords: {latest_kw.relative_to(ROOT)}")
 
@@ -445,11 +439,11 @@ def main() -> None:
         "\nRun step 2.3 — interactive manual bigram → leaf (unmatched from step 2.2 split)?",
         default=(start_step == "2.3"),
     ):
-        cmd_23 = [py, str(ROOT / "step-2-interactive-keyword-manual" / "interactive_keyword_match_1_3.py")]
+        cmd_23 = [py, str(ROOT / "step-2" / "2_3_interactive_keyword_match.py")]
         if sequential_fresh:
             cmd_23.append("--fresh-run")
         run(cmd_23)
-        latest_23 = newest_matching("1.3-manual*.json", ROOT / "step-2-interactive-keyword-manual" / "outputs")
+        latest_23 = newest_matching("1.3-manual*.json", STEP2_OUT)
         if latest_23:
             print(f"\nLatest step 2.3 manual: {latest_23.relative_to(ROOT)}")
     else:
@@ -476,7 +470,7 @@ def main() -> None:
 
             cmd = [
                 py,
-                str(ROOT / "step-3-llm-match-unmatched" / "llm_match_unmatched_1_4.py"),
+                str(ROOT / "step-3" / "3_llm_match_unmatched.py"),
                 "--model",
                 model,
                 "--batch-size",
@@ -488,7 +482,7 @@ def main() -> None:
             ]
             if latest_kw:
                 cmd += ["--input", str(latest_kw)]
-            s1m = newest_matching("1.6-manual_similar_title*.json", ROOT / "step-1-assign-group-leaves" / "outputs")
+            s1m = newest_under_step1("**/1.6-manual_similar_title*.json")
             if s1m and yn(
                 f"Merge step-1 similar-title assignments into the merged output?\n  {s1m.relative_to(ROOT)}",
                 default=True,
@@ -500,8 +494,8 @@ def main() -> None:
                 cmd.append("--no-resume")
             run(cmd)
 
-            latest_3m = newest_matching("1.4-llm_matched*.json", ROOT / "step-3-llm-match-unmatched" / "outputs")
-            latest_3u = newest_matching("1.4-llm_unmatched*.json", ROOT / "step-3-llm-match-unmatched" / "outputs")
+            latest_3m = newest_matching("1.4-llm_matched*.json", STEP3_OUT)
+            latest_3u = newest_matching("1.4-llm_unmatched*.json", STEP3_OUT)
             if latest_3m:
                 print(f"\nLatest step 3 matched: {latest_3m.relative_to(ROOT)}")
             if latest_3u:
@@ -516,9 +510,9 @@ def main() -> None:
         "\nRun step 4 — dedupe matched + unmatched from step 3 LLM outputs?",
         default=(start_step in ("1.1", "4")),
     ):
-        cmd_4 = [py, str(ROOT / "step-4-dedupe-final-summaries" / "dedupe_and_cleanup_1_5.py"), "--pair-latest"]
+        cmd_4 = [py, str(ROOT / "step-4" / "4_dedupe_and_summaries.py"), "--pair-latest"]
         run(cmd_4)
-        step4_out = ROOT / "step-4-dedupe-final-summaries" / "outputs"
+        step4_out = STEP4_OUT
         latest_4_m = newest_matching("**/matched_deduped.json", step4_out)
         latest_4_u = newest_matching("**/unmatched_deduped.json", step4_out)
         latest_4_ms = newest_matching("**/matched_summary.json", step4_out)
@@ -533,6 +527,15 @@ def main() -> None:
             print(f"Latest step 4 unmatched summary: {latest_4_us.relative_to(ROOT)}")
     else:
         print("Skipping step 4.")
+
+    # --- Step 5: DB upload ---
+    print()
+    print("─" * 60)
+    print("  Step 5 — DB upload")
+    print("  Run separately once the SSM tunnel is active:")
+    step5_script = ROOT / "step-5" / "5_upload_to_db.py"
+    print(f"    python {step5_script.relative_to(ROOT)}")
+    print("─" * 60)
 
 
 if __name__ == "__main__":

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Step 1.0
+Step 2.1a — Keyword frequencies
 Generate a curated keyword frequency list from production items.
 
 Reads:
@@ -22,10 +22,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
 from typing import Iterable, Set
+
+from tqdm import tqdm
 
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
@@ -124,6 +127,7 @@ def main() -> None:
     )
     parser.add_argument("--no-resume", action="store_true", help="Disable checkpoint resume.")
     parser.add_argument("--checkpoint-every", type=int, default=2000, help="Save progress every N items.")
+    parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bar.")
     args = parser.parse_args()
 
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -155,16 +159,46 @@ def main() -> None:
 
     print(f"Resume start_index={start_index} title_tokens_so_far={len(title_counts)} subtitle_tokens_so_far={len(subtitle_counts)}")
 
-    for idx in range(start_index, len(items)):
-        it = items[idx]
-        title_tokens = tokenize_letters_only(it.get("title") or "")
-        subtitle_tokens = tokenize_letters_only(it.get("subtitle") or "")
-        title_counts.update(title_tokens)
-        subtitle_counts.update(subtitle_tokens)
+    n_items = len(items)
+    use_pbar = not args.no_progress and sys.stderr.isatty() and n_items > 0
+    rng = range(start_index, n_items)
+    pbar: tqdm | None = None
+    if use_pbar:
+        pbar = tqdm(
+            rng,
+            total=n_items,
+            initial=start_index,
+            desc="2.1a keyword frequencies",
+            unit="item",
+            file=sys.stderr,
+            dynamic_ncols=True,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
+        )
+    try:
+        for idx in pbar or rng:
+            it = items[idx]
+            title_tokens = tokenize_letters_only(it.get("title") or "")
+            subtitle_tokens = tokenize_letters_only(it.get("subtitle") or "")
+            title_counts.update(title_tokens)
+            subtitle_counts.update(subtitle_tokens)
 
-        if (idx + 1) % args.checkpoint_every == 0:
-            save_checkpoint(ckpt, fp, next_index=idx + 1, title_counts=title_counts, subtitle_counts=subtitle_counts)
-            print(f"Checkpoint saved at idx={idx + 1}/{len(items)}")
+            if (idx + 1) % args.checkpoint_every == 0:
+                save_checkpoint(ckpt, fp, next_index=idx + 1, title_counts=title_counts, subtitle_counts=subtitle_counts)
+                if pbar:
+                    pbar.set_postfix_str(
+                        f"ckpt idx={idx + 1} uniq_title_tok={len(title_counts)} uniq_sub_tok={len(subtitle_counts)}",
+                        refresh=False,
+                    )
+                else:
+                    print(f"Checkpoint saved at idx={idx + 1}/{n_items}")
+            elif pbar and (idx + 1) % 500 == 0:
+                pbar.set_postfix_str(
+                    f"uniq_title_tok={len(title_counts)} uniq_sub_tok={len(subtitle_counts)}",
+                    refresh=False,
+                )
+    finally:
+        if pbar:
+            pbar.close()
 
     payload = {
         "version": "1.0",

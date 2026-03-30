@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """
-Step 1.5
-Deduplicate and normalize matched/unmatched item lists from step 1.4 (or compatible JSON).
+Step 4 — Dedupe and summaries
+Deduplicate and normalize matched/unmatched item lists from step 3 LLM outputs (or compatible JSON).
 
 Matched rows: one normalized row per item id. If duplicates exist, keep the row with highest
-precedence: manual_similar_title_1_6 > manual_bigram_1_3 > llm_1_4 > step-1.2 bigram.
+precedence: manual_similar_title_1_6 > manual_bigram_1_3 > llm_1_4 > step-2.2 bigram.
 
 Unmatched rows: one row per id; then drop any id that appears in the deduped matched list.
 
@@ -12,7 +12,7 @@ Inputs:
   - 1.4-llm_matched_*.json (matched_items)
   - 1.4-llm_unmatched_*.json (unmatched_items) — same run / timestamp as matched when using --pair-latest
 
-Outputs (per run under step-1.5/outputs/<YYYYMMDD_HHMMSS>/):
+Outputs (per run under step-4/outputs/<YYYYMMDD_HHMMSS>/):
   - matched_deduped.json
   - unmatched_deduped.json
   - matched_summary.json (master_categories t0, parent_categories t1, leaf_categories + counts)
@@ -38,7 +38,7 @@ from typing import Any, Dict, List, Set, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
-STEP14_OUT = ROOT / "step-3-llm-match-unmatched" / "outputs"
+STEP14_OUT = ROOT / "step-3" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 DEFAULT_TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
@@ -86,7 +86,7 @@ def _leaf_slug_from_path(path: str) -> str:
 def normalize_matched_row(row: dict) -> dict:
     """
     Produce compact matched rows without bigram payloads.
-    For step-1.2 rows, pick top-ranked category only (categories[0]).
+    For step-2.2 rows, pick top-ranked category only (categories[0]).
     """
     iid = row.get("id") or ""
     title = row.get("title") or ""
@@ -193,7 +193,7 @@ def strip_matched_from_unmatched(unmatched: List[dict], matched_ids: Set[str]) -
 
 
 def _leaf_path_for_summary(row: dict) -> str:
-    """Supports normalized 1.5 rows and legacy step-1.2-shaped rows (categories[0].category_slug)."""
+    """Supports normalized step-4 rows and legacy step-2.2-shaped rows (categories[0].category_slug)."""
     lp = row.get("leaf_path")
     if isinstance(lp, str) and lp.strip():
         return lp.strip()
@@ -341,7 +341,7 @@ def find_latest_pair() -> Tuple[Path | None, Path | None]:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Step 1.5: dedupe 1.4 matched/unmatched outputs.")
+    parser = argparse.ArgumentParser(description="Step 4: dedupe step 3 LLM matched/unmatched outputs.")
     parser.add_argument("--matched", metavar="PATH", help="Path to 1.4-llm_matched_*.json")
     parser.add_argument("--unmatched", metavar="PATH", help="Path to 1.4-llm_unmatched_*.json")
     parser.add_argument(
@@ -375,7 +375,9 @@ def main() -> None:
         print(f"Using unmatched: {u_path.relative_to(ROOT) if u_path else '(none)'}")
 
     if not m_path or not m_path.exists():
-        raise SystemExit("Need a valid --matched file, or place 1.4 outputs under step-1.4/outputs/.")
+        raise SystemExit(
+            f"Need a valid --matched file, or place 1.4 LLM outputs under {STEP14_OUT.relative_to(ROOT)}/."
+        )
 
     m_data = json.loads(m_path.read_text(encoding="utf-8"))
     raw_matched = m_data.get("matched_items")
@@ -413,7 +415,7 @@ def main() -> None:
         ),
         "matched_row_shape": (
             "id,title,subtitle,leaf_path,leaf_slug,leaf_display_name,method. "
-            "For step-1.2 rows, top-ranked category only."
+            "For step-2.2 rows, top-ranked category only."
         ),
         "stats": {
             "matched_rows_in": len(raw_matched),

@@ -83,21 +83,41 @@ def master_title_for_group(titles: Sequence[str]) -> str:
 
 
 
-def maximal_cliques_networkx(adj: Dict[int, Set[int]]) -> List[Set[int]]:
+def _build_nx_graph(adj: Dict[int, Set[int]]) -> "Any":
     import networkx as nx
 
-    verts = list(adj.keys())
     G = nx.Graph()
-    G.add_nodes_from(verts)
-    for u in verts:
-        for v in adj.get(u, ()):
+    G.add_nodes_from(adj.keys())
+    for u, neighbors in adj.items():
+        for v in neighbors:
             if u < v:
                 G.add_edge(u, v)
-    return [set(c) for c in nx.find_cliques(G)]
+    return G
 
 
 def induced_subgraph(adj: Dict[int, Set[int]], remaining: Set[int]) -> Dict[int, Set[int]]:
     return {u: (adj[u] & remaining) for u in remaining}
+
+
+def connected_components_cover(
+    sub_adj: Dict[int, Set[int]],
+    min_group_size: int,
+    *,
+    status: Callable[[str], None] | None = None,
+) -> List[Set[int]]:
+    """
+    Fast O(V+E) fallback for large buckets: group items by connected components.
+    Items are in the same group if they are transitively connected (A~B and B~C → same group).
+    Used when the bucket is too large for clique enumeration to be practical.
+    """
+    if status:
+        status(f"fast components: {len(sub_adj)} titles (large bucket — skipping clique search)…")
+    import networkx as nx
+    G = _build_nx_graph(sub_adj)
+    groups = [c for c in nx.connected_components(G) if len(c) >= min_group_size]
+    if status:
+        status(f"fast components: done · {len(groups)} group(s)")
+    return groups
 
 
 def iterative_clique_cover_on_bucket(
@@ -109,6 +129,9 @@ def iterative_clique_cover_on_bucket(
     """
     Repeatedly take the largest maximal clique in the remaining induced subgraph until
     no clique has size >= min_group_size.
+
+    Only used for small buckets (≤ max_clique_bucket titles); larger buckets use
+    connected_components_cover instead.
     """
     remaining: Set[int] = set(sub_adj.keys())
     groups: List[Set[int]] = []
@@ -120,9 +143,11 @@ def iterative_clique_cover_on_bucket(
             status(f"tight groups: round {rnd} · {len(remaining)} titles left…")
         sub = induced_subgraph(sub_adj, remaining)
         if status:
-            status(f"tight groups: analyzing overlaps ({len(remaining)} titles — can take a bit)…")
-        max_cliques = maximal_cliques_networkx(sub)
-        candidates = [set(c) for c in max_cliques if len(c) >= min_group_size]
+            status(f"tight groups: finding cliques ({len(remaining)} titles)…")
+        G = _build_nx_graph(sub)
+        import networkx as nx
+        max_cliques = [set(c) for c in nx.find_cliques(G)]
+        candidates = [c for c in max_cliques if len(c) >= min_group_size]
         if not candidates:
             break
         best = max(candidates, key=len)
@@ -139,9 +164,13 @@ def run_aggregate(
     min_group_size: int,
     *,
     show_progress: bool = True,
+    max_clique_bucket: int = 30,
 ) -> Tuple[List[dict], List[dict], Dict[str, Any]]:
     """
     Returns (group_payloads, ungrouped_items, stats_extra).
+
+    max_clique_bucket: buckets with more than this many titles skip the NP-hard clique
+    enumeration and use fast connected-components grouping instead (O(V+E)).
     """
     # index items by position in list for stable ids
     norms: List[str] = []
@@ -166,7 +195,9 @@ def run_aggregate(
     group_id_counter = 0
     out_groups: List[dict] = []
     used_global: Set[int] = set()
-    items_analyzed = 0  # cumulative items in fully-processed buckets
+    items_analyzed = 0       # cumulative items in fully-processed buckets
+    clique_buckets = 0       # buckets that used clique enumeration
+    component_buckets = 0    # buckets that used fast connected-components
 
     bucket_list = sorted(buckets.items(), key=lambda x: (x[0][0], x[0][1]))
     use_bk_pbar = show_progress and sys.stderr.isatty() and len(bucket_list) > 0
@@ -230,9 +261,16 @@ def run_aggregate(
                         )
                         next_report += update_every
 
-            groups = iterative_clique_cover_on_bucket(
-                sub_adj, min_group_size, status=_set_bucket_status if bk_pbar else None
-            )
+            if k > max_clique_bucket:
+                component_buckets += 1
+                groups = connected_components_cover(
+                    sub_adj, min_group_size, status=_set_bucket_status if bk_pbar else None
+                )
+            else:
+                clique_buckets += 1
+                groups = iterative_clique_cover_on_bucket(
+                    sub_adj, min_group_size, status=_set_bucket_status if bk_pbar else None
+                )
             for g in groups:
                 g_items = [valid[i] for i in sorted(g)]
                 titles = [str(it.get("title") or "") for it in g_items]
@@ -282,8 +320,14 @@ def run_aggregate(
         "items_ungrouped": len(ungrouped),
         "min_similarity": min_sim,
         "min_group_size": min_group_size,
+        "max_clique_bucket": max_clique_bucket,
         "blocking": "first_alpha_numeric_token + floor(len(normalized_title)/8)",
-        "clustering": "clique (iterative largest maximal clique on remaining induced subgraph)",
+        "clustering": (
+            f"clique (≤{max_clique_bucket} titles/bucket) "
+            f"or connected-components (>{max_clique_bucket} titles/bucket)"
+        ),
+        "clique_buckets": clique_buckets,
+        "fast_component_buckets": component_buckets,
     }
     return out_groups, ungrouped, stats
 
@@ -310,6 +354,16 @@ def main() -> None:
         help="Emit only groups with at least N items (default: 5).",
     )
     parser.add_argument("--no-progress", action="store_true", help="Disable tqdm progress bar.")
+    parser.add_argument(
+        "--max-clique-bucket",
+        type=int,
+        default=30,
+        metavar="N",
+        help=(
+            "Buckets with more than N titles use fast connected-components grouping instead of "
+            "NP-hard clique enumeration (default: 30). Lower = faster; higher = tighter groups."
+        ),
+    )
     args = parser.parse_args()
 
     in_path = Path(args.input).expanduser().resolve() if args.input else DEFAULT_ITEMS
@@ -329,7 +383,11 @@ def main() -> None:
         raise SystemExit("--min-similarity must be in (0, 1].")
     min_gs = max(2, int(args.min_group_size))
 
-    groups, ungrouped, stats = run_aggregate(raw, min_sim, min_gs, show_progress=not args.no_progress)
+    groups, ungrouped, stats = run_aggregate(
+        raw, min_sim, min_gs,
+        show_progress=not args.no_progress,
+        max_clique_bucket=args.max_clique_bucket,
+    )
 
     ts = timestamp()
     run_dir = OUTDIR / ts

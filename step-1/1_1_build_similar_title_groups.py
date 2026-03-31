@@ -3,7 +3,7 @@
 Step 1.1 — Build similar-title groups (aggregate)
 Cluster items whose titles are pairwise similar (default: min ratio 0.9).
 
-- Input: source-files/raw-prod-items-non-deleted.json (default) or --input (JSON array of items).
+- Input: source-files/pro-items-with-stores.json (default) or --input (JSON array of items).
 - Blocking: only compare titles in the same bucket (first letter-token + length bucket).
 - Clustering: clique — every pair in a group has similarity >= threshold. Within each block,
   repeatedly take the largest maximal clique in the remaining induced subgraph until no clique
@@ -30,7 +30,7 @@ from typing import Any, Callable, Dict, List, Sequence, Set, Tuple
 from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_ITEMS = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
+DEFAULT_ITEMS = ROOT / "source-files" / "prod-items-with-stores.json"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 VERSION = "1.6-unmatched-similar-title-groups"
@@ -178,7 +178,7 @@ def run_aggregate(
     for it in items:
         if not isinstance(it, dict):
             continue
-        iid = it.get("id")
+        iid = it.get("id") or it.get("item_id")
         if not isinstance(iid, str) or not iid:
             continue
         title = it.get("title") or ""
@@ -283,7 +283,7 @@ def run_aggregate(
                         "item_count": len(g_items),
                         "items": [
                             {
-                                "id": it.get("id"),
+                                "id": it.get("id") or it.get("item_id"),
                                 "title": it.get("title") or "",
                                 "subtitle": it.get("subtitle") or "",
                             }
@@ -342,9 +342,9 @@ def main() -> None:
     parser.add_argument(
         "--min-similarity",
         type=float,
-        default=0.9,
+        default=0.7,
         metavar="R",
-        help="Minimum pairwise title similarity ratio [0,1] (default: 0.9).",
+        help="Minimum pairwise title similarity ratio [0,1] (default: 0.7).",
     )
     parser.add_argument(
         "--min-group-size",
@@ -381,6 +381,24 @@ def main() -> None:
     min_sim = float(args.min_similarity)
     if not 0.0 < min_sim <= 1.0:
         raise SystemExit("--min-similarity must be in (0, 1].")
+
+    # Interactive threshold prompt (skipped if --min-similarity was explicitly passed)
+    if "--min-similarity" not in sys.argv:
+        try:
+            raw_thresh = input(
+                f"Similarity threshold [{min_sim}] (Enter to keep, or type a value 0.1–1.0): "
+            ).strip()
+            if raw_thresh:
+                parsed = float(raw_thresh)
+                if not 0.0 < parsed <= 1.0:
+                    raise ValueError
+                min_sim = parsed
+                print(f"  Using threshold: {min_sim}")
+            else:
+                print(f"  Using default threshold: {min_sim}")
+        except (ValueError, EOFError):
+            print(f"  Invalid input — using default threshold: {min_sim}")
+
     min_gs = max(2, int(args.min_group_size))
 
     groups, ungrouped, stats = run_aggregate(
@@ -405,7 +423,7 @@ def main() -> None:
         "groups": groups,
         "ungrouped_items": [
             {
-                "id": it.get("id"),
+                "id": it.get("id") or it.get("item_id"),
                 "title": it.get("title") or "",
                 "subtitle": it.get("subtitle") or "",
             }

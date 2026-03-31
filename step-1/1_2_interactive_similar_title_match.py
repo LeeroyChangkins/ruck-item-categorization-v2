@@ -604,13 +604,57 @@ def copy_to_clipboard(text: str) -> bool:
     return False
 
 
+_chrome_search_window_opened: bool = False  # track if we've opened our search window yet
+
+
 def open_google_images_in_chrome(query: str) -> bool:
-    """Open Google Images search in Google Chrome (macOS `open`). Uses `tbm=isch`."""
+    """Open or reuse a single Chrome window for Google Images searches (macOS).
+
+    First call: opens a new Chrome window at the search URL.
+    Subsequent calls: updates the URL in that same window's active tab.
+    After navigating, returns focus to Terminal / iTerm2.
+    """
+    global _chrome_search_window_opened
     url = f"https://www.google.com/search?q={quote_plus(query)}&tbm=isch"
+
+    if sys.platform != "darwin":
+        return False
+
     try:
-        if sys.platform == "darwin":
-            subprocess.run(["open", "-a", "Google Chrome", url], check=False)
-            return True
+        if not _chrome_search_window_opened:
+            # Open a fresh Chrome window
+            script = f'''
+tell application "Google Chrome"
+    make new window
+    set URL of active tab of front window to "{url}"
+    activate
+end tell
+'''
+        else:
+            # Reuse the existing front Chrome window's active tab
+            script = f'''
+tell application "Google Chrome"
+    set URL of active tab of front window to "{url}"
+    activate
+end tell
+'''
+        subprocess.run(["osascript", "-e", script], check=False, capture_output=True)
+        _chrome_search_window_opened = True
+
+        # Return focus to Terminal / iTerm2
+        focus_script = '''
+tell application "System Events"
+    set termApps to {"Terminal", "iTerm2", "iTerm"}
+    repeat with appName in termApps
+        if exists application process appName then
+            set frontmost of application process appName to true
+            exit repeat
+        end if
+    end repeat
+end tell
+'''
+        subprocess.run(["osascript", "-e", focus_script], check=False, capture_output=True)
+        return True
     except OSError:
         pass
     return False
@@ -871,16 +915,25 @@ def main() -> None:
     else:
         found = find_latest_manual_for_groups_source(groups_path)
         if found is not None:
+            # Peek at the file to show progress before prompting
+            try:
+                _prev = json.loads(found.read_text(encoding="utf-8"))
+                _done_count = len(_prev.get("group_assignments") or []) + len(_prev.get("unknown_groups") or [])
+            except Exception:
+                _done_count = 0
+            _total = len(groups)
+            _remaining = _total - _done_count
             print(f"\nPrevious session: {found.relative_to(ROOT)}")
+            print(f"  Progress: {_done_count}/{_total} decided, {_remaining} remaining")
             if yn_prompt(
-                f"Resume last session? ({len(groups)} group(s) in groups file.)",
+                f"Resume last session?",
                 default=True,
             ):
                 out_path = found
                 group_assignments, unknown_groups, item_matches, done_g, already_matched_ids = load_resume(
                     found, groups_path, False
                 )
-                print(f"Resuming: {len(done_g)} group(s) already decided.")
+                print(f"Resuming: {len(done_g)}/{_total} group(s) already decided, {_total - len(done_g)} remaining.")
                 if len(done_g) > 0:
                     review_skipped = yn_prompt(
                         "Also review groups already marked assigned or unknown (confirm or change)?",
@@ -895,9 +948,12 @@ def main() -> None:
 
     print(
         f"\n{len(groups)} group(s), {len(search_rows)} leaves for search ({len(other_rows)} catch-all via [o] only). "
-        "[Enter]=skip | [o] Other | [x] unknown | [i] insert new category | [p] preview | "
-        "[c] copy | [s] Google Images | else substring searches leaves.\n"
+        "[Enter]=skip | [o] Other | [x] unknown | [i] insert new category | "
+        "[c] copy | [s] preview + Google Images | else substring searches leaves.\n"
     )
+
+    # {"type": "assign", "chosen": <leaf dict>} | {"type": "unknown"} | {"type": "skip"}
+    last_action: dict | None = None
 
     for ki, row in enumerate(groups, start=1):
         advance_group = False
@@ -905,19 +961,20 @@ def main() -> None:
         gid = row.get("group_id")
         if not isinstance(gid, str) or not gid:
             continue
+        remaining = len(groups) - ki
         if gid in done_g:
             if not review_skipped:
-                print("-" * 72)
-                print(f"[{ki}/{len(groups)}] group {gid!r} — skipped (already decided).")
+                print("\n" + "─" * 72 + "\n")
+                print(f"[{ki}/{len(groups)}  {remaining} remaining] group {gid!r} — skipped (already decided).")
                 continue
             master_title_r = row.get("master_title") or ""
             items_in_group_r = row.get("items") or []
             item_ids_r = item_ids_from_group_items(items_in_group_r)
             ga_row = next((x for x in group_assignments if x.get("group_id") == gid), None)
             is_unknown = any(isinstance(x, dict) and x.get("group_id") == gid for x in unknown_groups)
-            print("-" * 72)
+            print("\n" + "─" * 72 + "\n")
             print(
-                f"[{ki}/{len(groups)}] REVIEW group={gid!r}  "
+                f"[{ki}/{len(groups)}  {remaining} remaining] REVIEW group={gid!r}  "
                 f"master_title={master_title_r!r}  items≈{row.get('item_count', '?')}"
             )
             if is_unknown:
@@ -946,17 +1003,27 @@ def main() -> None:
         ic = row.get("item_count", "?")
         items_in_group = row.get("items") or []
 
-        print("-" * 72)
-        print(f"[{ki}/{len(groups)}] group={gid!r}  master_title={master_title!r}  items≈{ic}")
+        print("\n" + "─" * 72 + "\n")
+        print(f"[{ki}/{len(groups)}  {remaining} remaining] group={gid!r}  master_title={master_title!r}  items≈{ic}")
 
         first_search: str | None = None
         while first_search is None:
+            if last_action is not None:
+                if last_action["type"] == "assign":
+                    r_hint = f" | [r] repeat (→ {last_action['chosen']['leaf_path']})"
+                elif last_action["type"] == "unknown":
+                    r_hint = " | [r] repeat (unknown)"
+                else:
+                    r_hint = " | [r] repeat (skip)"
+            else:
+                r_hint = ""
             pre = input(
                 "  [Enter] skip | [o] Other | [x] unknown | [i] insert category | "
-                "[p] preview | [c] copy | [s] Google Images | or substring: "
+                f"[c] copy | [s] preview + Google Images{r_hint} | or substring: "
             ).strip()
             if not pre:
                 first_search = ""
+                last_action = {"type": "skip"}
             elif pre.lower() == "i":
                 new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
                 if new_leaf is not None:
@@ -982,11 +1049,13 @@ def main() -> None:
                         )
                         print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
                         first_search = "__assigned__"
+                        last_action = {"type": "assign", "chosen": new_leaf}
                 continue
             elif pre.lower() == "o":
                 kind, chosen_other = interact_pick_other_leaf(other_rows)
                 if kind == "skip":
                     first_search = ""
+                    last_action = {"type": "skip"}
                 elif kind == "unknown":
                     unknown_groups.append({"group_id": gid, "master_title": master_title})
                     done_g.add(gid)
@@ -995,6 +1064,7 @@ def main() -> None:
                     )
                     print("  Marked unknown (saved).")
                     first_search = "__unknown__"
+                    last_action = {"type": "unknown"}
                 elif kind == "assign":
                     assert chosen_other is not None
                     n_assigned = assign_group_to_leaf(
@@ -1015,25 +1085,90 @@ def main() -> None:
                         f"  Assigned {n_assigned} item(s) → {chosen_other['leaf_path']} (saved) [Other bucket]"
                     )
                     first_search = "__assigned__"
+                    last_action = {"type": "assign", "chosen": chosen_other}
             elif pre.lower() == "x":
                 unknown_groups.append({"group_id": gid, "master_title": master_title})
                 done_g.add(gid)
                 write_manual_snapshot(out_path, groups_path, group_assignments, unknown_groups, item_matches)
                 print("  Marked unknown (saved).")
                 first_search = "__unknown__"
-            elif pre.lower() == "p":
+                last_action = {"type": "unknown"}
+            elif pre.lower() == "c":
+                master_title_clipboard_actions(master_title, "c")
+                continue
+            elif pre.lower() == "s":
                 n_show = min(PREVIEW_ITEMS_MAX, len(items_in_group))
-                print(f"  Sample ({n_show} of {len(items_in_group)} item(s)):")
+                print(f"  Items ({n_show} of {len(items_in_group)}) — enter # to search Google Images, Enter to go back:")
                 for j, it in enumerate(items_in_group[:PREVIEW_ITEMS_MAX], start=1):
                     tid = (it.get("id") or "") if isinstance(it, dict) else ""
                     tl = (it.get("title") or "").strip() if isinstance(it, dict) else ""
                     st = (it.get("subtitle") or "").strip() if isinstance(it, dict) else ""
                     sub = f" | {st}" if st else ""
                     print(f"    {j:2}. {tid}  {tl}{sub}")
+                raw_pick = input("  Item #: ").strip()
+                if not raw_pick:
+                    continue
+                if raw_pick.isdigit():
+                    idx = int(raw_pick) - 1
+                    picked = items_in_group[idx] if 0 <= idx < len(items_in_group) else None
+                    if isinstance(picked, dict):
+                        tl = (picked.get("title") or "").strip()
+                        st = (picked.get("subtitle") or "").strip()
+                        search_str = f"{tl} | {st}" if tl and st else tl or st or master_title
+                    else:
+                        search_str = master_title
+                    if copy_to_clipboard(search_str):
+                        print(f"  Copied to clipboard: {search_str!r}")
+                    if open_google_images_in_chrome(search_str):
+                        print("  Opened Google Images in Chrome.")
+                    else:
+                        print(
+                            "  Could not open Chrome (macOS + Google Chrome expected). "
+                            f"URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch"
+                        )
+                else:
+                    print("  Invalid number; returning to prompt.")
                 continue
-            elif pre.lower() in ("c", "s"):
-                master_title_clipboard_actions(master_title, pre)
-                continue
+            elif pre.lower() == "r":
+                if last_action is None:
+                    print("  No previous action to repeat.")
+                    continue
+                if last_action["type"] == "assign":
+                    lp = last_action["chosen"]["leaf_path"]
+                    print(f"  Repeat: assign → {lp}")
+                elif last_action["type"] == "unknown":
+                    print("  Repeat: mark unknown")
+                else:
+                    print("  Repeat: skip")
+                conf = input("  Confirm [y/n]: ").strip().lower()
+                if conf != "y":
+                    continue
+                if last_action["type"] == "assign":
+                    chosen_r = last_action["chosen"]
+                    n_assigned = assign_group_to_leaf(
+                        gid=gid,
+                        master_title=master_title,
+                        items_in_group=items_in_group,
+                        chosen=chosen_r,
+                        out_path=out_path,
+                        groups_path=groups_path,
+                        group_assignments=group_assignments,
+                        unknown_groups=unknown_groups,
+                        item_matches=item_matches,
+                        done_g=done_g,
+                        already_matched_ids=already_matched_ids,
+                        assignment_extra={"repeated_previous": True},
+                    )
+                    print(f"  Assigned {n_assigned} item(s) → {chosen_r['leaf_path']} (saved)")
+                    first_search = "__assigned__"
+                elif last_action["type"] == "unknown":
+                    unknown_groups.append({"group_id": gid, "master_title": master_title})
+                    done_g.add(gid)
+                    write_manual_snapshot(out_path, groups_path, group_assignments, unknown_groups, item_matches)
+                    print("  Marked unknown (saved).")
+                    first_search = "__unknown__"
+                else:
+                    first_search = ""
             else:
                 first_search = pre
 
@@ -1080,12 +1215,14 @@ def main() -> None:
                                     assignment_extra={"inserted_by_user": True},
                                 )
                                 print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
+                                last_action = {"type": "assign", "chosen": new_leaf}
                                 advance_group = True
                         nq = ""
                         break
                     if nq.lower() == "o":
                         kind, chosen_other = interact_pick_other_leaf(other_rows)
                         if kind == "skip":
+                            last_action = {"type": "skip"}
                             skip_group = True
                             break
                         if kind == "unknown":
@@ -1095,6 +1232,7 @@ def main() -> None:
                                 out_path, groups_path, group_assignments, unknown_groups, item_matches
                             )
                             print("  Marked unknown (saved).")
+                            last_action = {"type": "unknown"}
                             advance_group = True
                             break
                         assert chosen_other is not None
@@ -1115,6 +1253,7 @@ def main() -> None:
                         print(
                             f"  Assigned {n_assigned} item(s) → {chosen_other['leaf_path']} (saved) [Other]"
                         )
+                        last_action = {"type": "assign", "chosen": chosen_other}
                         advance_group = True
                         break
                     if nq.lower() in ("c", "s"):
@@ -1153,8 +1292,39 @@ def main() -> None:
             if not sel:
                 break
 
-            if sel.lower() in ("c", "s"):
-                master_title_clipboard_actions(master_title, sel)
+            if sel.lower() == "c":
+                master_title_clipboard_actions(master_title, "c")
+                continue
+
+            if sel.lower() == "s":
+                n_show = min(PREVIEW_ITEMS_MAX, len(items_in_group))
+                print(f"  Pick an item to search on Google Images ({n_show} of {len(items_in_group)}):")
+                for j, it in enumerate(items_in_group[:PREVIEW_ITEMS_MAX], start=1):
+                    tl = (it.get("title") or "").strip() if isinstance(it, dict) else ""
+                    st = (it.get("subtitle") or "").strip() if isinstance(it, dict) else ""
+                    sub = f" | {st}" if st else ""
+                    print(f"    {j:2}. {tl}{sub}")
+                raw_pick = input("  Item # (or Enter to use group title): ").strip()
+                if raw_pick.isdigit():
+                    idx = int(raw_pick) - 1
+                    picked = items_in_group[idx] if 0 <= idx < len(items_in_group) else None
+                    if isinstance(picked, dict):
+                        tl = (picked.get("title") or "").strip()
+                        st = (picked.get("subtitle") or "").strip()
+                        search_str = f"{tl} | {st}" if tl and st else tl or st or master_title
+                    else:
+                        search_str = master_title
+                else:
+                    search_str = master_title
+                if copy_to_clipboard(search_str):
+                    print(f"  Copied to clipboard: {search_str!r}")
+                if open_google_images_in_chrome(search_str):
+                    print("  Opened Google Images in Chrome.")
+                else:
+                    print(
+                        "  Could not open Chrome (macOS + Google Chrome expected). "
+                        f"URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch"
+                    )
                 continue
 
             if sel.lower() == "i":
@@ -1181,6 +1351,7 @@ def main() -> None:
                             assignment_extra={"inserted_by_user": True},
                         )
                         print(f"  Assigned {n_assigned} item(s) → {new_leaf['leaf_path']} (saved)")
+                        last_action = {"type": "assign", "chosen": new_leaf}
                         advance_group = True
                         break
                 continue
@@ -1188,6 +1359,7 @@ def main() -> None:
             if sel.lower() == "o":
                 kind, chosen_other = interact_pick_other_leaf(other_rows)
                 if kind == "skip":
+                    last_action = {"type": "skip"}
                     skip_group = True
                     break
                 if kind == "unknown":
@@ -1197,6 +1369,7 @@ def main() -> None:
                         out_path, groups_path, group_assignments, unknown_groups, item_matches
                     )
                     print("  Marked unknown (saved).")
+                    last_action = {"type": "unknown"}
                     advance_group = True
                     break
                 assert chosen_other is not None
@@ -1215,6 +1388,7 @@ def main() -> None:
                     assignment_extra={"picked_from_other_menu": True},
                 )
                 print(f"  Assigned {n_assigned} item(s) → {chosen_other['leaf_path']} (saved) [Other]")
+                last_action = {"type": "assign", "chosen": chosen_other}
                 advance_group = True
                 break
 
@@ -1238,6 +1412,7 @@ def main() -> None:
                     already_matched_ids=already_matched_ids,
                 )
                 print(f"  Assigned {n_assigned} item(s) → {chosen['leaf_path']} (saved)")
+                last_action = {"type": "assign", "chosen": chosen}
                 break
 
             low = sel.lower()

@@ -14,7 +14,8 @@ Flow (high level):
     2.3  step-2/2_3_interactive_keyword_match.py (optional)
   Step 3 — LLM: step-3/3_llm_match_unmatched.py [--step1-manual …]
   Step 4 — Dedupe: step-4/4_dedupe_and_summaries.py
-  Step 5 — DB upload: step-5/5_upload_to_db.py (run separately; requires SSM tunnel)
+  Step 5 — Attributes: step-5/5_generate_attributes.py
+  Step 6 — DB upload: step-6/6_upload_to_db.py (run separately; requires SSM tunnel)
 
 CLI --start-step uses 1.1, 1.2, 2.1, 2.2, 2.3, 3, 4 (first step to run). Legacy aliases:
   1.0→2.1, 1.2→2.2, 1.3→2.3, 1.4→3, 1.5→4. (Old “start at bigrams only” → use --start-step 2.1.)
@@ -528,13 +529,35 @@ def main() -> None:
     else:
         print("Skipping step 4.")
 
-    # --- Step 5: DB upload ---
+    # --- Step 5: Attribute generation ---
     print()
     print("─" * 60)
-    print("  Step 5 — DB upload")
-    print("  Run separately once the SSM tunnel is active:")
-    step5_script = ROOT / "step-5" / "5_upload_to_db.py"
+    print("  Step 5 — LLM Attribute Generation")
+    step5_script = ROOT / "step-5" / "5_generate_attributes.py"
     print(f"    python {step5_script.relative_to(ROOT)}")
+    print("  (runs automatically if OPENAI_API_KEY is set)")
+    print()
+
+    if os.environ.get("OPENAI_API_KEY"):
+        import subprocess
+        result = subprocess.run(
+            [sys.executable, str(step5_script)],
+            cwd=ROOT,
+        )
+        if result.returncode != 0:
+            print("  WARNING: Step 5 attribute generation failed — continuing.")
+    else:
+        print("  OPENAI_API_KEY not set — skipping step 5.")
+        print("  Run manually after setting the key.")
+    print("─" * 60)
+
+    # --- Step 6: DB upload ---
+    print()
+    print("─" * 60)
+    print("  Step 6 — DB upload")
+    print("  Run separately once the SSM tunnel is active:")
+    step6_script = ROOT / "step-6" / "6_upload_to_db.py"
+    print(f"    python {step6_script.relative_to(ROOT)}")
     print("─" * 60)
 
 

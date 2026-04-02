@@ -281,20 +281,40 @@ def _do_upload(
         print("\n  Dry run complete — no changes made.")
         return
 
-    # ── Push ──────────────────────────────────────────────────────────────────
+    # ── Push item-category relationships ─────────────────────────────────────
     print("\n  Pushing item-category relationships to DB…")
     conn = _connect(env, db_user, db_password)
     try:
         s5.push_item_relationships(conn, matched_deduped_path)
         conn.commit()
-        print("\n  Upload complete.")
+        print("  Item-category upload complete.")
     except Exception as e:
         conn.rollback()
-        print(f"\n  ERROR during upload: {e}")
+        print(f"\n  ERROR during item-category upload: {e}")
         print("  Transaction rolled back.")
         raise
     finally:
         conn.close()
+
+    # ── Push attributes + attribute values ────────────────────────────────────
+    print()
+    if _confirm("Push attribute schema and item attribute values to DB?", default_yes=True):
+        conn = _connect(env, db_user, db_password)
+        try:
+            s5.push_attributes(conn)
+            conn.commit()
+            print("  Attribute upload complete.")
+        except Exception as e:
+            conn.rollback()
+            print(f"\n  ERROR during attribute upload: {e}")
+            print("  Transaction rolled back — item-category data was already committed.")
+            raise
+        finally:
+            conn.close()
+    else:
+        print("  Skipping attribute push.")
+
+    print("\n  Upload complete.")
 
 
 # ── Main menu ──────────────────────────────────────────────────────────────────

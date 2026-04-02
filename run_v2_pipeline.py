@@ -14,7 +14,10 @@ Flow (high level):
     2.3  step-2/2_3_interactive_keyword_match.py (optional)
   Step 3 — LLM: step-3/3_llm_match_unmatched.py [--step1-manual …]
   Step 4 — Dedupe: step-4/4_dedupe_and_summaries.py
-  Step 5 — Attributes: step-5/5_generate_attributes.py
+  Step 5 — Attributes:
+    5a  step-5/5a_group_title_templates.py   (title structural clustering)
+    5b  step-5/5_generate_attributes.py      (LLM attribute schema + regex patterns)
+    5c  step-5/5c_extract_attribute_values.py (regex + LLM fallback value extraction)
   Step 6 — DB upload: step-6/6_upload_to_db.py (run separately; requires SSM tunnel)
 
 CLI --start-step uses 1.1, 1.2, 2.1, 2.2, 2.3, 3, 4, 5, 6 (first step to run). Legacy aliases:
@@ -508,7 +511,7 @@ def main() -> None:
                     ("2.3", "Step 2.3 — Interactive manual bigram → leaf (leftovers)"),
                     ("3", "Step 3 — LLM match remaining unmatched items"),
                     ("4", "Step 4 — Dedupe + summaries"),
-                    ("5", "Step 5 — LLM attribute generation per leaf category"),
+                    ("5", "Step 5 — Attribute generation (5a template grouping → 5b LLM schema+patterns → 5c value extraction)"),
                     ("6", "Step 6 — DB upload (requires SSM tunnel)"),
                 ],
             )
@@ -889,20 +892,41 @@ def main() -> None:
     else:
         print("Skipping step 4.")
 
-    # --- Step 5: Attribute generation ---
+    # --- Step 5: Attribute generation (3 sub-steps: 5a → 5b → 5c) ---
     if not run_5:
         print(f"Skipping step 5 (attribute generation) — starting at {start_step}.")
-    elif speed_run or yn("\nRun step 5 — LLM attribute generation per leaf category?", default=True):
-        if speed_run:
-            print("\n[speed run] Running step 5 — LLM attribute generation.")
-        step5_script = ROOT / "step-5" / "5_generate_attributes.py"
-        if not os.environ.get("OPENAI_API_KEY"):
-            print("  OPENAI_API_KEY not set — cannot run step 5.")
-            print(f"  Run manually: python {step5_script.relative_to(ROOT)}")
+    elif speed_run or yn("\nRun step 5 — attribute generation (template grouping → LLM schema + patterns → value extraction)?", default=True):
+        has_api_key = bool(os.environ.get("OPENAI_API_KEY"))
+        if not has_api_key:
+            print("  OPENAI_API_KEY not set — cannot run step 5b/5c LLM steps.")
+            print("  Set it in .env and re-run from step 5.")
         else:
-            result = subprocess.run([sys.executable, str(step5_script)], cwd=ROOT)
-            if result.returncode != 0:
-                print("  WARNING: Step 5 attribute generation failed — continuing.")
+            if speed_run:
+                print("\n[speed run] Running step 5a — title template grouping.")
+
+            # ── 5a: title template grouping (pure Python, no LLM)
+            script_5a = ROOT / "step-5" / "5a_group_title_templates.py"
+            result_5a = subprocess.run([sys.executable, str(script_5a)], cwd=ROOT)
+            if result_5a.returncode != 0:
+                print("  WARNING: Step 5a (template grouping) failed — skipping 5b and 5c.")
+            else:
+                if speed_run:
+                    print("\n[speed run] Running step 5b — LLM attribute schema + patterns.")
+
+                # ── 5b: LLM attribute schema + regex patterns
+                script_5b = ROOT / "step-5" / "5_generate_attributes.py"
+                result_5b = subprocess.run([sys.executable, str(script_5b)], cwd=ROOT)
+                if result_5b.returncode != 0:
+                    print("  WARNING: Step 5b (LLM attribute generation) failed — skipping 5c.")
+                else:
+                    if speed_run:
+                        print("\n[speed run] Running step 5c — attribute value extraction.")
+
+                    # ── 5c: regex + LLM fallback value extraction
+                    script_5c = ROOT / "step-5" / "5c_extract_attribute_values.py"
+                    result_5c = subprocess.run([sys.executable, str(script_5c)], cwd=ROOT)
+                    if result_5c.returncode != 0:
+                        print("  WARNING: Step 5c (value extraction) failed — continuing.")
     else:
         print("Skipping step 5.")
 

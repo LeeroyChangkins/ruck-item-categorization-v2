@@ -32,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg2
+from psycopg2.extras import execute_values
 from tqdm import tqdm  # noqa: F401
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -207,6 +208,7 @@ def import_item_categories(
     """
     Insert item-to-category relationships from matched_deduped rows.
     ON CONFLICT DO NOTHING silently skips existing active pairs.
+    Uses batch insert for performance.
     """
     if DRY_RUN:
         missing = [r for r in matched_rows if r.get("leaf_path") not in path_to_id]
@@ -219,11 +221,12 @@ def import_item_categories(
             )
         return
 
-    inserted_count = 0
-    skipped_count = 0
+    # Build batch of valid rows
+    batch_values = []
     missing_paths: list[str] = []
 
-    with tqdm(matched_rows, desc="  item_categories", unit="row", leave=False) as bar:
+    tqdm.write(f"  Preparing {len(matched_rows):,} item-category relationships for batch insert...")
+    with tqdm(total=len(matched_rows), desc="  preparing batch", unit="row", leave=False) as bar:
         for row in matched_rows:
             item_id = row.get("id")
             cat_path = row.get("leaf_path") or ""
@@ -231,33 +234,39 @@ def import_item_categories(
 
             if not cat_id:
                 missing_paths.append(f"{item_id} → {cat_path}")
-                bar.update(1)
-                continue
-
-            cur.execute(
-                """
-                INSERT INTO marketplace_item_categories (item_id, category_id)
-                VALUES (%s, %s)
-                ON CONFLICT DO NOTHING
-                """,
-                (item_id, cat_id),
-            )
-            if cur.rowcount > 0:
-                inserted_count += 1
             else:
-                skipped_count += 1
-
-            bar.set_postfix(inserted=inserted_count, skipped=skipped_count)
+                batch_values.append((item_id, cat_id))
+            
             bar.update(1)
+
+    # Batch insert all valid rows in chunks for progress feedback
+    if batch_values:
+        chunk_size = 5000
+        total_chunks = (len(batch_values) + chunk_size - 1) // chunk_size
+        
+        tqdm.write(f"  Batch inserting {len(batch_values):,} item-category relationships in {total_chunks} chunks...")
+        with tqdm(total=len(batch_values), desc="  inserting", unit="row", leave=False) as bar:
+            for i in range(0, len(batch_values), chunk_size):
+                chunk = batch_values[i:i + chunk_size]
+                execute_values(
+                    cur,
+                    """
+                    INSERT INTO marketplace_item_categories (item_id, category_id)
+                    VALUES %s
+                    ON CONFLICT DO NOTHING
+                    """,
+                    chunk,
+                )
+                bar.update(len(chunk))
+        
+        tqdm.write(f"  [item_categories] {len(batch_values):,} rows processed (duplicates skipped by DB)")
 
     if missing_paths:
         tqdm.write(f"  WARNING: {len(missing_paths)} rows had unknown leaf_path (skipped):")
-        for m in missing_paths[:20]:
+        for m in missing_paths[:10]:
             tqdm.write(f"    {m}")
-        if len(missing_paths) > 20:
-            tqdm.write(f"    … and {len(missing_paths) - 20} more")
-
-    tqdm.write(f"  [item_categories] {skipped_count} already existed, {inserted_count} inserted")
+        if len(missing_paths) > 10:
+            tqdm.write(f"    … and {len(missing_paths) - 10} more")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

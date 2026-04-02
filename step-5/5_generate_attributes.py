@@ -67,6 +67,11 @@ STEP5_DIR = Path(__file__).resolve().parent
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 OUTDIR = STEP5_DIR / "outputs"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
+
+# Add ROOT to path for imports
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
 from shared_utils import load_dotenv_file as _load_dotenv_file, timestamp as _timestamp
 
 DEFAULT_MODEL = "gpt-4o"

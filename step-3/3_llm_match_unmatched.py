@@ -44,29 +44,11 @@ TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 STEP12_OUT = ROOT / "step-2" / "outputs"
 STEP13_OUT = ROOT / "step-2" / "outputs"
 STEP14_OUTDIR = Path(__file__).resolve().parent / "outputs"
-ENV_PATH = ROOT / ".env"
-
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_MIN_CONF = 0.9
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 
-
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
-
-
-def load_env_dotfile(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        k, v = line.split("=", 1)
-        k = k.strip()
-        v = v.strip().strip('"').strip("'")
-        if k and k not in os.environ:
-            os.environ[k] = v
+from shared_utils import load_dotenv_file as _load_dotenv_file, timestamp
 
 
 def require_openai() -> None:
@@ -262,7 +244,7 @@ Items to categorize:
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Step 1.4: LLM leaf match for remaining unmatched items.")
+    parser = argparse.ArgumentParser(description="Step 3: LLM leaf match for remaining unmatched items.")
     parser.add_argument(
         "--input",
         metavar="PATH",
@@ -295,7 +277,7 @@ def main() -> None:
 
     STEP14_OUTDIR.mkdir(parents=True, exist_ok=True)
     CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
-    load_env_dotfile(ENV_PATH)
+    _load_dotenv_file()
 
     if not os.environ.get("OPENAI_API_KEY"):
         raise SystemExit("OPENAI_API_KEY not found in environment or .env")
@@ -466,12 +448,17 @@ def main() -> None:
             bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}<{remaining}, {rate_fmt}]{postfix}",
         )
 
+    batch_times: list[float] = []
+    total_unmatched = 0
+
     try:
         for batch_index in pbar or batch_range:
             batch = all_batches[batch_index]
             bi = batch_index + 1
             if not use_pbar:
                 print(f"Batch {bi}/{total_batches}: size={len(batch)} ...")
+
+            batch_start = time.time()
             preds = call_llm_for_batch(
                 client=client,
                 model=args.model,
@@ -479,10 +466,31 @@ def main() -> None:
                 items_batch=batch,
                 min_conf=args.min_confidence,
             )
+            batch_times.append(time.time() - batch_start)
 
+            batch_kept = 0
+            batch_low_conf = 0
+            batch_invalid = 0
+            sent_ids = {it["id"] for it in batch}
+            returned_ids: set[str] = set()
             for p in preds:
+                returned_ids.add(p["id"])
                 if p["confidence"] >= args.min_confidence:
                     kept_by_id[p["id"]] = p
+                    batch_kept += 1
+                else:
+                    batch_low_conf += 1
+            batch_missing = len(sent_ids - returned_ids)
+            batch_unmatched = batch_low_conf + batch_missing
+            total_unmatched += batch_unmatched
+
+            parts = [f"{batch_kept}/{len(batch)} matched at ≥{args.min_confidence} confidence"]
+            if batch_low_conf:
+                parts.append(f"{batch_low_conf} low-confidence")
+            if batch_missing:
+                parts.append(f"{batch_missing} not returned")
+            if not use_pbar:
+                print(f"  Batch {bi}: {' | '.join(parts)}")
 
             if args.checkpoint_every_batch <= 1 or (bi % args.checkpoint_every_batch == 0):
                 tmp = ckpt_path.with_suffix(".tmp")
@@ -496,10 +504,16 @@ def main() -> None:
                 if not use_pbar:
                     print(f"Checkpoint saved at batch {bi}")
             if pbar:
-                done_items = min((batch_index + 1) * args.batch_size, len(llm_inputs))
+                batches_remaining = total_batches - (batch_index + 1)
+                avg_secs = sum(batch_times) / len(batch_times)
+                eta_secs = avg_secs * batches_remaining
+                if eta_secs >= 60:
+                    eta_str = f"{int(eta_secs // 60)}m {int(eta_secs % 60)}s"
+                else:
+                    eta_str = f"{int(eta_secs)}s"
                 pbar.set_postfix_str(
-                    f"items_done={done_items}/{len(llm_inputs)} kept={len(kept_by_id)} batch_sz={len(batch)}",
-                    refresh=False,
+                    f"{len(kept_by_id)} matched  {total_unmatched} unmatched  ~{eta_str} left",
+                    refresh=True,
                 )
 
             if args.sleep_seconds:

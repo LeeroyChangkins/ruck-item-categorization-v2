@@ -111,6 +111,11 @@
             "slug": "other",
             "display_name": "Other",
             "subcategories": []
+          },
+          {
+            "slug": "raw_logs",
+            "display_name": "Raw Logs",
+            "subcategories": []
           }
         ]
       },
@@ -118,10 +123,6 @@
         "slug": "dimensional_lumber_and_composites",
         "display_name": "Dimensional Lumber & Composites",
         "subcategories": [
-          {
-            "slug": "framing_lumber",
-            "display_name": "Framing Lumber"
-          },
           {
             "slug": "appearance_boards",
             "display_name": "Appearance Boards"
@@ -224,6 +225,11 @@
             "slug": "other",
             "display_name": "Other",
             "subcategories": []
+          },
+          {
+            "slug": "vinyl_fencing",
+            "display_name": "Vinyl Fencing",
+            "subcategories": []
           }
         ]
       },
@@ -324,6 +330,16 @@
           {
             "slug": "other",
             "display_name": "Other",
+            "subcategories": []
+          },
+          {
+            "slug": "spray_paint",
+            "display_name": "Spray Paint",
+            "subcategories": []
+          },
+          {
+            "slug": "primers",
+            "display_name": "Primers",
             "subcategories": []
           }
         ]
@@ -1083,6 +1099,11 @@
           {
             "slug": "drill_bits",
             "display_name": "Drill Bits"
+          },
+          {
+            "slug": "sandpaper",
+            "display_name": "sandpaper",
+            "subcategories": []
           }
         ]
       },

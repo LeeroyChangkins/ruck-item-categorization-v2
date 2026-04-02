@@ -30,14 +30,14 @@ from typing import Any, Callable, Dict, List, Sequence, Set, Tuple
 from tqdm import tqdm
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 DEFAULT_ITEMS = ROOT / "source-files" / "prod-items-with-stores.json"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 VERSION = "1.6-unmatched-similar-title-groups"
 
-
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+from shared_utils import timestamp  # noqa: E402
 
 
 def normalize_title(s: str) -> str:

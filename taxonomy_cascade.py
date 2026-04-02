@@ -133,7 +133,7 @@ def collect_slug_to_path(categories: dict) -> Dict[str, str]:
         slug = node.get("slug")
         next_parts = parts + ([slug] if slug else [])
         path = "/".join(next_parts)
-        if slug:
+        if slug and not is_catch_all_bucket_slug(slug):
             if slug in slug_to_path and slug_to_path[slug] != path:
                 dup[slug].extend([slug_to_path[slug], path])
             else:
@@ -148,8 +148,9 @@ def collect_slug_to_path(categories: dict) -> Dict[str, str]:
         walk(root, [t0])
 
     if dup:
+        import sys
         msg = "; ".join(f"{s}: {paths}" for s, paths in dup.items())
-        raise ValueError(f"Duplicate taxonomy slugs at different paths: {msg}")
+        print(f"WARNING: duplicate taxonomy slugs (keeping first path): {msg}", file=sys.stderr)
 
     # T0 JSON keys (materials, tools_and_gear, services) are valid anchor slugs at depth 0.
     for t0 in ROOT_KEYS:

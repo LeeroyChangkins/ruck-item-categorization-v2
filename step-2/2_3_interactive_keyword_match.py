@@ -3,7 +3,7 @@
 Step 2.3 — Interactive manual bigram → leaf
 
 Build bigrams from `unmatched_word_frequencies` in a step-2.2 split `unmatched_and_keywords.json`,
-then walk each bigram (>=5 items), search taxonomy leaves, and assign a leaf to eligible unmatched items.
+then walk each bigram (>= MIN_ITEMS_PER_BIGRAM items, default 10), search taxonomy leaves, and assign a leaf to eligible unmatched items.
 
 Bigram → item rule (same-field, like step-2.2 title/subtitle split):
   Both words appear as letter-tokens in the item title, OR both appear in the subtitle.
@@ -28,31 +28,70 @@ Resume:
 from __future__ import annotations
 
 import argparse
+import itertools
 import json
+import random
 import re
+import subprocess
 import sys
+import threading
+import time
 from datetime import datetime
 from itertools import combinations
 from pathlib import Path
 from typing import Any, Dict, List, Set, Tuple
+from urllib.parse import quote_plus
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from taxonomy_cascade import is_catch_all_bucket_slug
+from shared_utils import timestamp
+from interactive_helpers import (
+    copy_to_clipboard,
+    open_google_images_in_chrome,
+    collect_leaf_rows,
+    filter_leaves,
+    filter_hits_narrow,
+    collect_other_bucket_leaves,
+    interact_pick_other_leaf,
+    interact_insert_new_category,
+    yn_prompt,
+)
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 STEP12_OUT = ROOT / "step-2" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100
 PREVIEW_ITEMS_MAX = 12
-MIN_ITEMS_PER_BIGRAM = 5
+MIN_ITEMS_PER_BIGRAM = 10
 MANUAL_VERSION = "1.4-manual-bigram"
 
 
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+class _Spinner:
+    """Simple terminal spinner. Use as a context manager."""
+
+    def __init__(self, msg: str = "Loading") -> None:
+        self._msg = msg
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._spin, daemon=True)
+
+    def _spin(self) -> None:
+        for ch in itertools.cycle("|/-\\"):
+            if self._stop.is_set():
+                break
+            print(f"\r  {self._msg}… {ch}", end="", flush=True)
+            time.sleep(0.1)
+        print("\r" + " " * (len(self._msg) + 8) + "\r", end="", flush=True)
+
+    def __enter__(self) -> "_Spinner":
+        self._thread.start()
+        return self
+
+    def __exit__(self, *_: object) -> None:
+        self._stop.set()
+        self._thread.join()
 
 
 def tokenize_alpha_preserve(text: str) -> List[str]:
@@ -74,89 +113,6 @@ def tokenize_alpha_preserve(text: str) -> List[str]:
     return out
 
 
-def collect_leaf_rows(categories: dict) -> List[Dict[str, str]]:
-    """Leaf = node with no subcategories. Same path convention as step-3 LLM all_leaf_paths."""
-    rows: List[Dict[str, str]] = []
-    roots = ["materials", "tools_and_gear", "services"]
-
-    def walk(node: Any, prefix: List[str]) -> None:
-        if not isinstance(node, dict):
-            return
-        slug = node.get("slug")
-        subs = node.get("subcategories") or []
-        dn = (node.get("display_name") or "").strip()
-
-        if slug is not None:
-            here = prefix + [slug]
-        else:
-            here = prefix
-
-        if not subs:
-            if slug is not None:
-                lp = "/".join(here)
-                hay = f"{lp} {slug} {dn}".lower()
-                rows.append(
-                    {
-                        "leaf_path": lp,
-                        "leaf_slug": slug,
-                        "display_name": dn,
-                        "_hay": hay,
-                    }
-                )
-            return
-        for child in subs:
-            walk(child, here)
-
-    for root in roots:
-        root_obj = categories.get(root)
-        if not isinstance(root_obj, dict):
-            continue
-        for child in root_obj.get("subcategories", []):
-            walk(child, [root])
-
-    rows.sort(key=lambda r: r["leaf_path"])
-    return rows
-
-
-def collect_other_bucket_leaves(raw_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """Catch-all bucket leaves: slug `other` plus materials top-level `miscellaneous`."""
-    return [
-        r
-        for r in raw_rows
-        if r.get("leaf_slug") == "other" or r.get("leaf_slug") == "miscellaneous"
-    ]
-
-
-def interact_pick_other_leaf(other_rows: List[Dict[str, str]]) -> tuple[str, Dict[str, str] | None]:
-    """
-    Prompt user to pick an Other bucket leaf.
-    Returns ("assign", row) | ("unknown", None) | ("skip", None).
-    Enter = skip matching entirely (no assign, no unknown; bigram stays for later).
-    """
-    if not other_rows:
-        print("  (No Other leaves in taxonomy; add them in categories_v1.json.)")
-        return ("skip", None)
-    print(f"  Other buckets ({len(other_rows)}) — pick a catch-all leaf:")
-    for i, h in enumerate(other_rows, start=1):
-        dn = h.get("display_name") or ""
-        print(f"    {i:3}) {h['leaf_path']}")
-        if dn:
-            print(f"        {dn}")
-    while True:
-        pick = input(
-            "  [#] assign here | [Enter] skip (no category) | [x] mark unknown (saved): "
-        ).strip()
-        if not pick:
-            return ("skip", None)
-        if pick.lower() == "x":
-            return ("unknown", None)
-        if re.fullmatch(r"\d+", pick):
-            n = int(pick)
-            if 1 <= n <= len(other_rows):
-                return ("assign", other_rows[n - 1])
-            print("  Out of range.")
-            continue
-        print("  Enter a number, Enter, or x.")
 
 
 def assign_bigram_to_leaf(
@@ -337,21 +293,6 @@ def pick_input_interactive() -> Path:
     raise SystemExit("Invalid selection.")
 
 
-def filter_leaves(leaves: List[Dict[str, str]], query: str) -> List[Dict[str, str]]:
-    q = query.strip().lower()
-    if not q:
-        return []
-    return [r for r in leaves if q in r["_hay"]]
-
-
-def filter_hits_narrow(hits: List[Dict[str, str]], query: str) -> List[Dict[str, str]]:
-    """Substring filter within an existing hit list (path / slug / display)."""
-    q = query.strip().lower()
-    if not q:
-        return hits
-    return [h for h in hits if q in h.get("_hay", "")]
-
-
 def pair_key_from_lower_sorted(a: str, b: str) -> Tuple[str, str]:
     x, y = a.lower(), b.lower()
     return (x, y) if x <= y else (y, x)
@@ -462,18 +403,6 @@ def item_matches_bigram_same_field(
     return (a in tt and b in tt) or (a in st and b in st)
 
 
-def yn_prompt(prompt: str, default: bool = True) -> bool:
-    hint = "Y/n" if default else "y/N"
-    while True:
-        ans = input(f"{prompt} [{hint}] ").strip().lower()
-        if not ans:
-            return default
-        if ans in ("y", "yes"):
-            return True
-        if ans in ("n", "no"):
-            return False
-
-
 def count_uncategorized_items(unmatched_items: List[dict], already_matched_ids: Set[str]) -> int:
     n = 0
     for it in unmatched_items:
@@ -525,14 +454,10 @@ def print_session_progress(
     done_pairs: Set[Tuple[str, str]],
     already_matched_ids: Set[str],
 ) -> None:
-    nu = count_uncategorized_items(unmatched_items, already_matched_ids)
-    nb = count_bigrams_with_work_remaining(
-        bigram_rows, done_pairs, unmatched_items, already_matched_ids
-    )
-    print(
-        f"  Progress: {nu} item(s) still uncategorized, "
-        f"{nb} bigram(s) with remaining work (empty bigrams excluded)."
-    )
+    total = sum(1 for it in unmatched_items if isinstance(it, dict) and isinstance(it.get("id"), str) and it["id"])
+    nu = total - len(already_matched_ids)
+    nb = len(bigram_rows) - len(done_pairs)
+    print(f"  Progress: {nu} item(s) still uncategorized, {nb} bigram(s) remaining.")
 
 
 def write_manual_snapshot(
@@ -591,6 +516,11 @@ def main() -> None:
         metavar="N",
         help=f"Minimum unmatched items per bigram to include (default: {MIN_ITEMS_PER_BIGRAM}).",
     )
+    parser.add_argument(
+        "--auto-random",
+        action="store_true",
+        help="Speed-run mode: randomly assign every eligible bigram to a leaf without prompting.",
+    )
     args = parser.parse_args()
 
     if args.resume_from and args.fresh_run:
@@ -598,7 +528,17 @@ def main() -> None:
 
     OUTDIR.mkdir(parents=True, exist_ok=True)
 
-    in_path = Path(args.input).expanduser().resolve() if args.input else pick_input_interactive()
+    if args.input:
+        in_path = Path(args.input).expanduser().resolve()
+    elif args.auto_random:
+        # Speed-run: auto-select the most recent file without prompting
+        _latest = newest_unmatched_keywords_file()
+        if not _latest:
+            raise SystemExit("No unmatched_and_keywords.json found — run step 2.2 first.")
+        print(f"[auto-random] Using most recent input: {_latest.relative_to(ROOT)}")
+        in_path = _latest
+    else:
+        in_path = pick_input_interactive()
     data = json.loads(in_path.read_text(encoding="utf-8"))
     unmatched_items = data.get("unmatched_items") or []
     if not isinstance(unmatched_items, list):
@@ -672,16 +612,19 @@ def main() -> None:
     else:
         found = find_latest_manual_for_source(OUTDIR, in_path)
         if found is not None:
-            assignments, matches, unknown_bigrams, done_pairs, already_matched_ids = load_resumed_state(
-                found,
-                in_path,
-                display_for_lower,
-                args.force_mismatch,
+            with _Spinner("Reading previous session"):
+                assignments, matches, unknown_bigrams, done_pairs, already_matched_ids = load_resumed_state(
+                    found,
+                    in_path,
+                    display_for_lower,
+                    args.force_mismatch,
+                )
+            total_items = sum(
+                1 for it in unmatched_items
+                if isinstance(it, dict) and isinstance(it.get("id"), str) and it["id"]
             )
-            nu = count_uncategorized_items(unmatched_items, already_matched_ids)
-            nb = count_bigrams_with_work_remaining(
-                bigram_rows, done_pairs, unmatched_items, already_matched_ids
-            )
+            nu = total_items - len(already_matched_ids)
+            nb = len(bigram_rows) - len(done_pairs)
             try:
                 fshow = str(found.relative_to(ROOT))
             except ValueError:
@@ -689,7 +632,7 @@ def main() -> None:
             print(f"\nPrevious session: {fshow}")
             if yn_prompt(
                 f"Resume last session? {nu} item(s) still uncategorized, "
-                f"{nb} bigram(s) with remaining work.",
+                f"{nb} bigram(s) remaining.",
                 default=True,
             ):
                 resume_p = found
@@ -730,12 +673,65 @@ def main() -> None:
         f"{len(unmatched_items)} unmatched item(s), {len(search_rows)} leaf categories for search "
         f"({len(other_rows)} catch-all bucket(s) via [o] only)."
     )
+
+    # ── Auto-random speed-run mode ─────────────────────────────────────────────
+    if args.auto_random:
+        if not search_rows:
+            raise SystemExit("No leaf categories found in taxonomy — cannot auto-assign.")
+        total_assigned = 0
+        for row in bigram_rows:
+            if not isinstance(row, dict):
+                continue
+            pair_lower_sorted = row.get("pair_lower_sorted")
+            if not isinstance(pair_lower_sorted, list) or len(pair_lower_sorted) != 2:
+                continue
+            pk = pair_key_from_lower_sorted(str(pair_lower_sorted[0]), str(pair_lower_sorted[1]))
+            if pk in done_pairs:
+                continue
+            bigram_display = row.get("bigram")
+            if not isinstance(bigram_display, list) or len(bigram_display) != 2:
+                bigram_display = [display_for_lower.get(pk[0], pk[0]), display_for_lower.get(pk[1], pk[1])]
+            hit_items = [
+                it for it in unmatched_items
+                if isinstance(it, dict)
+                and item_matches_bigram_same_field(it, list(pk))
+                and isinstance(it.get("id"), str)
+                and it["id"] not in already_matched_ids
+            ]
+            if len(hit_items) < args.min_items:
+                done_pairs.add(pk)
+                continue
+            chosen = random.choice(search_rows)
+            assign_bigram_to_leaf(
+                chosen,
+                hit_items=hit_items,
+                bigram_display=list(bigram_display),
+                pk=pk,
+                out_path=out_path,
+                in_path=in_path,
+                assignments=assignments,
+                matches=matches,
+                unknown_bigrams=unknown_bigrams,
+                already_matched_ids=already_matched_ids,
+                done_pairs=done_pairs,
+            )
+            total_assigned += len(hit_items)
+        write_manual_snapshot(out_path, in_path, assignments, matches, unknown_bigrams)
+        print(
+            f"[auto-random] Assigned {len(assignments)} bigram(s), "
+            f"{total_assigned} item(s) → {out_path.relative_to(ROOT)}"
+        )
+        return
+
     print(
-        "Per bigram: [Enter]=skip (no save) | [o]=Other buckets | [x]=mark unknown (saved) | "
-        "[p]=preview | else substring=search all leaves.\n"
-        "After leaf list: [#] pick | [o] Other | text=narrow | n / n <text>=new search | "
-        "[Enter]=skip.\n"
+        "Per bigram: [Enter]=skip | [o]=Other | [x]=mark unknown | [i]=insert category | "
+        "[p]=preview (→ [s] Google Images or type substring) | [c]=copy | else substring=search leaves.\n"
+        "After leaf list: [#] pick | [o] Other | [i] insert | [s] Google Images | text=narrow | "
+        "n / n <text>=new search | [Enter]=skip.\n"
     )
+
+    # {"type": "assign", "chosen": <leaf_row>} | {"type": "unknown"} | {"type": "skip"}
+    last_action: dict | None = None
 
     for ki, row in enumerate(bigram_rows, start=1):
         if not isinstance(row, dict):
@@ -745,6 +741,7 @@ def main() -> None:
             continue
         pk = pair_key_from_lower_sorted(str(pair_lower_sorted[0]), str(pair_lower_sorted[1]))
         if pk in done_pairs:
+            # Decided in a previous session (loaded from the resume file). Silent skip.
             bg = row.get("bigram")
             label = bg if isinstance(bg, list) else list(pk)
             print("-" * 72)
@@ -758,11 +755,14 @@ def main() -> None:
         if not isinstance(bigram_display, list) or len(bigram_display) != 2:
             bigram_display = [display_for_lower.get(pk[0], pk[0]), display_for_lower.get(pk[1], pk[1])]
 
+        # items≈N is the count from the original bigram file (step 2.1) — may be higher than
+        # the live count below if earlier bigrams in this session already claimed some of those items.
         ic = row.get("unmatched_item_count", "?")
 
         print("-" * 72)
         print(f"[{ki}/{len(bigram_rows)}] bigram={bigram_display!r}  items≈{ic}")
 
+        # Live count: items that still match this bigram AND haven't been assigned yet this session.
         hit_items = [
             it
             for it in unmatched_items
@@ -772,17 +772,113 @@ def main() -> None:
             and it["id"] not in already_matched_ids
         ]
 
+        if len(hit_items) < MIN_ITEMS_PER_BIGRAM:
+            reason = (
+                "0 eligible items; all claimed by earlier assignments this session"
+                if not hit_items
+                else f"{len(hit_items)} eligible item(s); below minimum threshold of {MIN_ITEMS_PER_BIGRAM}"
+            )
+            print(f"  — auto-skipped ({reason})")
+            done_pairs.add(pk)
+            continue
+
         skip_bigram = False
         advance_bigram = False
 
         first_search: str | None = None
         while first_search is None:
+            r_hint = ""
+            if last_action is not None:
+                if last_action["type"] == "assign":
+                    r_hint = f" | [r] repeat (→ {last_action['chosen']['leaf_path']})"
+                elif last_action["type"] == "unknown":
+                    r_hint = " | [r] repeat (unknown)"
+                else:
+                    r_hint = " | [r] repeat (skip)"
             pre = input(
-                "  [Enter] skip bigram | [o] Other | [x] unknown | [p] preview | "
-                "or substring to search leaves: "
+                "  [Enter] skip | [o] Other | [x] unknown | [i] insert category | "
+                f"[p] preview | [c] copy{r_hint} | or substring to search leaves: "
             ).strip()
             if not pre:
+                last_action = {"type": "skip"}
                 first_search = ""
+            elif pre.lower() == "c":
+                bigram_text = " ".join(str(w) for w in bigram_display)
+                if copy_to_clipboard(bigram_text):
+                    print(f"  Copied: {bigram_text!r}")
+                else:
+                    print(f"  (Clipboard unavailable.) Bigram: {bigram_text!r}")
+                continue
+            elif pre.lower() == "r":
+                if last_action is None:
+                    print("  No previous action to repeat.")
+                    continue
+                lact = last_action
+                la_type = lact["type"]
+                if la_type == "assign":
+                    la_lp = lact["chosen"]["leaf_path"]
+                    confirm = input(f"  Repeat: assign → {la_lp}? [y/N] ").strip().lower()
+                else:
+                    confirm = input(f"  Repeat: {la_type}? [y/N] ").strip().lower()
+                if confirm != "y":
+                    continue
+                if la_type == "assign":
+                    assign_bigram_to_leaf(
+                        lact["chosen"],
+                        hit_items=hit_items,
+                        bigram_display=list(bigram_display),
+                        pk=pk,
+                        out_path=out_path,
+                        in_path=in_path,
+                        assignments=assignments,
+                        matches=matches,
+                        unknown_bigrams=unknown_bigrams,
+                        already_matched_ids=already_matched_ids,
+                        done_pairs=done_pairs,
+                    )
+                    print(f"  Assigned {len(hit_items)} item(s) → {la_lp} (saved)")
+                    print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                    first_search = "__assigned__"
+                elif la_type == "unknown":
+                    if not pair_in_unknown_list(pk, unknown_bigrams):
+                        unknown_bigrams.append(
+                            {"bigram": list(bigram_display), "pair_lower_sorted": [pk[0], pk[1]]}
+                        )
+                    done_pairs.add(pk)
+                    write_manual_snapshot(out_path, in_path, assignments, matches, unknown_bigrams)
+                    print(f"  Marked unknown (saved) [repeat]")
+                    print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                    first_search = "__unknown__"
+                else:
+                    last_action = {"type": "skip"}
+                    first_search = ""
+            elif pre.lower() == "i":
+                new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
+                if new_leaf is not None:
+                    raw_rows[:] = collect_leaf_rows(categories)
+                    other_rows[:] = collect_other_bucket_leaves(raw_rows)
+                    search_rows[:] = [r for r in raw_rows if not is_catch_all_bucket_slug(r.get("leaf_slug"))]
+                    print(f"  New leaf available: {new_leaf['leaf_path']}")
+                    if yn_prompt(f"  Assign this bigram to '{new_leaf['leaf_path']}'?", default=True):
+                        assign_bigram_to_leaf(
+                            new_leaf,
+                            hit_items=hit_items,
+                            bigram_display=list(bigram_display),
+                            pk=pk,
+                            out_path=out_path,
+                            in_path=in_path,
+                            assignments=assignments,
+                            matches=matches,
+                            unknown_bigrams=unknown_bigrams,
+                            already_matched_ids=already_matched_ids,
+                            done_pairs=done_pairs,
+                            extra_assignment={"inserted_by_user": True},
+                        )
+                        print(f"  Assigned {len(hit_items)} item(s) → {new_leaf['leaf_path']} (saved)")
+                        print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                        last_action = {"type": "assign", "chosen": new_leaf}
+                        first_search = "__assigned__"
+                continue
             elif pre.lower() == "o":
                 kind, chosen_other = interact_pick_other_leaf(other_rows)
                 if kind == "skip":
@@ -799,6 +895,7 @@ def main() -> None:
                         "for this bigram."
                     )
                     print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                    last_action = {"type": "unknown"}
                     first_search = "__unknown__"
                 elif kind == "assign":
                     assert chosen_other is not None
@@ -821,6 +918,7 @@ def main() -> None:
                         "(saved) [Other bucket]"
                     )
                     print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                    last_action = {"type": "assign", "chosen": chosen_other}
                     first_search = "__assigned__"
             elif pre.lower() == "x":
                 if not pair_in_unknown_list(pk, unknown_bigrams):
@@ -831,20 +929,50 @@ def main() -> None:
                 write_manual_snapshot(out_path, in_path, assignments, matches, unknown_bigrams)
                 print(f"  Marked unknown (saved); {len(hit_items)} item(s) still unmatched for this bigram.")
                 print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                last_action = {"type": "unknown"}
                 first_search = "__unknown__"
             elif pre.lower() == "p":
-                n_show = min(PREVIEW_ITEMS_MAX, len(hit_items))
                 if not hit_items:
-                    print("  (No eligible items: same-field bigram + not already in item_matches.)")
-                else:
-                    print(f"  Sample ({n_show} of {len(hit_items)} item(s)):")
-                    for j, it in enumerate(hit_items[:PREVIEW_ITEMS_MAX], start=1):
-                        tid = it.get("id") or ""
-                        tl = (it.get("title") or "").strip()
-                        st = (it.get("subtitle") or "").strip()
-                        sub = f" | {st}" if st else ""
-                        print(f"    {j:2}. {tid}  {tl}{sub}")
-                continue
+                    print("  (No eligible items for this bigram.)")
+                    continue
+                n_show = min(PREVIEW_ITEMS_MAX, len(hit_items))
+                print(f"  Items ({n_show} of {len(hit_items)}):")
+                for j, it in enumerate(hit_items[:PREVIEW_ITEMS_MAX], start=1):
+                    tid = it.get("id") or ""
+                    tl = (it.get("title") or "").strip()
+                    st = (it.get("subtitle") or "").strip()
+                    sub = f" | {st}" if st else ""
+                    print(f"    {j:2}. {tid}  {tl}{sub}")
+                while True:
+                    p_sel = input(
+                        "  [s] Google Images | or type category substring to search: "
+                    ).strip()
+                    if not p_sel:
+                        break  # back to main prompt
+                    if p_sel.lower() == "s":
+                        raw_pick = input("  Item # to open in Google Images: ").strip()
+                        if raw_pick.isdigit():
+                            idx = int(raw_pick) - 1
+                            picked = hit_items[idx] if 0 <= idx < len(hit_items) else None
+                            if isinstance(picked, dict):
+                                tl = (picked.get("title") or "").strip()
+                                st = (picked.get("subtitle") or "").strip()
+                                search_str = f"{tl} | {st}" if tl and st else tl or st or ""
+                            else:
+                                search_str = " ".join(str(w) for w in bigram_display)
+                            if copy_to_clipboard(search_str):
+                                print(f"  Copied: {search_str!r}")
+                            if open_google_images_in_chrome(search_str):
+                                print("  Opened Google Images in Chrome.")
+                            else:
+                                print(f"  URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch")
+                        else:
+                            print("  Enter a valid item number.")
+                        continue  # stay in preview loop
+                    else:
+                        first_search = p_sel
+                        break  # exit preview loop → jump to leaf search
+                continue  # re-enters outer while if first_search still None
             else:
                 first_search = pre
 
@@ -938,12 +1066,79 @@ def main() -> None:
                     print(f"        {dn}")
 
             sel = input(
-                "  [#] assign | [o] Other | [text] narrow | [n]/[n <text>] new search | "
-                "[Enter] skip bigram: "
+                "  [#] assign | [o] Other | [i] insert | [s] Google Images | [c] copy | [text] narrow | "
+                "[n]/[n <text>] new search | [Enter] skip bigram: "
             ).strip()
 
             if not sel:
                 break
+
+            if sel.lower() == "i":
+                new_leaf = interact_insert_new_category(categories, TAXONOMY_PATH)
+                if new_leaf is not None:
+                    raw_rows[:] = collect_leaf_rows(categories)
+                    other_rows[:] = collect_other_bucket_leaves(raw_rows)
+                    search_rows[:] = [r for r in raw_rows if not is_catch_all_bucket_slug(r.get("leaf_slug"))]
+                    hits = filter_leaves(search_rows, first_search) if first_search else hits
+                    print(f"  New leaf available: {new_leaf['leaf_path']}")
+                    if yn_prompt(f"  Assign this bigram to '{new_leaf['leaf_path']}'?", default=True):
+                        assign_bigram_to_leaf(
+                            new_leaf,
+                            hit_items=hit_items,
+                            bigram_display=list(bigram_display),
+                            pk=pk,
+                            out_path=out_path,
+                            in_path=in_path,
+                            assignments=assignments,
+                            matches=matches,
+                            unknown_bigrams=unknown_bigrams,
+                            already_matched_ids=already_matched_ids,
+                            done_pairs=done_pairs,
+                            extra_assignment={"inserted_by_user": True},
+                        )
+                        print(f"  Assigned {len(hit_items)} item(s) → {new_leaf['leaf_path']} (saved)")
+                        print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                        last_action = {"type": "assign", "chosen": new_leaf}
+                        advance_bigram = True
+                        break
+                continue
+
+            if sel.lower() == "s":
+                n_show = min(PREVIEW_ITEMS_MAX, len(hit_items))
+                print(f"  Items ({n_show} of {len(hit_items)}):")
+                for j, it in enumerate(hit_items[:PREVIEW_ITEMS_MAX], start=1):
+                    tid = it.get("id") or ""
+                    tl = (it.get("title") or "").strip()
+                    st = (it.get("subtitle") or "").strip()
+                    sub = f" | {st}" if st else ""
+                    print(f"    {j:2}. {tid}  {tl}{sub}")
+                raw_pick = input("  Item # to open in Google Images: ").strip()
+                if raw_pick.isdigit():
+                    idx = int(raw_pick) - 1
+                    picked = hit_items[idx] if 0 <= idx < len(hit_items) else None
+                    if isinstance(picked, dict):
+                        tl = (picked.get("title") or "").strip()
+                        st = (picked.get("subtitle") or "").strip()
+                        search_str = f"{tl} | {st}" if tl and st else tl or st or ""
+                    else:
+                        search_str = " ".join(str(w) for w in bigram_display)
+                    if copy_to_clipboard(search_str):
+                        print(f"  Copied: {search_str!r}")
+                    if open_google_images_in_chrome(search_str):
+                        print("  Opened Google Images in Chrome.")
+                    else:
+                        print(f"  URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch")
+                else:
+                    print("  Enter a valid item number.")
+                continue
+
+            if sel.lower() == "c":
+                bigram_text = " ".join(str(w) for w in bigram_display)
+                if copy_to_clipboard(bigram_text):
+                    print(f"  Copied: {bigram_text!r}")
+                else:
+                    print(f"  (Clipboard unavailable.) Bigram: {bigram_text!r}")
+                continue
 
             if sel.lower() == "o":
                 kind, chosen_other = interact_pick_other_leaf(other_rows)
@@ -963,6 +1158,7 @@ def main() -> None:
                     print(
                         f"  Marked unknown (saved); {len(hit_items)} item(s) still unmatched."
                     )
+                    last_action = {"type": "unknown"}
                     advance_bigram = True
                     break
                 assert chosen_other is not None
@@ -983,6 +1179,8 @@ def main() -> None:
                 print(
                     f"  Assigned {len(hit_items)} item(s) → {chosen_other['leaf_path']} (saved) [Other]"
                 )
+                print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                last_action = {"type": "assign", "chosen": chosen_other}
                 advance_bigram = True
                 break
 
@@ -1006,6 +1204,8 @@ def main() -> None:
                     done_pairs=done_pairs,
                 )
                 print(f"  Assigned {len(hit_items)} item(s) → {chosen['leaf_path']} (saved)")
+                print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
+                last_action = {"type": "assign", "chosen": chosen}
                 break
 
             low = sel.lower()

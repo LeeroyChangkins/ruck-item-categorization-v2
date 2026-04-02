@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import random
 import re
 import subprocess
 import sys
@@ -35,6 +36,18 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import is_catch_all_bucket_slug
 from pipeline_paths import glob_step1_outputs
+from shared_utils import timestamp
+from interactive_helpers import (
+    copy_to_clipboard,
+    open_google_images_in_chrome,
+    collect_leaf_rows,
+    filter_leaves,
+    filter_hits_narrow,
+    collect_other_bucket_leaves,
+    interact_pick_other_leaf,
+    interact_insert_new_category,
+    yn_prompt,
+)
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
@@ -46,74 +59,10 @@ MANUAL_VERSION = "1.6-manual-similar-title"
 _step15_dedup_cache: dict | None = None
 
 
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
 
 
-def collect_leaf_rows(categories: dict) -> List[Dict[str, str]]:
-    rows: List[Dict[str, str]] = []
-    roots = ["materials", "tools_and_gear", "services"]
-
-    def walk(node: Any, prefix: List[str]) -> None:
-        if not isinstance(node, dict):
-            return
-        slug = node.get("slug")
-        subs = node.get("subcategories") or []
-        dn = (node.get("display_name") or "").strip()
-
-        if slug is not None:
-            here = prefix + [slug]
-        else:
-            here = prefix
-
-        if not subs:
-            if slug is not None:
-                lp = "/".join(here)
-                hay = f"{lp} {slug} {dn}".lower()
-                rows.append(
-                    {
-                        "leaf_path": lp,
-                        "leaf_slug": slug,
-                        "display_name": dn,
-                        "_hay": hay,
-                    }
-                )
-            return
-        for child in subs:
-            walk(child, here)
-
-    for root in roots:
-        root_obj = categories.get(root)
-        if not isinstance(root_obj, dict):
-            continue
-        for child in root_obj.get("subcategories", []):
-            walk(child, [root])
-
-    rows.sort(key=lambda r: r["leaf_path"])
-    return rows
 
 
-def filter_leaves(leaves: List[Dict[str, str]], query: str) -> List[Dict[str, str]]:
-    q = query.strip().lower()
-    if not q:
-        return []
-    return [r for r in leaves if q in r["_hay"]]
-
-
-def filter_hits_narrow(hits: List[Dict[str, str]], query: str) -> List[Dict[str, str]]:
-    q = query.strip().lower()
-    if not q:
-        return hits
-    return [h for h in hits if q in h.get("_hay", "")]
-
-
-def collect_other_bucket_leaves(raw_rows: List[Dict[str, str]]) -> List[Dict[str, str]]:
-    """Catch-all bucket leaves: slug `other` (per domain) plus materials top-level `miscellaneous`."""
-    return [
-        r
-        for r in raw_rows
-        if r.get("leaf_slug") == "other" or r.get("leaf_slug") == "miscellaneous"
-    ]
 
 
 def assign_group_to_leaf(
@@ -204,38 +153,6 @@ def undo_group_decision(
     done_g.discard(gid)
     for iid in item_ids_in_group:
         already_matched_ids.discard(iid)
-
-
-def interact_pick_other_leaf(other_rows: List[Dict[str, str]]) -> tuple[str, Dict[str, str] | None]:
-    """
-    Prompt user to pick an Other bucket leaf.
-    Returns ("assign", row) | ("unknown", None) | ("skip", None).
-    Enter = skip matching entirely (no assign, no unknown; group/bigram stays unmatched for later).
-    """
-    if not other_rows:
-        print("  (No Other leaves in taxonomy; add them in categories_v1.json.)")
-        return ("skip", None)
-    print(f"  Other buckets ({len(other_rows)}) — pick a catch-all leaf:")
-    for i, h in enumerate(other_rows, start=1):
-        dn = h.get("display_name") or ""
-        print(f"    {i:3}) {h['leaf_path']}")
-        if dn:
-            print(f"        {dn}")
-    while True:
-        pick = input(
-            "  [#] assign here | [Enter] skip (no category) | [x] mark unknown (saved): "
-        ).strip()
-        if not pick:
-            return ("skip", None)
-        if pick.lower() == "x":
-            return ("unknown", None)
-        if re.fullmatch(r"\d+", pick):
-            n = int(pick)
-            if 1 <= n <= len(other_rows):
-                return ("assign", other_rows[n - 1])
-            print("  Out of range.")
-            continue
-        print("  Enter a number, Enter, or x.")
 
 
 def find_latest_groups_file() -> Path | None:
@@ -593,73 +510,6 @@ def write_manual_snapshot(
     ua_path.write_text(json.dumps(ua_payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
 
-def copy_to_clipboard(text: str) -> bool:
-    """Best-effort clipboard (macOS pbcopy; elsewhere may fail)."""
-    try:
-        if sys.platform == "darwin":
-            subprocess.run(["pbcopy"], input=text.encode("utf-8"), check=True)
-            return True
-    except (OSError, subprocess.SubprocessError, ValueError):
-        pass
-    return False
-
-
-_chrome_search_window_opened: bool = False  # track if we've opened our search window yet
-
-
-def open_google_images_in_chrome(query: str) -> bool:
-    """Open or reuse a single Chrome window for Google Images searches (macOS).
-
-    First call: opens a new Chrome window at the search URL.
-    Subsequent calls: updates the URL in that same window's active tab.
-    After navigating, returns focus to Terminal / iTerm2.
-    """
-    global _chrome_search_window_opened
-    url = f"https://www.google.com/search?q={quote_plus(query)}&tbm=isch"
-
-    if sys.platform != "darwin":
-        return False
-
-    try:
-        if not _chrome_search_window_opened:
-            # Open a fresh Chrome window
-            script = f'''
-tell application "Google Chrome"
-    make new window
-    set URL of active tab of front window to "{url}"
-    activate
-end tell
-'''
-        else:
-            # Reuse the existing front Chrome window's active tab
-            script = f'''
-tell application "Google Chrome"
-    set URL of active tab of front window to "{url}"
-    activate
-end tell
-'''
-        subprocess.run(["osascript", "-e", script], check=False, capture_output=True)
-        _chrome_search_window_opened = True
-
-        # Return focus to Terminal / iTerm2
-        focus_script = '''
-tell application "System Events"
-    set termApps to {"Terminal", "iTerm2", "iTerm"}
-    repeat with appName in termApps
-        if exists application process appName then
-            set frontmost of application process appName to true
-            exit repeat
-        end if
-    end repeat
-end tell
-'''
-        subprocess.run(["osascript", "-e", focus_script], check=False, capture_output=True)
-        return True
-    except OSError:
-        pass
-    return False
-
-
 def master_title_clipboard_actions(master_title: str, which: str) -> None:
     """which: 'c' = copy only, 's' = copy + open Google Images in Chrome."""
     w = which.lower()
@@ -683,177 +533,6 @@ def master_title_clipboard_actions(master_title: str, which: str) -> None:
             )
 
 
-def _make_slug(name: str) -> str:
-    """Slugify a display name: lowercase, non-alphanumeric runs → underscore, trim underscores."""
-    s = re.sub(r"[^a-z0-9]+", "_", name.lower().strip())
-    return s.strip("_")
-
-
-def interact_insert_new_category(
-    categories: dict,
-    taxonomy_path: Path,
-) -> Dict[str, str] | None:
-    """
-    Interactive wizard to create a new leaf category in the taxonomy.
-
-    Navigation rules:
-      - Level 0 (master: materials / tools_and_gear / services): select only, no creation.
-      - Level 1 (tier-1 nodes under master): navigate only, no creation.
-      - Level 2+ (tier-2 and deeper): [c] create new category here, [b] back.
-
-    On creation:
-      - Slugifies the display name and checks for uniqueness among siblings.
-      - Inserts the new node into the in-memory `categories` dict (mutates caller's dict).
-      - Writes categories_v1.json immediately (atomic via .tmp).
-
-    Returns the new leaf's row dict (leaf_path, leaf_slug, display_name, _hay),
-    or None if the user cancelled at any point.
-    """
-    ROOT_KEYS = ("materials", "tools_and_gear", "services")
-
-    # ── Level 0: pick master ───────────────────────────────────────────────────
-    roots = [
-        (k, categories[k].get("display_name") or k)
-        for k in ROOT_KEYS
-        if isinstance(categories.get(k), dict)
-    ]
-    print("\n  ── Insert new category ───────────────────────────────────────────")
-    print("  Select master category:")
-    for i, (k, dn) in enumerate(roots, 1):
-        print(f"    [{i}]  {dn}  ({k})")
-    print("    [Enter]  cancel")
-    while True:
-        r = input("  → ").strip()
-        if not r:
-            print("  Cancelled.")
-            return None
-        if r.isdigit() and 1 <= int(r) <= len(roots):
-            root_key, _ = roots[int(r) - 1]
-            break
-        print("  Enter a number or Enter to cancel.")
-
-    # ── Level 1+: navigate the tree ───────────────────────────────────────────
-    node_stack: List[dict] = [categories[root_key]]
-    slug_stack: List[str] = [root_key]
-
-    while True:
-        current = node_stack[-1]
-        current_path = "/".join(slug_stack)
-        depth = len(slug_stack)  # 1 = at root node, 2 = inside tier-1, etc.
-        can_create = depth >= 2
-
-        children = [
-            c for c in (current.get("subcategories") or [])
-            if isinstance(c, dict) and c.get("slug")
-        ]
-
-        print(f"\n  /{current_path}/")
-        if children:
-            for i, child in enumerate(children, 1):
-                n_sub = sum(
-                    1 for c in (child.get("subcategories") or [])
-                    if isinstance(c, dict) and c.get("slug")
-                )
-                dn = child.get("display_name") or child["slug"]
-                tag = f"({n_sub} sub)" if n_sub else "[leaf]"
-                print(f"    [{i:3}]  {child['slug']}  —  {dn}  {tag}")
-        else:
-            print("    (no subcategories yet)")
-
-        if can_create:
-            print(f"    [c]    Create new category under /{current_path}/")
-        back_target = "/".join(slug_stack[:-1]) if len(slug_stack) > 1 else "root selection"
-        print(f"    [b]    Back  (→ /{back_target}/)")
-        print("    [Enter] Cancel")
-
-        sel = input("  → ").strip()
-
-        if not sel:
-            print("  Cancelled.")
-            return None
-
-        if sel.lower() == "b":
-            if len(slug_stack) == 1:
-                # Back to root selection — restart the whole wizard
-                return interact_insert_new_category(categories, taxonomy_path)
-            node_stack.pop()
-            slug_stack.pop()
-            continue
-
-        if sel.lower() == "c" and can_create:
-            existing_slugs = {
-                c["slug"] for c in children
-                if isinstance(c, dict) and c.get("slug")
-            }
-            while True:
-                name = input(f"\n  Display name for new category under /{current_path}/: ").strip()
-                if not name:
-                    print("  Cancelled.")
-                    return None
-                slug = _make_slug(name)
-                if not slug:
-                    print("  Could not generate a valid slug from that name — try again.")
-                    continue
-                if slug in existing_slugs:
-                    print(f"  Error: slug '{slug}' already exists at this level. Use a different name.")
-                    continue
-                new_path = f"{current_path}/{slug}"
-                print(f"\n  Will create:  {new_path}")
-                print(f"  Display name: {name!r}")
-                confirm = input("  Confirm? [Y/n] ").strip().lower()
-                if confirm in ("n", "no"):
-                    print("  Discarded — try again.")
-                    continue
-                break
-
-            new_node: dict = {"slug": slug, "display_name": name, "subcategories": []}
-            if not isinstance(current.get("subcategories"), list):
-                current["subcategories"] = []
-            current["subcategories"].append(new_node)
-
-            # Write to file immediately (atomic)
-            tmp = taxonomy_path.with_suffix(".json.tmp")
-            tmp.write_text(
-                json.dumps(categories, indent=2, ensure_ascii=False) + "\n",
-                encoding="utf-8",
-            )
-            tmp.replace(taxonomy_path)
-            print(f"  Saved → {taxonomy_path.name}  ({new_path})")
-
-            hay = f"{new_path} {slug} {name}".lower()
-            return {
-                "leaf_path": new_path,
-                "leaf_slug": slug,
-                "display_name": name,
-                "_hay": hay,
-            }
-
-        if sel.isdigit():
-            n = int(sel)
-            if 1 <= n <= len(children):
-                child = children[n - 1]
-                node_stack.append(child)
-                slug_stack.append(child["slug"])
-                continue
-            print("  Out of range.")
-            continue
-
-        opts = "[c] / " if can_create else ""
-        print(f"  Enter a number, {opts}[b], or Enter to cancel.")
-
-
-def yn_prompt(prompt: str, default: bool = True) -> bool:
-    hint = "Y/n" if default else "y/N"
-    while True:
-        ans = input(f"{prompt} [{hint}] ").strip().lower()
-        if not ans:
-            return default
-        if ans in ("y", "yes"):
-            return True
-        if ans in ("n", "no"):
-            return False
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(description="Interactive similar-title group → leaf (1.6).")
     parser.add_argument(
@@ -864,6 +543,11 @@ def main() -> None:
     parser.add_argument("--resume-from", metavar="PATH", help="Continue this 1.6 manual JSON.")
     parser.add_argument("--fresh-run", action="store_true", help="Start a new manual file; no auto-resume.")
     parser.add_argument("--force-mismatch", action="store_true", help="Allow resume when groups_source differs.")
+    parser.add_argument(
+        "--auto-random",
+        action="store_true",
+        help="Speed-run mode: randomly assign every group to a leaf without prompting.",
+    )
     args = parser.parse_args()
 
     if args.resume_from and args.fresh_run:
@@ -906,7 +590,7 @@ def main() -> None:
         )
         if len(done_g) > 0:
             review_skipped = yn_prompt(
-                "Also review groups already marked assigned or unknown (confirm or change)?",
+                "Also review groups marked unknown (confirm or re-categorize)?",
                 default=False,
             )
     elif args.fresh_run:
@@ -936,7 +620,7 @@ def main() -> None:
                 print(f"Resuming: {len(done_g)}/{_total} group(s) already decided, {_total - len(done_g)} remaining.")
                 if len(done_g) > 0:
                     review_skipped = yn_prompt(
-                        "Also review groups already marked assigned or unknown (confirm or change)?",
+                        "Also review groups marked unknown (confirm or re-categorize)?",
                         default=False,
                     )
             else:
@@ -946,10 +630,43 @@ def main() -> None:
             out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
             print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
 
+    # ── Auto-random speed-run mode ─────────────────────────────────────────────
+    if args.auto_random:
+        if not search_rows:
+            raise SystemExit("No leaf categories found in taxonomy — cannot auto-assign.")
+        assigned = 0
+        for row in groups:
+            gid = row.get("group_id")
+            if not isinstance(gid, str) or not gid or gid in done_g:
+                continue
+            master_title = row.get("master_title") or ""
+            items_in_group = row.get("items") or []
+            chosen = random.choice(search_rows)
+            n = assign_group_to_leaf(
+                gid=gid,
+                master_title=master_title,
+                items_in_group=items_in_group,
+                chosen=chosen,
+                out_path=out_path,
+                groups_path=groups_path,
+                group_assignments=group_assignments,
+                unknown_groups=unknown_groups,
+                item_matches=item_matches,
+                done_g=done_g,
+                already_matched_ids=already_matched_ids,
+            )
+            assigned += n
+        write_manual_snapshot(out_path, groups_path, group_assignments, unknown_groups, item_matches)
+        print(
+            f"[auto-random] Assigned {len(group_assignments)} group(s), "
+            f"{assigned} item(s) → {out_path.relative_to(ROOT)}"
+        )
+        return
+
     print(
         f"\n{len(groups)} group(s), {len(search_rows)} leaves for search ({len(other_rows)} catch-all via [o] only). "
         "[Enter]=skip | [o] Other | [x] unknown | [i] insert new category | "
-        "[c] copy | [s] preview + Google Images | else substring searches leaves.\n"
+        "[c] copy | [p] preview items (→ [s] Google Images or type substring) | else substring searches leaves.\n"
     )
 
     # {"type": "assign", "chosen": <leaf dict>} | {"type": "unknown"} | {"type": "skip"}
@@ -963,15 +680,13 @@ def main() -> None:
             continue
         remaining = len(groups) - ki
         if gid in done_g:
-            if not review_skipped:
-                print("\n" + "─" * 72 + "\n")
-                print(f"[{ki}/{len(groups)}  {remaining} remaining] group {gid!r} — skipped (already decided).")
+            is_unknown = any(isinstance(x, dict) and x.get("group_id") == gid for x in unknown_groups)
+            if not review_skipped or not is_unknown:
                 continue
             master_title_r = row.get("master_title") or ""
             items_in_group_r = row.get("items") or []
             item_ids_r = item_ids_from_group_items(items_in_group_r)
             ga_row = next((x for x in group_assignments if x.get("group_id") == gid), None)
-            is_unknown = any(isinstance(x, dict) and x.get("group_id") == gid for x in unknown_groups)
             print("\n" + "─" * 72 + "\n")
             print(
                 f"[{ki}/{len(groups)}  {remaining} remaining] REVIEW group={gid!r}  "
@@ -1019,7 +734,7 @@ def main() -> None:
                 r_hint = ""
             pre = input(
                 "  [Enter] skip | [o] Other | [x] unknown | [i] insert category | "
-                f"[c] copy | [s] preview + Google Images{r_hint} | or substring: "
+                f"[c] copy | [p] preview{r_hint} | or substring: "
             ).strip()
             if not pre:
                 first_search = ""
@@ -1096,39 +811,51 @@ def main() -> None:
             elif pre.lower() == "c":
                 master_title_clipboard_actions(master_title, "c")
                 continue
-            elif pre.lower() == "s":
+            elif pre.lower() == "p":
                 n_show = min(PREVIEW_ITEMS_MAX, len(items_in_group))
-                print(f"  Items ({n_show} of {len(items_in_group)}) — enter # to search Google Images, Enter to go back:")
+                print(f"  Items ({n_show} of {len(items_in_group)}):")
                 for j, it in enumerate(items_in_group[:PREVIEW_ITEMS_MAX], start=1):
                     tid = (it.get("id") or "") if isinstance(it, dict) else ""
                     tl = (it.get("title") or "").strip() if isinstance(it, dict) else ""
                     st = (it.get("subtitle") or "").strip() if isinstance(it, dict) else ""
                     sub = f" | {st}" if st else ""
                     print(f"    {j:2}. {tid}  {tl}{sub}")
-                raw_pick = input("  Item #: ").strip()
-                if not raw_pick:
-                    continue
-                if raw_pick.isdigit():
-                    idx = int(raw_pick) - 1
-                    picked = items_in_group[idx] if 0 <= idx < len(items_in_group) else None
-                    if isinstance(picked, dict):
-                        tl = (picked.get("title") or "").strip()
-                        st = (picked.get("subtitle") or "").strip()
-                        search_str = f"{tl} | {st}" if tl and st else tl or st or master_title
+                # Inner preview loop: [s] for Google Images, substring to jump to category
+                # search, or Enter to go back to the main prompt.
+                while True:
+                    p_sel = input(
+                        "  [s] Google Images | or type category substring to search: "
+                    ).strip()
+                    if not p_sel:
+                        break  # back to main prompt, first_search stays None
+                    if p_sel.lower() == "s":
+                        raw_pick = input("  Item # to open in Google Images: ").strip()
+                        if raw_pick.isdigit():
+                            idx = int(raw_pick) - 1
+                            picked = items_in_group[idx] if 0 <= idx < len(items_in_group) else None
+                            if isinstance(picked, dict):
+                                tl = (picked.get("title") or "").strip()
+                                st = (picked.get("subtitle") or "").strip()
+                                search_str = f"{tl} | {st}" if tl and st else tl or st or master_title
+                            else:
+                                search_str = master_title
+                            if copy_to_clipboard(search_str):
+                                print(f"  Copied to clipboard: {search_str!r}")
+                            if open_google_images_in_chrome(search_str):
+                                print("  Opened Google Images in Chrome.")
+                            else:
+                                print(
+                                    "  Could not open Chrome (macOS + Google Chrome expected). "
+                                    f"URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch"
+                                )
+                        else:
+                            print("  Enter a valid item number.")
+                        continue  # stay in preview loop (search another or type substring)
                     else:
-                        search_str = master_title
-                    if copy_to_clipboard(search_str):
-                        print(f"  Copied to clipboard: {search_str!r}")
-                    if open_google_images_in_chrome(search_str):
-                        print("  Opened Google Images in Chrome.")
-                    else:
-                        print(
-                            "  Could not open Chrome (macOS + Google Chrome expected). "
-                            f"URL: https://www.google.com/search?q={quote_plus(search_str)}&tbm=isch"
-                        )
-                else:
-                    print("  Invalid number; returning to prompt.")
-                continue
+                        # Treat as category substring — exit preview and jump to leaf search
+                        first_search = p_sel
+                        break
+                continue  # re-enters outer while if first_search still None (Enter was pressed)
             elif pre.lower() == "r":
                 if last_action is None:
                     print("  No previous action to repeat.")

@@ -3,12 +3,12 @@
 6_db_import.py
 
 DB push and pull module for v2 marketplace categorization data.
-Designed to be imported by 5_upload_to_db.py; contains no interactive prompts.
+Designed to be imported by 6_upload_to_db.py; contains no interactive prompts.
 
 v2 differences from v1:
   - Taxonomy loaded from source-files/categories_v1.json (recursive tree, not tier1/tier2/tier3 keyed JSON)
   - Item mappings loaded from step-4/outputs/<run_id>/matched_deduped.json (not CSVs)
-  - No attribute or unit support — v2 pipeline does not produce attribute values
+  - Attribute upload not yet implemented — step-5 proposed_attributes.json is generated but not pushed here
 
 Push tables (in dependency order):
   1. marketplace_categories

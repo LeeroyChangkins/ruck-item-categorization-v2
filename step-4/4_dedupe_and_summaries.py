@@ -31,6 +31,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from collections import Counter
 from datetime import datetime
 from pathlib import Path
@@ -38,6 +39,8 @@ from typing import Any, Dict, List, Set, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]  # v2/
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 STEP14_OUT = ROOT / "step-3" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 DEFAULT_TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
@@ -62,8 +65,7 @@ def resolve_taxonomy_path(m_data: dict) -> Path:
     return DEFAULT_TAXONOMY_PATH
 
 
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+from shared_utils import timestamp  # noqa: E402
 
 
 def match_row_tier(row: dict) -> int:

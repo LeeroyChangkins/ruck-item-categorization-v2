@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-5_validate.py
+6_validate.py
 
 Validate v2 categorization artifacts before DB import.
 
@@ -10,7 +10,7 @@ Checks:
   - No duplicate item IDs in matched_deduped.json
   - All item rows have a non-empty id and leaf_path
 
-Can be run standalone or called as a module from 5_upload_to_db.py.
+Can be run standalone or called as a module from 6_upload_to_db.py.
 """
 
 from __future__ import annotations

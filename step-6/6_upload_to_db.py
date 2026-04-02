@@ -52,18 +52,9 @@ def _import_sibling(module_name: str, filename: str):
     spec.loader.exec_module(mod)
     return mod
 
-_env_file = ROOT / ".env"
-if _env_file.exists():
-    try:
-        from dotenv import load_dotenv
-        load_dotenv(_env_file)
-    except ImportError:
-        for _line in _env_file.read_text().splitlines():
-            _line = _line.strip()
-            if _line and not _line.startswith("#") and "=" in _line:
-                _k, _v = _line.split("=", 1)
-                if _v and not os.environ.get(_k.strip()):
-                    os.environ[_k.strip()] = _v.strip()
+sys.path.insert(0, str(ROOT))
+from shared_utils import load_dotenv_file as _load_dotenv_file
+_load_dotenv_file()
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 

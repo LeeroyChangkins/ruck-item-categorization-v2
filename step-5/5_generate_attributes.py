@@ -54,6 +54,7 @@ import argparse
 import asyncio
 import json
 import os
+import shutil
 import random
 import sys
 import time
@@ -66,7 +67,7 @@ STEP5_DIR = Path(__file__).resolve().parent
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 OUTDIR = STEP5_DIR / "outputs"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-ENV_PATH = ROOT / ".env"
+from shared_utils import load_dotenv_file as _load_dotenv_file, timestamp as _timestamp
 
 DEFAULT_MODEL = "gpt-4o"
 DEFAULT_BATCH_SIZE = 5
@@ -77,12 +78,7 @@ DEFAULT_SAMPLE = 50
 # ── env / deps ─────────────────────────────────────────────────────────────────
 
 def _load_env() -> None:
-    if ENV_PATH.exists():
-        try:
-            from dotenv import load_dotenv
-            load_dotenv(ENV_PATH)
-        except ImportError:
-            pass
+    _load_dotenv_file()
 
 
 def _require_openai():
@@ -341,34 +337,70 @@ async def generate(
 
     category_attributes: dict[str, list[dict]] = {}
     units: dict[str, dict] = {}
-    done = 0
-    errors = 0
+    cats_matched = 0
+    cats_failed = 0
+    batch_times: list[float] = []
 
-    # tqdm optional
     try:
-        from tqdm.asyncio import tqdm as atqdm
-        use_tqdm = True
+        from tqdm import tqdm as _tqdm
+        use_tqdm = sys.stderr.isatty()
     except ImportError:
         use_tqdm = False
 
-    async def process_batch(batch):
-        nonlocal done, errors
-        result = await _call_llm(client, model, batch, semaphore)
-        if result:
-            _merge_result(result, category_attributes, units)
-        else:
-            errors += 1
-        done += len(batch)
-
-    tasks = [process_batch(b) for b in batches]
-
+    pbar = None
     if use_tqdm:
-        await atqdm.gather(*tasks, desc="  batches", unit="batch", total=total_batches)
-    else:
-        start = time.time()
-        await asyncio.gather(*tasks)
-        elapsed = time.time() - start
-        print(f"  Done in {elapsed:.1f}s — {done} categories, {errors} batch errors")
+        pbar = _tqdm(
+            total=total_batches,
+            desc="5 attr gen",
+            unit="batch",
+            file=sys.stderr,
+            dynamic_ncols=True,
+            bar_format="{desc}: {percentage:3.0f}%|{bar}| {n_fmt}/{total_fmt} [{elapsed}]{postfix}",
+        )
+
+    lock = asyncio.Lock()
+
+    async def process_batch(batch):
+        nonlocal cats_matched, cats_failed
+        t0 = time.monotonic()
+        result = await _call_llm(client, model, batch, semaphore)
+        elapsed_b = time.monotonic() - t0
+
+        async with lock:
+            if result:
+                _merge_result(result, category_attributes, units)
+                cats_matched += len(batch)
+            else:
+                cats_failed += len(batch)
+            batch_times.append(elapsed_b)
+
+            if pbar:
+                batches_done = len(batch_times)
+                batches_remaining = total_batches - batches_done
+                avg = sum(batch_times) / batches_done
+                eta_secs = avg * batches_remaining
+                if eta_secs >= 60:
+                    eta_str = f"{int(eta_secs // 60)}m {int(eta_secs % 60)}s"
+                else:
+                    eta_str = f"{int(eta_secs)}s"
+                pbar.set_postfix_str(
+                    f"{cats_matched} done  {cats_failed} failed  ~{eta_str} left",
+                    refresh=True,
+                )
+                pbar.update(1)
+            else:
+                batches_done = len(batch_times)
+                status = "ok" if result else "FAILED"
+                print(f"  Batch {batches_done}/{total_batches}: {len(batch)} categories [{status}]"
+                      f"  total done={cats_matched} failed={cats_failed}")
+
+    await asyncio.gather(*[process_batch(b) for b in batches])
+
+    if pbar:
+        pbar.close()
+
+    total_elapsed = sum(batch_times)
+    print(f"\n  Done in {total_elapsed:.1f}s — {cats_matched} categories attributed, {cats_failed} failed")
 
     return category_attributes, units
 
@@ -445,7 +477,7 @@ def main() -> None:
 
     # ── write output
     OUTDIR.mkdir(parents=True, exist_ok=True)
-    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    ts = _timestamp()
     out_path = OUTDIR / f"proposed_attributes_{ts}.json"
 
     output = {
@@ -474,6 +506,30 @@ def main() -> None:
     if no_attr:
         print(f"  {len(no_attr)} leaves with no attributes generated "
               f"(no items? API errors?)")
+
+    # ── consolidate final outputs into final-output/<timestamp>/
+    final_dir = ROOT / "final-output" / ts
+    final_dir.mkdir(parents=True, exist_ok=True)
+
+    shutil.copy2(out_path, final_dir / "proposed_attributes.json")
+    shutil.copy2(TAXONOMY_PATH, final_dir / "categories_v1.json")
+
+    # Find latest matched_deduped.json from step 4
+    step4_matched = sorted(
+        (ROOT / "step-4" / "outputs").glob("**/matched_deduped.json"),
+        key=lambda p: p.stat().st_mtime,
+    )
+    if step4_matched:
+        shutil.copy2(step4_matched[-1], final_dir / "matched_deduped.json")
+        print(f"\nFinal outputs consolidated → final-output/{ts}/")
+        print(f"  proposed_attributes.json")
+        print(f"  matched_deduped.json  (from {step4_matched[-1].parent.name})")
+        print(f"  categories_v1.json")
+    else:
+        print(f"\nFinal outputs consolidated → final-output/{ts}/")
+        print(f"  proposed_attributes.json")
+        print(f"  categories_v1.json")
+        print(f"  (matched_deduped.json not found — run step 4 first)")
 
 
 if __name__ == "__main__":

@@ -279,45 +279,50 @@ def import_units(cur: Any, units: dict[str, dict]) -> dict[str, str]:
     Insert attribute units from proposed_attributes.json.
     Skips units that already exist (matched by symbol).
     Returns symbol → id map.
+    Uses batch insert for performance.
     """
     if DRY_RUN:
         print(f"  [units] would ensure {len(units)} units are present")
         return {sym: f"<dry:{sym}>" for sym in units}
 
     symbol_to_id = {}
-    inserted_count = 0
-    skipped_count = 0
-
-    with tqdm(units.items(), desc="  units", unit="unit", leave=False) as bar:
-        for symbol, unit_data in bar:
-            bar.set_postfix_str(symbol)
-
-            cur.execute(
-                "SELECT id FROM marketplace_attribute_units WHERE symbol = %s AND deleted_at IS NULL",
-                (symbol,),
-            )
-            existing_row = cur.fetchone()
-            if existing_row:
-                symbol_to_id[symbol] = existing_row[0]
-                skipped_count += 1
-            else:
-                cur.execute(
-                    """
-                    INSERT INTO marketplace_attribute_units (symbol, name, description, value_type)
-                    VALUES (%s, %s, %s, %s)
-                    RETURNING id
-                    """,
-                    (
-                        symbol,
-                        unit_data.get("name", symbol),
-                        unit_data.get("description", ""),
-                        unit_data.get("value_type", "number"),
-                    ),
-                )
-                symbol_to_id[symbol] = cur.fetchone()[0]
-                inserted_count += 1
-
-    tqdm.write(f"  [units] {skipped_count} already existed, {inserted_count} inserted")
+    
+    # First, fetch all existing units
+    cur.execute(
+        "SELECT symbol, id FROM marketplace_attribute_units WHERE deleted_at IS NULL"
+    )
+    for symbol, unit_id in cur.fetchall():
+        symbol_to_id[symbol] = unit_id
+    
+    # Prepare new units for batch insert
+    new_units = []
+    for symbol, unit_data in units.items():
+        if symbol not in symbol_to_id:
+            new_units.append((
+                symbol,
+                unit_data.get("name", symbol),
+                unit_data.get("description", ""),
+                unit_data.get("value_type", "number"),
+            ))
+    
+    # Batch insert new units
+    if new_units:
+        tqdm.write(f"  Batch inserting {len(new_units)} new units...")
+        execute_values(
+            cur,
+            """
+            INSERT INTO marketplace_attribute_units (symbol, name, description, value_type)
+            VALUES %s
+            RETURNING symbol, id
+            """,
+            new_units,
+            fetch=True,
+        )
+        for symbol, unit_id in cur.fetchall():
+            symbol_to_id[symbol] = unit_id
+    
+    skipped_count = len(units) - len(new_units)
+    tqdm.write(f"  [units] {skipped_count} already existed, {len(new_units)} inserted")
     return symbol_to_id
 
 
@@ -335,6 +340,7 @@ def import_attributes(
     """
     Insert category attributes from proposed_attributes.json.
     Skips attributes that already exist (matched by category_id + key).
+    Uses batch insert for performance.
     """
     total_attrs = sum(len(attrs) for attrs in category_attributes.values())
 
@@ -345,60 +351,58 @@ def import_attributes(
             print(f"  WARNING: {len(missing_cats)} category paths not in DB (would skip). Sample: {missing_cats[:5]}")
         return
 
-    inserted_count = 0
-    skipped_count = 0
     missing_cats: list[str] = []
     missing_units: list[str] = []
 
-    all_attrs = [
-        (cat_path, attr)
-        for cat_path, attrs in category_attributes.items()
-        for attr in attrs
-    ]
+    # First, fetch all existing attributes
+    cur.execute(
+        "SELECT category_id, key FROM marketplace_attributes WHERE deleted_at IS NULL"
+    )
+    existing_attrs = {(cat_id, key) for cat_id, key in cur.fetchall()}
 
-    with tqdm(all_attrs, desc="  attributes", unit="attr", leave=False) as bar:
-        for cat_path, attr in bar:
-            cat_id = path_to_id.get(cat_path)
-            if not cat_id:
-                if cat_path not in missing_cats:
-                    missing_cats.append(cat_path)
-                bar.update(1)
+    # Prepare new attributes for batch insert
+    new_attrs = []
+    for cat_path, attrs in category_attributes.items():
+        cat_id = path_to_id.get(cat_path)
+        if not cat_id:
+            if cat_path not in missing_cats:
+                missing_cats.append(cat_path)
+            continue
+
+        for attr in attrs:
+            key = attr.get("key", "")
+            
+            # Skip if already exists
+            if (cat_id, key) in existing_attrs:
                 continue
 
-            key = attr.get("key", "")
             label = attr.get("label", "")
             description = attr.get("description", "")
             unit_required = bool(attr.get("unit_required", False))
             unit_symbol = attr.get("unit")
-            unit_id = None
 
             if unit_required and unit_symbol:
                 unit_id = symbol_to_id.get(unit_symbol)
                 if not unit_id:
                     missing_units.append(f"{cat_path}/{key} → {unit_symbol}")
-                    bar.update(1)
                     continue
 
-            bar.set_postfix_str(f"{cat_path}/{key}")
+            new_attrs.append((cat_id, key, label, description, unit_required))
 
-            cur.execute(
-                "SELECT id FROM marketplace_attributes WHERE category_id = %s AND key = %s AND deleted_at IS NULL",
-                (cat_id, key),
-            )
-            existing_row = cur.fetchone()
-            if existing_row:
-                skipped_count += 1
-            else:
-                cur.execute(
-                    """
-                    INSERT INTO marketplace_attributes (category_id, key, label, description, unit_required)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (cat_id, key, label, description, unit_required),
-                )
-                inserted_count += 1
+    # Batch insert new attributes
+    if new_attrs:
+        tqdm.write(f"  Batch inserting {len(new_attrs)} new attributes...")
+        execute_values(
+            cur,
+            """
+            INSERT INTO marketplace_attributes (category_id, key, label, description, unit_required)
+            VALUES %s
+            """,
+            new_attrs,
+        )
 
-            bar.update(1)
+    skipped_count = total_attrs - len(new_attrs) - len(missing_cats) - len(missing_units)
+    tqdm.write(f"  [attributes] {skipped_count} already existed, {len(new_attrs)} inserted")
 
     if missing_cats:
         tqdm.write(f"  WARNING: {len(missing_cats)} category paths not found in DB (skipped):")
@@ -413,8 +417,6 @@ def import_attributes(
             tqdm.write(f"    {m}")
         if len(missing_units) > 10:
             tqdm.write(f"    … and {len(missing_units) - 10} more")
-
-    tqdm.write(f"  [attributes] {skipped_count} already existed, {inserted_count} inserted")
 
 
 # ──────────────────────────────────────────────────────────────────────────────

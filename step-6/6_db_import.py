@@ -8,11 +8,13 @@ Designed to be imported by 6_upload_to_db.py; contains no interactive prompts.
 v2 differences from v1:
   - Taxonomy loaded from source-files/categories_v1.json (recursive tree, not tier1/tier2/tier3 keyed JSON)
   - Item mappings loaded from step-4/outputs/<run_id>/matched_deduped.json (not CSVs)
-  - Attribute upload not yet implemented — step-5 proposed_attributes.json is generated but not pushed here
+  - Attributes loaded from source-files/proposed-attributes.json
 
 Push tables (in dependency order):
   1. marketplace_categories
   2. marketplace_item_categories
+  3. marketplace_attribute_units
+  4. marketplace_attributes
 
 Pull tables (DB → local files):
   items, marketplace_categories, marketplace_item_categories,
@@ -30,6 +32,7 @@ from pathlib import Path
 from typing import Any
 
 import psycopg2
+from psycopg2.extras import execute_values
 from tqdm import tqdm  # noqa: F401
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -56,6 +59,7 @@ PROD_DB_CONFIG: dict[str, Any] = {
 
 ROOT = Path(__file__).resolve().parent.parent  # v2/ root
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
+ATTRIBUTES_PATH = ROOT / "source-files" / "proposed-attributes.json"
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 
 ROOT_CATEGORY_KEYS = ("materials", "tools_and_gear", "services")
@@ -204,6 +208,7 @@ def import_item_categories(
     """
     Insert item-to-category relationships from matched_deduped rows.
     ON CONFLICT DO NOTHING silently skips existing active pairs.
+    Uses batch insert for performance.
     """
     if DRY_RUN:
         missing = [r for r in matched_rows if r.get("leaf_path") not in path_to_id]
@@ -216,11 +221,12 @@ def import_item_categories(
             )
         return
 
-    inserted_count = 0
-    skipped_count = 0
+    # Build batch of valid rows
+    batch_values = []
     missing_paths: list[str] = []
 
-    with tqdm(matched_rows, desc="  item_categories", unit="row", leave=False) as bar:
+    tqdm.write(f"  Preparing {len(matched_rows):,} item-category relationships for batch insert...")
+    with tqdm(total=len(matched_rows), desc="  preparing batch", unit="row", leave=False) as bar:
         for row in matched_rows:
             item_id = row.get("id")
             cat_path = row.get("leaf_path") or ""
@@ -228,33 +234,189 @@ def import_item_categories(
 
             if not cat_id:
                 missing_paths.append(f"{item_id} → {cat_path}")
-                bar.update(1)
-                continue
-
-            cur.execute(
-                """
-                INSERT INTO marketplace_item_categories (item_id, category_id)
-                VALUES (%s, %s)
-                ON CONFLICT DO NOTHING
-                """,
-                (item_id, cat_id),
-            )
-            if cur.rowcount > 0:
-                inserted_count += 1
             else:
-                skipped_count += 1
-
-            bar.set_postfix(inserted=inserted_count, skipped=skipped_count)
+                batch_values.append((item_id, cat_id))
+            
             bar.update(1)
+
+    # Batch insert all valid rows in chunks for progress feedback
+    if batch_values:
+        chunk_size = 5000
+        total_chunks = (len(batch_values) + chunk_size - 1) // chunk_size
+        
+        tqdm.write(f"  Batch inserting {len(batch_values):,} item-category relationships in {total_chunks} chunks...")
+        with tqdm(total=len(batch_values), desc="  inserting", unit="row", leave=False) as bar:
+            for i in range(0, len(batch_values), chunk_size):
+                chunk = batch_values[i:i + chunk_size]
+                execute_values(
+                    cur,
+                    """
+                    INSERT INTO marketplace_item_categories (item_id, category_id)
+                    VALUES %s
+                    ON CONFLICT DO NOTHING
+                    """,
+                    chunk,
+                )
+                bar.update(len(chunk))
+        
+        tqdm.write(f"  [item_categories] {len(batch_values):,} rows processed (duplicates skipped by DB)")
 
     if missing_paths:
         tqdm.write(f"  WARNING: {len(missing_paths)} rows had unknown leaf_path (skipped):")
-        for m in missing_paths[:20]:
+        for m in missing_paths[:10]:
             tqdm.write(f"    {m}")
-        if len(missing_paths) > 20:
-            tqdm.write(f"    … and {len(missing_paths) - 20} more")
+        if len(missing_paths) > 10:
+            tqdm.write(f"    … and {len(missing_paths) - 10} more")
 
-    tqdm.write(f"  [item_categories] {skipped_count} already existed, {inserted_count} inserted")
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 3 — marketplace_attribute_units
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def import_units(cur: Any, units: dict[str, dict]) -> dict[str, str]:
+    """
+    Insert attribute units from proposed_attributes.json.
+    Skips units that already exist (matched by symbol).
+    Returns symbol → id map.
+    Uses batch insert for performance.
+    """
+    if DRY_RUN:
+        print(f"  [units] would ensure {len(units)} units are present")
+        return {sym: f"<dry:{sym}>" for sym in units}
+
+    symbol_to_id = {}
+    
+    # First, fetch all existing units
+    cur.execute(
+        "SELECT symbol, id FROM marketplace_attribute_units WHERE deleted_at IS NULL"
+    )
+    for symbol, unit_id in cur.fetchall():
+        symbol_to_id[symbol] = unit_id
+    
+    # Prepare new units for batch insert
+    new_units = []
+    for symbol, unit_data in units.items():
+        if symbol not in symbol_to_id:
+            new_units.append((
+                symbol,
+                unit_data.get("name", symbol),
+                unit_data.get("description", ""),
+                unit_data.get("value_type", "number"),
+            ))
+    
+    # Batch insert new units
+    if new_units:
+        tqdm.write(f"  Batch inserting {len(new_units)} new units...")
+        execute_values(
+            cur,
+            """
+            INSERT INTO marketplace_attribute_units (symbol, name, description, value_type)
+            VALUES %s
+            RETURNING symbol, id
+            """,
+            new_units,
+            fetch=True,
+        )
+        for symbol, unit_id in cur.fetchall():
+            symbol_to_id[symbol] = unit_id
+    
+    skipped_count = len(units) - len(new_units)
+    tqdm.write(f"  [units] {skipped_count} already existed, {len(new_units)} inserted")
+    return symbol_to_id
+
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Phase 4 — marketplace_attributes
+# ──────────────────────────────────────────────────────────────────────────────
+
+
+def import_attributes(
+    cur: Any,
+    category_attributes: dict[str, list[dict]],
+    path_to_id: dict[str, str],
+    symbol_to_id: dict[str, str],
+) -> None:
+    """
+    Insert category attributes from proposed_attributes.json.
+    Skips attributes that already exist (matched by category_id + key).
+    Uses batch insert for performance.
+    """
+    total_attrs = sum(len(attrs) for attrs in category_attributes.values())
+
+    if DRY_RUN:
+        missing_cats = [p for p in category_attributes if p not in path_to_id]
+        print(f"  [attributes] would insert up to {total_attrs} attributes across {len(category_attributes)} categories")
+        if missing_cats:
+            print(f"  WARNING: {len(missing_cats)} category paths not in DB (would skip). Sample: {missing_cats[:5]}")
+        return
+
+    missing_cats: list[str] = []
+    missing_units: list[str] = []
+
+    # First, fetch all existing attributes
+    cur.execute(
+        "SELECT category_id, key FROM marketplace_attributes WHERE deleted_at IS NULL"
+    )
+    existing_attrs = {(cat_id, key) for cat_id, key in cur.fetchall()}
+
+    # Prepare new attributes for batch insert
+    new_attrs = []
+    for cat_path, attrs in category_attributes.items():
+        cat_id = path_to_id.get(cat_path)
+        if not cat_id:
+            if cat_path not in missing_cats:
+                missing_cats.append(cat_path)
+            continue
+
+        for attr in attrs:
+            key = attr.get("key", "")
+            
+            # Skip if already exists
+            if (cat_id, key) in existing_attrs:
+                continue
+
+            label = attr.get("label", "")
+            description = attr.get("description", "")
+            unit_required = bool(attr.get("unit_required", False))
+            unit_symbol = attr.get("unit")
+
+            if unit_required and unit_symbol:
+                unit_id = symbol_to_id.get(unit_symbol)
+                if not unit_id:
+                    missing_units.append(f"{cat_path}/{key} → {unit_symbol}")
+                    continue
+
+            new_attrs.append((cat_id, key, label, description, unit_required))
+
+    # Batch insert new attributes
+    if new_attrs:
+        tqdm.write(f"  Batch inserting {len(new_attrs)} new attributes...")
+        execute_values(
+            cur,
+            """
+            INSERT INTO marketplace_attributes (category_id, key, label, description, unit_required)
+            VALUES %s
+            """,
+            new_attrs,
+        )
+
+    skipped_count = total_attrs - len(new_attrs) - len(missing_cats) - len(missing_units)
+    tqdm.write(f"  [attributes] {skipped_count} already existed, {len(new_attrs)} inserted")
+
+    if missing_cats:
+        tqdm.write(f"  WARNING: {len(missing_cats)} category paths not found in DB (skipped):")
+        for m in missing_cats[:10]:
+            tqdm.write(f"    {m}")
+        if len(missing_cats) > 10:
+            tqdm.write(f"    … and {len(missing_cats) - 10} more")
+
+    if missing_units:
+        tqdm.write(f"  WARNING: {len(missing_units)} attributes reference unknown units (skipped):")
+        for m in missing_units[:10]:
+            tqdm.write(f"    {m}")
+        if len(missing_units) > 10:
+            tqdm.write(f"    … and {len(missing_units) - 10} more")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -323,6 +485,52 @@ def push_item_relationships(
 
         tqdm.write("  Pushing item-category relationships…")
         import_item_categories(cur, matched_rows, path_to_id)
+        conn.commit()
+
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        cur.close()
+
+
+def push_attributes(
+    conn,
+    attributes_path: Path | None = None,
+    taxonomy_path: Path | None = None,
+) -> None:
+    """
+    Push attribute units and category attributes from proposed_attributes.json.
+    Syncs categories first to build path_to_id map, then inserts units and attributes.
+    
+    Args:
+        conn: Database connection
+        attributes_path: Path to proposed_attributes.json (defaults to source-files/proposed-attributes.json)
+        taxonomy_path: Path to categories_v1.json (defaults to source-files/categories_v1.json)
+    """
+    tax_path = taxonomy_path or TAXONOMY_PATH
+    attr_path = attributes_path or ATTRIBUTES_PATH
+    
+    categories = json.loads(tax_path.read_text(encoding="utf-8"))
+    nodes = build_category_nodes(categories)
+
+    attr_data = json.loads(attr_path.read_text(encoding="utf-8"))
+    units = attr_data.get("units", {})
+    category_attributes = attr_data.get("_category_attributes", {})
+
+    conn.autocommit = False
+    cur = conn.cursor()
+    try:
+        tqdm.write("  Building category map from DB…")
+        path_to_id = import_categories(cur, nodes)
+        conn.commit()
+
+        tqdm.write("  Pushing attribute units…")
+        symbol_to_id = import_units(cur, units)
+        conn.commit()
+
+        tqdm.write("  Pushing category attributes…")
+        import_attributes(cur, category_attributes, path_to_id, symbol_to_id)
         conn.commit()
 
     except Exception:

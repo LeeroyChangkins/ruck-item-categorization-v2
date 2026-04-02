@@ -66,6 +66,7 @@ def resolve_taxonomy_path(m_data: dict) -> Path:
 
 
 from shared_utils import timestamp  # noqa: E402
+from taxonomy_cascade import collect_slug_to_path  # noqa: E402
 
 
 def match_row_tier(row: dict) -> int:
@@ -85,7 +86,7 @@ def _leaf_slug_from_path(path: str) -> str:
     return parts[-1] if parts else ""
 
 
-def normalize_matched_row(row: dict) -> dict:
+def normalize_matched_row(row: dict, slug_to_path: dict[str, str] | None = None) -> dict:
     """
     Produce compact matched rows without bigram payloads.
     For step-2.2 rows, pick top-ranked category only (categories[0]).
@@ -137,7 +138,12 @@ def normalize_matched_row(row: dict) -> dict:
     # Step 1.2 shape: categories sorted by rank; keep top-ranked only.
     categories = row.get("categories") if isinstance(row.get("categories"), list) else []
     top = categories[0] if categories and isinstance(categories[0], dict) else {}
-    leaf_path = str(top.get("category_slug") or "")
+    category_slug = str(top.get("category_slug") or "")
+    # Resolve slug to full path using taxonomy (fix for partial leaf paths)
+    if slug_to_path and category_slug:
+        leaf_path = slug_to_path.get(category_slug, category_slug)
+    else:
+        leaf_path = category_slug
     leaf_slug = _leaf_slug_from_path(leaf_path)
     method = "t1_bigram" if "/" not in leaf_path else "cascading_bigram"
     return {
@@ -151,7 +157,7 @@ def normalize_matched_row(row: dict) -> dict:
     }
 
 
-def dedupe_matched(rows: List[Any]) -> Tuple[List[dict], int]:
+def dedupe_matched(rows: List[Any], slug_to_path: dict[str, str] | None = None) -> Tuple[List[dict], int]:
     best: Dict[str, dict] = {}
     valid_in = 0
     for row in rows:
@@ -164,7 +170,7 @@ def dedupe_matched(rows: List[Any]) -> Tuple[List[dict], int]:
         t = match_row_tier(row)
         if iid not in best or t > match_row_tier(best[iid]):
             best[iid] = row
-    out = [normalize_matched_row(best[k]) for k in sorted(best.keys())]
+    out = [normalize_matched_row(best[k], slug_to_path) for k in sorted(best.keys())]
     removed = valid_in - len(out)
     return out, removed
 
@@ -395,7 +401,12 @@ def main() -> None:
     elif args.unmatched:
         raise SystemExit(f"Unmatched file not found: {u_path}")
 
-    matched_out, dup_m = dedupe_matched(raw_matched)
+    # Load taxonomy to resolve slugs to full paths (fix for partial leaf paths)
+    taxonomy_path = resolve_taxonomy_path(m_data)
+    categories = json.loads(taxonomy_path.read_text(encoding="utf-8"))
+    slug_to_path = collect_slug_to_path(categories) if isinstance(categories, dict) else {}
+
+    matched_out, dup_m = dedupe_matched(raw_matched, slug_to_path)
     matched_ids = {r["id"] for r in matched_out if isinstance(r.get("id"), str)}
 
     unmatched_out, dup_u = dedupe_unmatched(raw_unmatched)

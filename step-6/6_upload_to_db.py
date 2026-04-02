@@ -41,6 +41,7 @@ from pathlib import Path
 STEP6_DIR = Path(__file__).resolve().parent
 ROOT = STEP6_DIR.parent  # v2/ root
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
+ATTRIBUTES_PATH = ROOT / "source-files" / "proposed-attributes.json"
 
 
 def _import_sibling(module_name: str, filename: str):
@@ -193,12 +194,23 @@ def run_upload(env: str) -> None:
     count, run_id = _load_run_summary(selected_run)
     print(f"  Selected: {selected_run.name}  ({count:,} matched items)")
 
-    _do_upload(env, matched_path)
+    # ── Check for attributes file ─────────────────────────────────────────────
+    attr_path = ATTRIBUTES_PATH if ATTRIBUTES_PATH.exists() else None
+    upload_attributes = False
+    if attr_path:
+        print(f"\n  Found attribute file: {attr_path.relative_to(ROOT)}")
+        upload_attributes = _confirm("Upload attributes and units to DB as well?", default_yes=False)
+    else:
+        print("\n  No proposed-attributes.json found in source-files/")
+        print("  (Attributes and units will not be uploaded)")
+
+    _do_upload(env, matched_path, upload_attributes)
 
 
 def _do_upload(
     env: str,
     matched_deduped_path: Path,
+    upload_attributes: bool = False,
     db_user: str | None = None,
     db_password: str | None = None,
     dry_run: bool | None = None,
@@ -281,13 +293,29 @@ def _do_upload(
         print("\n  Dry run complete — no changes made.")
         return
 
-    # ── Push ──────────────────────────────────────────────────────────────────
+    # ── Push attributes (if requested) ────────────────────────────────────────
+    if upload_attributes:
+        print("\n  Pushing attributes and units to DB…")
+        conn = _connect(env, db_user, db_password)
+        try:
+            s5.push_attributes(conn)
+            conn.commit()
+            print("\n  Attributes and units uploaded.")
+        except Exception as e:
+            conn.rollback()
+            print(f"\n  ERROR during attribute upload: {e}")
+            print("  Transaction rolled back.")
+            raise
+        finally:
+            conn.close()
+
+    # ── Push item-category relationships ──────────────────────────────────────
     print("\n  Pushing item-category relationships to DB…")
     conn = _connect(env, db_user, db_password)
     try:
         s5.push_item_relationships(conn, matched_deduped_path)
         conn.commit()
-        print("\n  Upload complete.")
+        print("\n  Item-category relationships uploaded.")
     except Exception as e:
         conn.rollback()
         print(f"\n  ERROR during upload: {e}")
@@ -295,6 +323,8 @@ def _do_upload(
         raise
     finally:
         conn.close()
+
+    print("\n  Upload complete.")
 
 
 # ── Main menu ──────────────────────────────────────────────────────────────────

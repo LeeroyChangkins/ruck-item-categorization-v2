@@ -88,7 +88,7 @@ STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su
-from shared_utils import load_dotenv_file as _load_dotenv, timestamp as _timestamp
+from shared_utils import load_dotenv_file as _load_dotenv, timestamp as _timestamp, env_suffix as _env_suffix
 
 DEFAULT_MODEL      = "gpt-4o"
 DEFAULT_BATCH_SIZE = 3
@@ -115,17 +115,20 @@ def find_latest_groups_dir() -> Path:
     # candidates are the title_groups/ dirs; filter by the parent dir's env suffix
     run_dirs = [
         d for d in outputs.iterdir()
-        if d.is_dir() and (d / "title_groups" / "_manifest.json").exists()
+        if d.is_dir() and any((d / "title_groups").glob("manifest*.json"))
     ]
     if not run_dirs:
-        sys.exit("No title_groups/_manifest.json found — run step 5a first.")
+        sys.exit("No title_groups/manifest*.json found — run step 5a first.")
     best = _su.latest_env_path(run_dirs, name_attr="name")
     return (best or run_dirs[0]) / "title_groups"
 
 
 def load_groups(groups_dir: Path) -> dict[str, dict]:
     """Return leaf_path → category group data dict."""
-    manifest = json.loads((groups_dir / "_manifest.json").read_text())
+    mf_cands = sorted(groups_dir.glob("manifest*.json"), key=lambda p: p.stat().st_mtime)
+    if not mf_cands:
+        raise FileNotFoundError(f"No manifest*.json in {groups_dir}")
+    manifest = json.loads(mf_cands[-1].read_text())
     result: dict[str, dict] = {}
     for entry in manifest.get("categories", []):
         leaf_path = entry["leaf_path"]
@@ -534,7 +537,8 @@ def main() -> None:
 
     out_dir: Path = args.out_dir or groups_dir.parent
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "proposed_attributes.json"
+    _sfx = _env_suffix()
+    out_path = out_dir / f"proposed_attributes{_sfx}.json"
 
     # ── load taxonomy display names
     leaves = load_leaves(TAXONOMY_PATH)
@@ -605,17 +609,33 @@ def main() -> None:
     print(f"  {len(low_structure_paths)} low-structure categories (schema-only, LLM fallback in 5c)")
     print(f"  {len(merged_units)} unique units")
 
+    (out_dir / f"summary{_sfx}.json").write_text(
+        json.dumps({
+            "step": "5b-generate-attributes",
+            "env": _sfx.lstrip("-") or "unset",
+            "run_at": datetime.now().isoformat(timespec="seconds"),
+            "model": args.model,
+            "output_files": [out_path.name],
+            "counts": {
+                "categories_with_attributes": len(merged_attrs),
+                "categories_with_patterns": attrs_with_patterns,
+                "low_structure_categories": len(low_structure_paths),
+                "unique_units": len(merged_units),
+            },
+        }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
+
     # ── consolidate to final-output/
     final_dir = ROOT / "final-output" / out_dir.name
     final_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(out_path, final_dir / "proposed_attributes.json")
+    shutil.copy2(out_path, final_dir / f"proposed_attributes{_sfx}.json")
     shutil.copy2(TAXONOMY_PATH, final_dir / "categories_v1.json")
     step4_matched = sorted(
-        (ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs").glob("**/matched_deduped.json"),
+        (ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs").glob("**/matched_deduped*.json"),
         key=lambda p: p.stat().st_mtime,
     )
     if step4_matched:
-        shutil.copy2(step4_matched[-1], final_dir / "matched_deduped.json")
+        shutil.copy2(step4_matched[-1], final_dir / f"matched_deduped{_sfx}.json")
     print(f"\nFinal outputs staged → final-output/{out_dir.name}/")
 
 

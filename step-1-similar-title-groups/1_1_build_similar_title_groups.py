@@ -37,7 +37,7 @@ OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 VERSION = "1.6-unmatched-similar-title-groups"
 
-from shared_utils import timestamp  # noqa: E402
+from shared_utils import timestamp, env_suffix  # noqa: E402
 
 
 def normalize_title(s: str) -> str:
@@ -408,9 +408,10 @@ def main() -> None:
     )
 
     ts = timestamp()
+    sfx = env_suffix()
     run_dir = OUTDIR / ts
     run_dir.mkdir(parents=True, exist_ok=False)
-    out_path = run_dir / "unmatched_similar_title_groups.json"
+    out_path = run_dir / f"unmatched_similar_title_groups{sfx}.json"
 
     payload = {
         "version": VERSION,
@@ -437,6 +438,23 @@ def main() -> None:
     print(
         f"Groups: {stats['groups_emitted']}  Items in groups: {stats['items_in_groups']}  "
         f"Ungrouped: {stats['items_ungrouped']}"
+    )
+
+    summary = {
+        "step": "1-similar-title-groups",
+        "env": (sfx.lstrip("-") or "unset"),
+        "run_at": datetime.now().isoformat(timespec="seconds"),
+        "input_files": [str(in_path.relative_to(ROOT))],
+        "output_files": [out_path.name],
+        "counts": {
+            "total_items": stats.get("items_total", 0),
+            "groups": stats.get("groups_emitted", 0),
+            "items_in_groups": stats.get("items_in_groups", 0),
+            "ungrouped": stats.get("items_ungrouped", 0),
+        },
+    }
+    (run_dir / f"summary{sfx}.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 

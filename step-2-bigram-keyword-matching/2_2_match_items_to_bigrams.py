@@ -61,8 +61,10 @@ UNMATCHED_KEYWORD_MIN_CHARS = 5  # strictly more than 4 characters
 UNMATCHED_KEYWORD_MIN_ITEMS = 4  # strictly more than 3 distinct unmatched items
 
 
-def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+import sys as _sys
+if str(ROOT) not in _sys.path:
+    _sys.path.insert(0, str(ROOT))
+from shared_utils import timestamp, env_suffix  # noqa: E402
 
 
 def tokenize_alpha_preserve(text: str) -> List[str]:
@@ -299,15 +301,16 @@ def write_split_artifacts(
     unmatched_word_list.sort(key=lambda x: (-x["unmatched_item_count"], -x["token_count"], x["word"]))
 
     # 3) Write files
-    (split_out_dir / "bigrams_combined.json").write_text(
+    sfx = env_suffix()
+    (split_out_dir / f"bigrams_combined{sfx}.json").write_text(
         json.dumps(bigrams_combined, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    (split_out_dir / "matched.json").write_text(
+    (split_out_dir / f"matched{sfx}.json").write_text(
         json.dumps(matched_items, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    (split_out_dir / "unmatched_and_keywords.json").write_text(
+    (split_out_dir / f"unmatched_and_keywords{sfx}.json").write_text(
         json.dumps(
             {
                 "unmatched_items": unmatched_items,
@@ -541,15 +544,28 @@ def run_single_mapping(args: argparse.Namespace) -> None:
     }
 
     ts = timestamp()
-    out_path = OUTPUT_DIR / f"1.2-bigram_sorted_items_{ts}.json"
+    sfx = env_suffix()
+    run_dir = OUTPUT_DIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+    out_path = run_dir / f"bigram_sorted_items{sfx}.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     print(f"Wrote {out_path}")
     print(f"matched_items: {len(matched_items)}")
     print(f"unmatched_items: {len(unmatched_items)}")
 
-    split_dir = OUTPUT_DIR / f"1.2_split_{ts}"
-    write_split_artifacts(matched_items, unmatched_items, split_dir)
+    write_split_artifacts(matched_items, unmatched_items, run_dir)
+
+    (run_dir / f"summary{sfx}.json").write_text(
+        json.dumps({
+            "step": "2.2-bigram-keyword-matching",
+            "env": sfx.lstrip("-") or "unset",
+            "run_at": datetime.now().isoformat(timespec="seconds"),
+            "output_files": [out_path.name, f"bigrams_combined{sfx}.json",
+                             f"matched{sfx}.json", f"unmatched_and_keywords{sfx}.json"],
+            "counts": {"matched_items": len(matched_items), "unmatched_items": len(unmatched_items)},
+        }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
     try:
         if ckpt.exists():
@@ -703,16 +719,29 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
     }
 
     ts = timestamp()
-    out_path = OUTPUT_DIR / f"1.2-bigram_sorted_items_{ts}.json"
+    sfx = env_suffix()
+    run_dir = OUTPUT_DIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+    out_path = run_dir / f"bigram_sorted_items{sfx}.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     print(f"Wrote {out_path}")
     print(f"matched_items: {len(matched_items)}")
     print(f"unmatched_items: {len(unmatched_items)}")
 
-    split_dir = OUTPUT_DIR / f"1.2_split_{ts}"
-    write_split_artifacts(matched_items, unmatched_items, split_dir)
-    print(f"Split artifacts: {split_dir}", flush=True)
+    write_split_artifacts(matched_items, unmatched_items, run_dir)
+    print(f"Run dir: {run_dir}", flush=True)
+
+    (run_dir / f"summary{sfx}.json").write_text(
+        json.dumps({
+            "step": "2.2-bigram-keyword-matching",
+            "env": sfx.lstrip("-") or "unset",
+            "run_at": datetime.now().isoformat(timespec="seconds"),
+            "output_files": [out_path.name, f"bigrams_combined{sfx}.json",
+                             f"matched{sfx}.json", f"unmatched_and_keywords{sfx}.json"],
+            "counts": {"matched_items": len(matched_items), "unmatched_items": len(unmatched_items)},
+        }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 def _load_items_list() -> tuple[list[dict], Path]:

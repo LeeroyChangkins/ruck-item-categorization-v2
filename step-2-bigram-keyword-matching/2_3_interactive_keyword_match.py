@@ -47,7 +47,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from taxonomy_cascade import is_catch_all_bucket_slug
-from shared_utils import timestamp
+from shared_utils import timestamp, env_suffix
 from interactive_helpers import (
     copy_to_clipboard,
     open_google_images_in_chrome,
@@ -167,7 +167,7 @@ def assign_bigram_to_leaf(
 
 
 def newest_unmatched_keywords_file() -> Path | None:
-    cands = list(STEP12_OUT.glob("1.2_split_*/unmatched_and_keywords.json"))
+    cands = list(STEP12_OUT.glob("*/unmatched_and_keywords*.json"))
     if not cands:
         return None
     return max(cands, key=lambda p: p.stat().st_mtime)
@@ -180,7 +180,7 @@ def find_latest_manual_for_source(out_dir: Path, in_path: Path) -> Path | None:
     """
     in_resolved = in_path.resolve()
     best: tuple[float, Path] | None = None
-    for p in out_dir.glob("1.3-manual*.json"):
+    for p in out_dir.glob("*/manual_bigram_matches*.json"):
         if not p.is_file():
             continue
         try:
@@ -582,6 +582,12 @@ def main() -> None:
         return False
 
     resume_p: Path | None = None
+    _sfx = env_suffix()
+
+    def _new_out() -> Path:
+        p = OUTDIR / timestamp() / f"manual_bigram_matches{_sfx}.json"
+        p.parent.mkdir(parents=True, exist_ok=True)
+        return p
 
     if args.resume_from:
         resume_p = Path(args.resume_from).expanduser().resolve()
@@ -603,7 +609,7 @@ def main() -> None:
             f"{len(done_pairs)} bigram(s) to skip."
         )
     elif args.fresh_run:
-        out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
+        out_path = _new_out()
         try:
             oshow = str(out_path.relative_to(ROOT))
         except ValueError:
@@ -650,14 +656,14 @@ def main() -> None:
             else:
                 assignments, matches, unknown_bigrams = [], [], []
                 done_pairs, already_matched_ids = set(), set()
-                out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
+                out_path = _new_out()
                 try:
                     oshow = str(out_path.relative_to(ROOT))
                 except ValueError:
                     oshow = str(out_path)
                 print(f"\nStarting new manual file: {oshow}")
         else:
-            out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
+            out_path = _new_out()
             try:
                 oshow = str(out_path.relative_to(ROOT))
             except ValueError:
@@ -1238,6 +1244,23 @@ def main() -> None:
     print(
         f"Bigram assignments: {len(assignments)}  Unknown bigrams: {len(unknown_bigrams)}  "
         f"Item rows: {len(matches)}"
+    )
+
+    summary = {
+        "step": "2.3-interactive-bigram-match",
+        "env": _sfx.lstrip("-") or "unset",
+        "run_at": datetime.now().isoformat(timespec="seconds"),
+        "input_files": [str(in_path.relative_to(ROOT)) if in_path else None],
+        "output_files": [out_path.name],
+        "counts": {
+            "bigrams_total": len(bigram_rows),
+            "bigrams_assigned": len(assignments),
+            "bigrams_unknown": len(unknown_bigrams),
+            "item_matches": len(matches),
+        },
+    }
+    (out_path.parent / f"summary{_sfx}.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 

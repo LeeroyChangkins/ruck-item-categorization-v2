@@ -52,6 +52,7 @@ import argparse
 import json
 import re
 import sys
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -62,7 +63,7 @@ TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _timestamp_module
-from shared_utils import timestamp as _timestamp
+from shared_utils import timestamp as _timestamp, env_suffix as _env_suffix
 
 DEFAULT_MIN_CLUSTER = 3
 DEFAULT_LOW_STRUCTURE_RATIO = 0.60
@@ -265,12 +266,28 @@ def main() -> None:
         "categories":          manifest_entries,
     }
 
+    sfx = _env_suffix()
     if not args.dry_run:
-        (groups_dir / "_manifest.json").write_text(
+        manifest_file = groups_dir / f"manifest{sfx}.json"
+        manifest_file.write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         print(f"\nWrote {len(manifest_entries)} category files → {groups_dir.relative_to(ROOT)}/")
+
+        (out_root / f"summary{sfx}.json").write_text(
+            json.dumps({
+                "step": "5a-group-title-templates",
+                "env": sfx.lstrip("-") or "unset",
+                "run_at": datetime.now().isoformat(timespec="seconds"),
+                "output_files": [f"title_groups/manifest{sfx}.json"],
+                "counts": {
+                    "categories": len(manifest_entries),
+                    "total_items": total_items_processed,
+                    "low_structure_categories": low_structure_count,
+                },
+            }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
 
     print(f"\nSummary:")
     print(f"  Categories with items : {len(manifest_entries)}")

@@ -338,7 +338,9 @@ def push_item_relationships(
 
 
 def _find_latest_step5_file(filename: str) -> Path | None:
-    """Find the most recent env-matching file under step-5/outputs/."""
+    """Find the most recent env-matching file under step-5/outputs/.
+    filename may include a glob wildcard, e.g. 'proposed_attributes*.json'.
+    """
     import shared_utils as _su
     candidates = list((ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "outputs").rglob(filename))
     if not candidates:
@@ -544,7 +546,7 @@ def push_attributes(
     proposed_attrs_path: proposed_attributes.json from step 5b
     values_path:         item_attribute_values.json from step 5c
     """
-    attrs_file = proposed_attrs_path or _find_latest_step5_file("proposed_attributes.json")
+    attrs_file = proposed_attrs_path or _find_latest_step5_file("proposed_attributes*.json")
     if not attrs_file or not attrs_file.exists():
         tqdm.write("  No proposed_attributes.json found — skipping attribute push.")
         return
@@ -566,7 +568,7 @@ def push_attributes(
             for row in cur.fetchall():
                 unit_symbol_to_id[row[1]] = str(row[0])
 
-        val_file = values_path or _find_latest_step5_file("item_attribute_values.json")
+        val_file = values_path or _find_latest_step5_file("item_attribute_values*.json")
         if val_file and val_file.exists():
             tqdm.write(f"  Loading attribute values from: {val_file.name}")
             values = json.loads(val_file.read_text(encoding="utf-8"))

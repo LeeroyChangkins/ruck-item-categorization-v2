@@ -9,8 +9,9 @@ Per group: [c] copies master_title; [s] copy + Google Images in Chrome (macOS). 
 Other leaves; [x] marks unknown without picking Other.
 
 Outputs (next to the chosen groups JSON, or --resume-from):
-  1.6-manual_similar_title_<timestamp>.json
-  unmatched_after_step1.json (pool for step 2)
+  manual_matches-<env>.json
+  unmatched_after_step1-<env>.json (pool for step 2)
+  summary-<env>.json
 
 Fields: group_assignments, unknown_groups, item_matches (source=manual_similar_title_1_6).
 matched_cumulative / unmatched_and_skipped_cumulative: from full catalog (source_items_catalog) or
@@ -36,7 +37,7 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import is_catch_all_bucket_slug
 from pipeline_paths import glob_step1_outputs
-from shared_utils import timestamp
+from shared_utils import timestamp, env_suffix
 from interactive_helpers import (
     copy_to_clipboard,
     open_google_images_in_chrome,
@@ -156,8 +157,8 @@ def undo_group_decision(
 
 
 def find_latest_groups_file() -> Path | None:
-    """Newest unmatched_similar_title_groups.json under step-1-similar-title-groups/outputs/."""
-    cands = glob_step1_outputs("**/unmatched_similar_title_groups.json")
+    """Newest unmatched_similar_title_groups*.json under step-1-similar-title-groups/outputs/."""
+    cands = glob_step1_outputs("**/unmatched_similar_title_groups*.json")
     if not cands:
         return None
     return max(cands, key=lambda p: p.stat().st_mtime)
@@ -165,11 +166,11 @@ def find_latest_groups_file() -> Path | None:
 
 def find_latest_manual_for_groups_source(groups_src: Path) -> Path | None:
     """
-    Newest 1.6 manual JSON whose groups_source matches groups_src under step-1-similar-title-groups/outputs/ (resume).
+    Newest manual_matches*.json whose groups_source matches groups_src under step-1-similar-title-groups/outputs/ (resume).
     """
     gs = groups_src.resolve()
     best: tuple[float, Path] | None = None
-    for p in glob_step1_outputs("**/1.6-manual_similar_title*.json"):
+    for p in glob_step1_outputs("**/manual_matches*.json"):
         if not p.is_file():
             continue
         try:
@@ -494,7 +495,7 @@ def write_manual_snapshot(
     tmp = out_path.with_suffix(out_path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     tmp.replace(out_path)
-    ua_path = out_path.parent / "unmatched_after_step1.json"
+    ua_path = out_path.parent / f"unmatched_after_step1{env_suffix()}.json"
     ua_items = [
         {"id": r["id"], "title": r.get("title") or "", "subtitle": r.get("subtitle") or ""}
         for r in cumulative.get("unmatched_and_skipped_cumulative") or []
@@ -594,7 +595,7 @@ def main() -> None:
                 default=False,
             )
     elif args.fresh_run:
-        out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
+        out_path = groups_path.parent / f"manual_matches{env_suffix()}.json"
         print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
     else:
         found = find_latest_manual_for_groups_source(groups_path)
@@ -624,10 +625,10 @@ def main() -> None:
                         default=False,
                     )
             else:
-                out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
+                out_path = groups_path.parent / f"manual_matches{env_suffix()}.json"
                 print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
         else:
-            out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
+            out_path = groups_path.parent / f"manual_matches{env_suffix()}.json"
             print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
 
     # ── Auto-random speed-run mode ─────────────────────────────────────────────
@@ -1168,6 +1169,25 @@ def main() -> None:
     print(
         f"group_assignments: {len(group_assignments)}  unknown_groups: {len(unknown_groups)}  "
         f"item_matches: {len(item_matches)}"
+    )
+
+    sfx = env_suffix()
+    summary = {
+        "step": "1.2-interactive-similar-title-match",
+        "env": sfx.lstrip("-") or "unset",
+        "run_at": datetime.now().isoformat(timespec="seconds"),
+        "input_files": [str(groups_path.relative_to(ROOT))],
+        "output_files": [out_path.name, f"unmatched_after_step1{sfx}.json"],
+        "counts": {
+            "groups_total": len(groups),
+            "groups_assigned": len(group_assignments),
+            "groups_unknown": len(unknown_groups),
+            "groups_skipped": len(groups) - len(group_assignments) - len(unknown_groups),
+            "item_matches": len(item_matches),
+        },
+    }
+    (out_path.parent / f"summary{sfx}.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
     cc = compute_cumulative_matched_and_remaining(
         groups_path, group_assignments, unknown_groups, item_matches

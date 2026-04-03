@@ -65,7 +65,7 @@ def resolve_taxonomy_path(m_data: dict) -> Path:
     return DEFAULT_TAXONOMY_PATH
 
 
-from shared_utils import timestamp, latest_env_path  # noqa: E402
+from shared_utils import timestamp, latest_env_path, env_suffix  # noqa: E402
 
 
 def match_row_tier(row: dict) -> int:
@@ -325,30 +325,25 @@ def summarize_unmatched_items(unmatched_out: List[dict], run_id: str, stats: dic
 
 
 def find_latest_pair() -> Tuple[Path | None, Path | None]:
-    """Latest env-matching 1.4 matched file and its paired unmatched file."""
-    matched_files = list(STEP14_OUT.glob("1.4-llm_matched_*.json"))
+    """Latest env-matching llm_matched file and its paired unmatched file (same run dir)."""
+    matched_files = list(STEP14_OUT.glob("*/llm_matched*.json"))
     if not matched_files:
         return None, None
-    # Prefer files whose stem ends with the current env suffix (e.g. -prod / -dev)
-    m_path = latest_env_path(matched_files, name_attr="stem")
+    # Prefer files whose parent dir ends with the current env suffix (e.g. -prod / -dev)
+    m_path = latest_env_path(matched_files, name_attr="parent")
     if not m_path:
         return None, None
-    m = re.match(r"^1\.4-llm_matched_(.+)\.json$", m_path.name)
-    if not m:
-        return m_path, None
-    ts = m.group(1)
-    u_path = STEP14_OUT / f"1.4-llm_unmatched_{ts}.json"
-    if u_path.is_file():
-        return m_path, u_path
-    u_files = list(STEP14_OUT.glob("1.4-llm_unmatched_*.json"))
-    u_fallback = latest_env_path(u_files, name_attr="stem") if u_files else None
-    return m_path, u_fallback
+    # Look for the unmatched companion in the same run dir
+    run_dir = m_path.parent
+    u_files = list(run_dir.glob("llm_unmatched*.json"))
+    u_path = max(u_files, key=lambda p: p.stat().st_mtime) if u_files else None
+    return m_path, u_path
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Step 4: dedupe step 3 LLM matched/unmatched outputs.")
-    parser.add_argument("--matched", metavar="PATH", help="Path to 1.4-llm_matched_*.json")
-    parser.add_argument("--unmatched", metavar="PATH", help="Path to 1.4-llm_unmatched_*.json")
+    parser.add_argument("--matched", metavar="PATH", help="Path to llm_matched*.json (step-3 output)")
+    parser.add_argument("--unmatched", metavar="PATH", help="Path to llm_unmatched*.json (step-3 output)")
     parser.add_argument(
         "--pair-latest",
         action="store_true",
@@ -364,7 +359,7 @@ def main() -> None:
     if args.pair_latest:
         m_path, u_path = find_latest_pair()
         if not m_path:
-            raise SystemExit(f"No 1.4-llm_matched_*.json under {STEP14_OUT}")
+            raise SystemExit(f"No llm_matched*.json under {STEP14_OUT}")
         print(f"Using matched: {m_path.relative_to(ROOT)}")
         print(f"Using unmatched: {u_path.relative_to(ROOT) if u_path else '(none)'}")
     elif args.matched or args.unmatched:
@@ -375,7 +370,7 @@ def main() -> None:
     else:
         m_path, u_path = find_latest_pair()
         if not m_path:
-            raise SystemExit(f"No 1.4-llm_matched_*.json under {STEP14_OUT}")
+            raise SystemExit(f"No llm_matched*.json under {STEP14_OUT}")
         print(f"Using matched: {m_path.relative_to(ROOT)}")
         print(f"Using unmatched: {u_path.relative_to(ROOT) if u_path else '(none)'}")
 
@@ -405,6 +400,7 @@ def main() -> None:
     unmatched_out, stray = strip_matched_from_unmatched(unmatched_out, matched_ids)
 
     ts = timestamp()
+    sfx = env_suffix()
     run_dir = OUTDIR / ts
     run_dir.mkdir(parents=True, exist_ok=False)
 
@@ -445,10 +441,10 @@ def main() -> None:
         if k in m_data and k not in base_meta:
             base_meta[k] = m_data[k]
 
-    out_m = run_dir / "matched_deduped.json"
-    out_u = run_dir / "unmatched_deduped.json"
-    out_matched_summary = run_dir / "matched_summary.json"
-    out_unmatched_summary = run_dir / "unmatched_summary.json"
+    out_m = run_dir / f"matched_deduped{sfx}.json"
+    out_u = run_dir / f"unmatched_deduped{sfx}.json"
+    out_matched_summary = run_dir / f"matched_summary{sfx}.json"
+    out_unmatched_summary = run_dir / f"unmatched_summary{sfx}.json"
 
     payload_m = {**base_meta, "matched_items": matched_out}
     payload_u = {**base_meta, "unmatched_items": unmatched_out}
@@ -474,6 +470,28 @@ def main() -> None:
         f"({dup_m} duplicate rows dropped). "
         f"Unmatched: {len(raw_unmatched)} -> {len(unmatched_out)} "
         f"({dup_u} dup rows, {stray} removed as matched)."
+    )
+
+    (run_dir / f"summary{sfx}.json").write_text(
+        json.dumps({
+            "step": "4-dedupe-and-merge",
+            "env": sfx.lstrip("-") or "unset",
+            "run_at": datetime.now().isoformat(timespec="seconds"),
+            "input_files": [
+                str(m_path.relative_to(ROOT)),
+                str(u_path.relative_to(ROOT)) if u_path else None,
+            ],
+            "output_files": [out_m.name, out_u.name, out_matched_summary.name, out_unmatched_summary.name],
+            "counts": {
+                "matched_in": len(raw_matched),
+                "matched_out": len(matched_out),
+                "matched_dups_dropped": dup_m,
+                "unmatched_in": len(raw_unmatched),
+                "unmatched_out": len(unmatched_out),
+                "unmatched_dups_dropped": dup_u,
+                "unmatched_removed_as_matched": stray,
+            },
+        }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
     )
 
 

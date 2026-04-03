@@ -62,6 +62,7 @@ import os
 import re
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -71,7 +72,7 @@ STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su
-from shared_utils import load_dotenv_file as _load_dotenv
+from shared_utils import load_dotenv_file as _load_dotenv, env_suffix as _env_suffix
 
 DEFAULT_MODEL       = "gpt-4o"
 DEFAULT_LLM_BATCH   = 20
@@ -123,18 +124,18 @@ def normalise_title(title: str) -> str:
 
 def find_latest_attributes() -> Path:
     outputs = STEP5_DIR / "outputs"
-    candidates = list(outputs.rglob("proposed_attributes.json"))
+    candidates = list(outputs.rglob("proposed_attributes*.json"))
     if not candidates:
-        sys.exit("No proposed_attributes.json found — run step 5b first.")
+        sys.exit("No proposed_attributes*.json found — run step 5b first.")
     # filter by parent dir (timestamped run folder) env suffix
     result = _su.latest_env_path(candidates, name_attr="parent")
     return result or candidates[0]
 
 
 def find_latest_matched() -> Path:
-    candidates = list(STEP4_OUTPUTS.rglob("matched_deduped.json"))
+    candidates = list(STEP4_OUTPUTS.rglob("matched_deduped*.json"))
     if not candidates:
-        sys.exit("No matched_deduped.json found — run step 4 first.")
+        sys.exit("No matched_deduped*.json found — run step 4 first.")
     result = _su.latest_env_path(candidates, name_attr="parent")
     return result or candidates[0]
 
@@ -161,10 +162,10 @@ def load_template_map(groups_dir: Path) -> dict[str, dict[str, str]]:
     Returns leaf_path → { normalised_template → representative_title }.
     Used to find which cluster an item belongs to.
     """
-    manifest_path = groups_dir / "_manifest.json"
-    if not manifest_path.exists():
+    mf_cands = sorted(groups_dir.glob("manifest*.json"), key=lambda p: p.stat().st_mtime)
+    if not mf_cands:
         return {}
-    manifest = json.loads(manifest_path.read_text())
+    manifest = json.loads(mf_cands[-1].read_text())
     result: dict[str, dict[str, str]] = {}
     for entry in manifest.get("categories", []):
         leaf = entry["leaf_path"]
@@ -395,9 +396,11 @@ async def llm_fallback_pass(
                 for r in result.get("results", []):
                     iid  = r.get("item_id", "")
                     for av in r.get("attributes", []):
-                        conf_raw = av.get("confidence", "none").strip().lower()
+                        _raw_conf = av.get("confidence", "none")
+                        conf_raw = (str(_raw_conf) if not isinstance(_raw_conf, bool) else "none").strip().lower()
                         conf_key = f"llm_{conf_raw}" if not conf_raw.startswith("llm_") else conf_raw
-                        val = (av.get("value") or "").strip()
+                        _raw_val = av.get("value")
+                        val = ("" if isinstance(_raw_val, bool) or _raw_val is None else str(_raw_val)).strip()
                         if not val or conf_raw == "none":
                             conf_key = "llm_none"
                         row: dict[str, Any] = {
@@ -479,6 +482,7 @@ def main() -> None:
 
     out_dir: Path = args.out_dir or attr_path.parent
     out_dir.mkdir(parents=True, exist_ok=True)
+    _sfx = _env_suffix()
 
     # ── pass 1: regex extraction
     print(f"\nPass 1 — regex extraction…")
@@ -567,7 +571,7 @@ def main() -> None:
         return
 
     # ── write outputs
-    values_path = out_dir / "item_attribute_values.json"
+    values_path = out_dir / f"item_attribute_values{_sfx}.json"
     values_path.write_text(
         json.dumps(all_accepted, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -575,26 +579,34 @@ def main() -> None:
     print(f"\nWrote: {values_path.relative_to(ROOT)}")
 
     if llm_rejected:
-        rejected_path = out_dir / "unextracted_values.json"
+        rejected_path = out_dir / f"unextracted_values{_sfx}.json"
         rejected_path.write_text(
             json.dumps(llm_rejected, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         print(f"Wrote: {rejected_path.relative_to(ROOT)}  (low/none confidence — not uploaded)")
 
-    stats_path = out_dir / "extraction_stats.json"
-    stats_path.write_text(
-        json.dumps(stats, indent=2, ensure_ascii=False) + "\n",
+    # extraction_stats becomes the step summary
+    summary_data = {
+        "step": "5c-extract-attribute-values",
+        "env": _sfx.lstrip("-") or "unset",
+        "run_at": datetime.now().isoformat(timespec="seconds"),
+        "output_files": [values_path.name],
+        "counts": stats,
+    }
+    summary_path = out_dir / f"summary{_sfx}.json"
+    summary_path.write_text(
+        json.dumps(summary_data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    print(f"Wrote: {stats_path.relative_to(ROOT)}")
+    print(f"Wrote: {summary_path.relative_to(ROOT)}")
 
     # Copy to final-output/
     final_dir = ROOT / "final-output" / out_dir.name
     if final_dir.exists():
         import shutil
-        shutil.copy2(values_path, final_dir / "item_attribute_values.json")
-        print(f"Copied item_attribute_values.json → final-output/{out_dir.name}/")
+        shutil.copy2(values_path, final_dir / f"item_attribute_values{_sfx}.json")
+        print(f"Copied item_attribute_values{_sfx}.json → final-output/{out_dir.name}/")
 
 
 if __name__ == "__main__":

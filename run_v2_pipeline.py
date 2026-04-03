@@ -138,8 +138,8 @@ def newest_matching(glob_pat: str, folder: Path) -> Path | None:
 
 
 def newest_unmatched_after_step1() -> Path | None:
-    """Newest unmatched_after_step1.json under step-1-similar-title-groups/outputs/ (resume-safe)."""
-    return newest_under_step1("**/unmatched_after_step1.json")
+    """Newest unmatched_after_step1*.json under step-1-similar-title-groups/outputs/ (resume-safe)."""
+    return newest_under_step1("**/unmatched_after_step1*.json")
 
 
 def _format_duration(seconds: float) -> str:
@@ -175,8 +175,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
     print("═" * W)
 
     # ── Step 1 ──────────────────────────────────────────────────────
-    s1m = newest_under_step1("**/1.6-manual_similar_title*.json")
-    groups_file = newest_under_step1("**/unmatched_similar_title_groups.json")
+    s1m = newest_under_step1("**/manual_matches*.json")
+    groups_file = newest_under_step1("**/unmatched_similar_title_groups*.json")
 
     s1_groups_total = 0
     s1_assigned = 0
@@ -197,7 +197,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             s1_assigned = len(md.get("group_assignments") or [])
             s1_unknown_groups = len(md.get("unknown_groups") or [])
             s1_items_matched = len(md.get("item_matches") or [])
-            ua = s1m.parent / "unmatched_after_step1.json"
+            ua_candidates = sorted(s1m.parent.glob("unmatched_after_step1*.json"), key=lambda p: p.stat().st_mtime)
+            ua = ua_candidates[-1] if ua_candidates else s1m.parent / "unmatched_after_step1.json"
             if ua.exists():
                 ud = _read_json_safe(ua)
                 if isinstance(ud, dict):
@@ -235,8 +236,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             items22u = d22u.get("unmatched_items") or d22u.get("items") or []
             s22_unmatched = len(items22u)
 
-    # 2.3 manual bigram: newest 1.3-manual_bigram_matches_*.json
-    s23_file = newest_matching("1.3-manual_bigram_matches_*.json", STEP2_OUT)
+    # 2.3 manual bigram: newest manual_bigram_matches*.json
+    s23_file = newest_matching("*/manual_bigram_matches*.json", STEP2_OUT)
     s23_matched = 0
     s23_assignments = 0
     s23_unknown = 0
@@ -250,8 +251,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
     s2_matched = s22_matched + s23_matched
 
     # ── Step 3 ──────────────────────────────────────────────────────
-    s3m_file = newest_matching("1.4-llm_matched*.json", STEP3_OUT)
-    s3u_file = newest_matching("1.4-llm_unmatched*.json", STEP3_OUT)
+    s3m_file = newest_matching("*/llm_matched*.json", STEP3_OUT)
+    s3u_file = newest_matching("*/llm_unmatched*.json", STEP3_OUT)
     s3_matched = 0
     s3_unmatched: "int | None" = None
     if s3m_file:
@@ -569,7 +570,7 @@ def main() -> None:
         print(f"\nUsing unmatched pool for step 2: {ua.relative_to(ROOT)}")
     else:
         print(
-            "\n(No unmatched_after_step1.json — step 2.1 / 2.2 will use the full raw catalog "
+            "\n(No unmatched_after_step1 file — step 2.1 / 2.2 will use the full raw catalog "
             "unless you complete step 1.2 first.)"
         )
 
@@ -761,7 +762,7 @@ def main() -> None:
         elif sequential_fresh:
             cmd_23.append("--fresh-run")
         run(cmd_23)
-        latest_23 = newest_matching("1.3-manual*.json", STEP2_OUT)
+        latest_23 = newest_matching("*/manual_bigram_matches*.json", STEP2_OUT)
         if latest_23:
             print(f"\nLatest step 2.3 manual: {latest_23.relative_to(ROOT)}")
     else:
@@ -777,8 +778,8 @@ def main() -> None:
 
         if speed_run:
             print("\n[speed run] Running step 3 — LLM match with default settings.")
-            s1m = newest_under_step1("**/1.6-manual_similar_title*.json")
-            s23m = newest_matching("1.3-manual_bigram_matches_*.json", STEP2_OUT)
+            s1m = newest_under_step1("**/manual_matches*.json")
+            s23m = newest_matching("*/manual_bigram_matches*.json", STEP2_OUT)
             cmd = [
                 py,
                 str(ROOT / "step-3-llm-matching" / "3_llm_match_unmatched.py"),
@@ -800,8 +801,8 @@ def main() -> None:
                 print("Skipping step 3.")
             else:
                 # Auto-discover latest manual results from step 1 and step 2.3
-                s1m = newest_under_step1("**/1.6-manual_similar_title*.json")
-                s23m = newest_matching("1.3-manual_bigram_matches_*.json", STEP2_OUT)
+                s1m = newest_under_step1("**/manual_matches*.json")
+                s23m = newest_matching("*/manual_bigram_matches*.json", STEP2_OUT)
 
                 merge_sources: list[str] = []
                 if s1m:
@@ -860,8 +861,8 @@ def main() -> None:
 
                 run(cmd)
 
-        latest_3m = newest_matching("1.4-llm_matched*.json", STEP3_OUT)
-        latest_3u = newest_matching("1.4-llm_unmatched*.json", STEP3_OUT)
+        latest_3m = newest_matching("*/llm_matched*.json", STEP3_OUT)
+        latest_3u = newest_matching("*/llm_unmatched*.json", STEP3_OUT)
         if latest_3m:
             print(f"\nLatest step 3 matched: {latest_3m.relative_to(ROOT)}")
         if latest_3u:

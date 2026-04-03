@@ -48,7 +48,7 @@ DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_MIN_CONF = 0.9
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 
-from shared_utils import load_dotenv_file as _load_dotenv_file, timestamp
+from shared_utils import load_dotenv_file as _load_dotenv_file, timestamp, env_suffix
 
 
 def require_openai() -> None:
@@ -93,7 +93,7 @@ def all_leaf_paths(categories: dict) -> List[str]:
 
 
 def newest_unmatched_split_file() -> Path | None:
-    cands = list(STEP12_OUT.glob("1.2_split_*/unmatched_and_keywords.json"))
+    cands = list(STEP12_OUT.glob("*/unmatched_and_keywords*.json"))
     if not cands:
         return None
     return max(cands, key=lambda p: p.stat().st_mtime)
@@ -103,7 +103,7 @@ def find_latest_manual_for_source(out_dir: Path, in_path: Path) -> Path | None:
     """Newest 1.3 manual JSON whose unmatched_keywords_source matches the split file."""
     in_resolved = in_path.resolve()
     best: tuple[float, Path] | None = None
-    for p in out_dir.glob("1.3-manual*.json"):
+    for p in out_dir.glob("*/manual_bigram_matches*.json"):
         if not p.is_file():
             continue
         try:
@@ -590,6 +590,10 @@ def main() -> None:
         remaining_unmatched.append(it)
 
     ts = timestamp()
+    sfx = env_suffix()
+    run_dir = STEP14_OUTDIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+
     common_meta = {
         "version": "1.4",
         "llm_model": args.model,
@@ -610,13 +614,13 @@ def main() -> None:
             "unmatched_after_llm": len(remaining_unmatched),
         },
         "merge_rule": (
-            "matched file: matched.json (1.2) + item_matches (1.3) + LLM rows (>= min_confidence). "
-            "unmatched file: split unmatched_items minus 1.3 ids minus LLM-kept ids."
+            "matched file: matched json (step2.2) + item_matches (step2.3) + LLM rows (>= min_confidence). "
+            "unmatched file: split unmatched_items minus step2.3 ids minus LLM-kept ids."
         ),
     }
 
-    out_matched = STEP14_OUTDIR / f"1.4-llm_matched_{ts}.json"
-    out_unmatched = STEP14_OUTDIR / f"1.4-llm_unmatched_{ts}.json"
+    out_matched = run_dir / f"llm_matched{sfx}.json"
+    out_unmatched = run_dir / f"llm_unmatched{sfx}.json"
 
     payload_matched = {**common_meta, "matched_items": merged_matched}
     payload_unmatched = {**common_meta, "unmatched_items": remaining_unmatched}
@@ -628,6 +632,21 @@ def main() -> None:
     print(f"Wrote {out_unmatched.relative_to(ROOT)}")
     print(f"LLM new matched rows: {llm_added}")
     print(f"Remaining unmatched items: {len(remaining_unmatched)}")
+
+    (run_dir / f"summary{sfx}.json").write_text(
+        json.dumps({
+            "step": "3-llm-matching",
+            "env": sfx.lstrip("-") or "unset",
+            "run_at": datetime.now().isoformat(timespec="seconds"),
+            "model": args.model,
+            "output_files": [out_matched.name, out_unmatched.name],
+            "counts": {
+                "llm_new_matched": llm_added,
+                "merged_matched_total": len(merged_matched),
+                "unmatched_after_llm": len(remaining_unmatched),
+            },
+        }, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+    )
 
 
 if __name__ == "__main__":

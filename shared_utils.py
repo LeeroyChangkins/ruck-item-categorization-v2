@@ -31,6 +31,40 @@ def timestamp() -> str:
     return datetime.now().strftime("%Y%m%d_%H%M%S") + env_suffix()
 
 
+def latest_env_path(candidates: list[Path], *, name_attr: str = "parent") -> Path | None:
+    """Return the most-recently-modified path that matches the current PIPELINE_ENV suffix.
+
+    Checks the suffix against the path component named by `name_attr`:
+      - "name"   : the path's own filename / dir name  (use for directories)
+      - "parent" : the immediate parent directory name  (use for files inside timestamped dirs)
+      - "stem"   : the filename without extension       (use for flat files like 1.4-llm_matched_*.json)
+
+    Falls back to the overall newest candidate if none carry the expected suffix,
+    so the pipeline still works when PIPELINE_ENV is not set.
+    """
+    if not candidates:
+        return None
+
+    suffix = env_suffix()  # "-prod", "-dev", or ""
+
+    def _check(p: Path) -> bool:
+        if name_attr == "name":
+            return p.name.endswith(suffix)
+        if name_attr == "parent":
+            return p.parent.name.endswith(suffix)
+        if name_attr == "stem":
+            return p.stem.endswith(suffix)
+        return False
+
+    if suffix:
+        env_cands = [p for p in candidates if _check(p)]
+        if env_cands:
+            return max(env_cands, key=lambda p: p.stat().st_mtime)
+
+    # fallback — no suffix set or nothing matched: return overall newest
+    return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
 def load_dotenv_file(env_path: Path | None = None) -> None:
     """Load key=value pairs from a .env file into os.environ (skip keys already set).
 

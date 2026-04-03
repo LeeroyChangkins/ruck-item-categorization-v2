@@ -70,6 +70,7 @@ STEP5_DIR = Path(__file__).resolve().parent
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 
 sys.path.insert(0, str(ROOT))
+import shared_utils as _su
 from shared_utils import load_dotenv_file as _load_dotenv
 
 DEFAULT_MODEL       = "gpt-4o"
@@ -122,25 +123,20 @@ def normalise_title(title: str) -> str:
 
 def find_latest_attributes() -> Path:
     outputs = STEP5_DIR / "outputs"
-    candidates = sorted(
-        outputs.rglob("proposed_attributes.json"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+    candidates = list(outputs.rglob("proposed_attributes.json"))
     if not candidates:
         sys.exit("No proposed_attributes.json found — run step 5b first.")
-    return candidates[0]
+    # filter by parent dir (timestamped run folder) env suffix
+    result = _su.latest_env_path(candidates, name_attr="parent")
+    return result or candidates[0]
 
 
 def find_latest_matched() -> Path:
-    candidates = sorted(
-        STEP4_OUTPUTS.rglob("matched_deduped.json"),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
+    candidates = list(STEP4_OUTPUTS.rglob("matched_deduped.json"))
     if not candidates:
         sys.exit("No matched_deduped.json found — run step 4 first.")
-    return candidates[0]
+    result = _su.latest_env_path(candidates, name_attr="parent")
+    return result or candidates[0]
 
 
 def find_groups_dir(attributes_path: Path) -> Path | None:

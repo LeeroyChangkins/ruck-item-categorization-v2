@@ -25,8 +25,10 @@ def glob_step1_outputs(glob_pat: str) -> list[Path]:
 
 
 def newest_under_step1(glob_pat: str) -> Path | None:
-    """Newest file matching glob_pat under step-1/outputs/, by mtime."""
+    """Newest env-matching file under step-1/outputs/, by mtime."""
+    import shared_utils as _su
     cands = glob_step1_outputs(glob_pat)
     if not cands:
         return None
-    return max(cands, key=lambda p: p.stat().st_mtime)
+    # Step-1 timestamped run dirs carry the env suffix, so check the parent dir
+    return _su.latest_env_path(cands, name_attr="parent")

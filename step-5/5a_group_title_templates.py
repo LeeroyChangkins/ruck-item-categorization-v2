@@ -61,6 +61,7 @@ STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
 sys.path.insert(0, str(ROOT))
+import shared_utils as _timestamp_module
 from shared_utils import timestamp as _timestamp
 
 DEFAULT_MIN_CLUSTER = 3
@@ -109,14 +110,11 @@ def load_leaves(path: Path) -> list[tuple[str, str]]:
 # ── step-4 helpers ─────────────────────────────────────────────────────────────
 
 def find_latest_run_dir(step4_outputs: Path) -> Path:
-    dirs = sorted(
-        [d for d in step4_outputs.iterdir() if d.is_dir()],
-        key=lambda d: d.stat().st_mtime,
-        reverse=True,
-    )
+    dirs = [d for d in step4_outputs.iterdir() if d.is_dir()]
     if not dirs:
         sys.exit(f"No run directories found under {step4_outputs}")
-    return dirs[0]
+    result = _timestamp_module.latest_env_path(dirs, name_attr="name")
+    return result or dirs[0]
 
 
 def load_matched_items(run_dir: Path) -> dict[str, list[dict]]:

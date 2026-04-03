@@ -65,7 +65,7 @@ def resolve_taxonomy_path(m_data: dict) -> Path:
     return DEFAULT_TAXONOMY_PATH
 
 
-from shared_utils import timestamp  # noqa: E402
+from shared_utils import timestamp, latest_env_path  # noqa: E402
 
 
 def match_row_tier(row: dict) -> int:
@@ -325,11 +325,14 @@ def summarize_unmatched_items(unmatched_out: List[dict], run_id: str, stats: dic
 
 
 def find_latest_pair() -> Tuple[Path | None, Path | None]:
-    """Latest 1.4 matched file and unmatched with same timestamp suffix if present."""
+    """Latest env-matching 1.4 matched file and its paired unmatched file."""
     matched_files = list(STEP14_OUT.glob("1.4-llm_matched_*.json"))
     if not matched_files:
         return None, None
-    m_path = max(matched_files, key=lambda p: p.stat().st_mtime)
+    # Prefer files whose stem ends with the current env suffix (e.g. -prod / -dev)
+    m_path = latest_env_path(matched_files, name_attr="stem")
+    if not m_path:
+        return None, None
     m = re.match(r"^1\.4-llm_matched_(.+)\.json$", m_path.name)
     if not m:
         return m_path, None
@@ -338,7 +341,7 @@ def find_latest_pair() -> Tuple[Path | None, Path | None]:
     if u_path.is_file():
         return m_path, u_path
     u_files = list(STEP14_OUT.glob("1.4-llm_unmatched_*.json"))
-    u_fallback = max(u_files, key=lambda p: p.stat().st_mtime) if u_files else None
+    u_fallback = latest_env_path(u_files, name_attr="stem") if u_files else None
     return m_path, u_fallback
 
 

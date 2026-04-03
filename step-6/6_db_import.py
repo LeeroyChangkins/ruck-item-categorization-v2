@@ -338,13 +338,12 @@ def push_item_relationships(
 
 
 def _find_latest_step5_file(filename: str) -> Path | None:
-    """Find the most recent file matching `filename` under step-5/outputs/."""
-    candidates = sorted(
-        (ROOT / "step-5" / "outputs").rglob(filename),
-        key=lambda p: p.stat().st_mtime,
-        reverse=True,
-    )
-    return candidates[0] if candidates else None
+    """Find the most recent env-matching file under step-5/outputs/."""
+    import shared_utils as _su
+    candidates = list((ROOT / "step-5" / "outputs").rglob(filename))
+    if not candidates:
+        return None
+    return _su.latest_env_path(candidates, name_attr="parent")
 
 
 def import_attributes_and_units(

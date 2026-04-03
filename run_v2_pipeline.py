@@ -39,6 +39,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+import shared_utils
 from shared_utils import load_dotenv_file as _load_dotenv
 _load_dotenv()
 
@@ -129,10 +130,11 @@ def choose(prompt: str, options: list[tuple[str, str]]) -> str:
 
 
 def newest_matching(glob_pat: str, folder: Path) -> Path | None:
+    """Newest env-matching file in folder by mtime. Filenames carry the env suffix in the stem."""
     files = list(folder.glob(glob_pat))
     if not files:
         return None
-    return max(files, key=lambda p: p.stat().st_mtime)
+    return shared_utils.latest_env_path(files, name_attr="stem")
 
 
 def newest_unmatched_after_step1() -> Path | None:

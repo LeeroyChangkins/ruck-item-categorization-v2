@@ -87,6 +87,7 @@ TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
 
 sys.path.insert(0, str(ROOT))
+import shared_utils as _su
 from shared_utils import load_dotenv_file as _load_dotenv, timestamp as _timestamp
 
 DEFAULT_MODEL      = "gpt-4o"
@@ -111,15 +112,15 @@ def find_latest_groups_dir() -> Path:
     outputs = STEP5_DIR / "outputs"
     if not outputs.exists():
         sys.exit(f"No step-5/outputs/ directory found — run step 5a first.")
-    candidates = sorted(
-        [d / "title_groups" for d in outputs.iterdir()
-         if d.is_dir() and (d / "title_groups" / "_manifest.json").exists()],
-        key=lambda d: d.parent.stat().st_mtime,
-        reverse=True,
-    )
-    if not candidates:
+    # candidates are the title_groups/ dirs; filter by the parent dir's env suffix
+    run_dirs = [
+        d for d in outputs.iterdir()
+        if d.is_dir() and (d / "title_groups" / "_manifest.json").exists()
+    ]
+    if not run_dirs:
         sys.exit("No title_groups/_manifest.json found — run step 5a first.")
-    return candidates[0]
+    best = _su.latest_env_path(run_dirs, name_attr="name")
+    return (best or run_dirs[0]) / "title_groups"
 
 
 def load_groups(groups_dir: Path) -> dict[str, dict]:

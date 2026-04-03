@@ -16,7 +16,7 @@ def step1_output_roots() -> list[Path]:
 
 
 def glob_step1_outputs(glob_pat: str) -> list[Path]:
-    """Glob under step-1-similar-title-groups/outputs/ (e.g. '**/similar_title_groups*.json')."""
+    """Glob under step-1-similar-title-groups/outputs/ (e.g. '**/unmatched_similar_title_groups.json')."""
     out: list[Path] = []
     for base in step1_output_roots():
         if base.is_dir():

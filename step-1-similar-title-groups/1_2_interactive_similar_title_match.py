@@ -36,7 +36,7 @@ if str(ROOT) not in sys.path:
 
 from taxonomy_cascade import is_catch_all_bucket_slug
 from pipeline_paths import glob_step1_outputs
-from shared_utils import timestamp, write_step_summary, env_suffix
+from shared_utils import timestamp
 from interactive_helpers import (
     copy_to_clipboard,
     open_google_images_in_chrome,
@@ -494,8 +494,7 @@ def write_manual_snapshot(
     tmp = out_path.with_suffix(out_path.suffix + ".tmp")
     tmp.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     tmp.replace(out_path)
-    suf = env_suffix()
-    ua_path = out_path.parent / f"unmatched_after_step1{suf}.json"
+    ua_path = out_path.parent / "unmatched_after_step1.json"
     ua_items = [
         {"id": r["id"], "title": r.get("title") or "", "subtitle": r.get("subtitle") or ""}
         for r in cumulative.get("unmatched_and_skipped_cumulative") or []
@@ -595,7 +594,7 @@ def main() -> None:
                 default=False,
             )
     elif args.fresh_run:
-        out_path = groups_path.parent / f"manual_similar_title_matches{env_suffix()}.json"
+        out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
         print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
     else:
         found = find_latest_manual_for_groups_source(groups_path)
@@ -625,10 +624,10 @@ def main() -> None:
                         default=False,
                     )
             else:
-                out_path = groups_path.parent / f"manual_similar_title_matches{env_suffix()}.json"
+                out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
                 print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
         else:
-            out_path = groups_path.parent / f"manual_similar_title_matches{env_suffix()}.json"
+            out_path = groups_path.parent / f"1.6-manual_similar_title_{timestamp()}.json"
             print(f"\nNew manual file: {out_path.relative_to(ROOT)}")
 
     # ── Auto-random speed-run mode ─────────────────────────────────────────────
@@ -1165,17 +1164,6 @@ def main() -> None:
             continue
 
     write_manual_snapshot(out_path, groups_path, group_assignments, unknown_groups, item_matches)
-    write_step_summary(
-        out_path.parent,
-        step="step-1-similar-title-groups (1.2 manual)",
-        stats={
-            "group_assignments": len(group_assignments),
-            "unknown_groups":    len(unknown_groups),
-            "item_matches":      len(item_matches),
-        },
-        input_files=[str(groups_path.name)],
-        output_files=[out_path.name, f"unmatched_after_step1{env_suffix()}.json"],
-    )
     print(f"\nFinal: {out_path}")
     print(
         f"group_assignments: {len(group_assignments)}  unknown_groups: {len(unknown_groups)}  "

@@ -47,7 +47,7 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 from taxonomy_cascade import is_catch_all_bucket_slug
-from shared_utils import timestamp, write_step_summary, env_suffix
+from shared_utils import timestamp
 from interactive_helpers import (
     copy_to_clipboard,
     open_google_images_in_chrome,
@@ -167,24 +167,20 @@ def assign_bigram_to_leaf(
 
 
 def newest_unmatched_keywords_file() -> Path | None:
-    """Find newest env-matching unmatched_and_keywords*.json inside a step-2.2 run subdir."""
-    import shared_utils as _su
-    subdirs = [p for p in STEP12_OUT.glob("*") if p.is_dir()]
-    env_dir = _su.latest_env_path(subdirs, name_attr="name") if subdirs else None
-    if env_dir is None:
+    cands = list(STEP12_OUT.glob("1.2_split_*/unmatched_and_keywords.json"))
+    if not cands:
         return None
-    cands = list(env_dir.glob("split/unmatched_and_keywords*.json"))
-    return max(cands, key=lambda p: p.stat().st_mtime) if cands else None
+    return max(cands, key=lambda p: p.stat().st_mtime)
 
 
 def find_latest_manual_for_source(out_dir: Path, in_path: Path) -> Path | None:
     """
-    Newest bigram_matches*.json in out_dir subdirs whose unmatched_keywords_source resolves to
-    the same path as in_path (the step-2.2 split unmatched_and_keywords.json).
+    Newest 1.3 manual JSON in out_dir whose unmatched_keywords_source resolves to the same
+    path as in_path (the step-2.2 split unmatched_and_keywords.json).
     """
     in_resolved = in_path.resolve()
     best: tuple[float, Path] | None = None
-    for p in out_dir.glob("**/bigram_matches*.json"):
+    for p in out_dir.glob("1.3-manual*.json"):
         if not p.is_file():
             continue
         try:
@@ -607,7 +603,7 @@ def main() -> None:
             f"{len(done_pairs)} bigram(s) to skip."
         )
     elif args.fresh_run:
-        out_path = OUTDIR / timestamp() / f"bigram_matches{env_suffix()}.json"
+        out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
         try:
             oshow = str(out_path.relative_to(ROOT))
         except ValueError:
@@ -654,14 +650,14 @@ def main() -> None:
             else:
                 assignments, matches, unknown_bigrams = [], [], []
                 done_pairs, already_matched_ids = set(), set()
-                out_path = OUTDIR / timestamp() / f"bigram_matches{env_suffix()}.json"
+                out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
                 try:
                     oshow = str(out_path.relative_to(ROOT))
                 except ValueError:
                     oshow = str(out_path)
                 print(f"\nStarting new manual file: {oshow}")
         else:
-            out_path = OUTDIR / timestamp() / f"bigram_matches{env_suffix()}.json"
+            out_path = OUTDIR / f"1.3-manual_bigram_matches_{timestamp()}.json"
             try:
                 oshow = str(out_path.relative_to(ROOT))
             except ValueError:
@@ -1238,17 +1234,6 @@ def main() -> None:
         print_session_progress(unmatched_items, bigram_rows, done_pairs, already_matched_ids)
 
     write_manual_snapshot(out_path, in_path, assignments, matches, unknown_bigrams)
-    write_step_summary(
-        out_path.parent,
-        step="step-2-bigram-keyword-matching (2.3 manual)",
-        stats={
-            "bigram_assignments": len(assignments),
-            "unknown_bigrams":    len(unknown_bigrams),
-            "item_matches":       len(matches),
-        },
-        input_files=[str(in_path.name)],
-        output_files=[out_path.name],
-    )
     print(f"\nFinal: {out_path}")
     print(
         f"Bigram assignments: {len(assignments)}  Unknown bigrams: {len(unknown_bigrams)}  "

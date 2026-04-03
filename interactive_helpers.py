@@ -2,7 +2,7 @@
 interactive_helpers.py — Shared UX utilities for interactive v2 pipeline scripts.
 
 Used by:
-  step-1/1_2_interactive_similar_title_match.py
+  step-1-similar-title-groups/1_2_interactive_similar_title_match.py
   step-2/2_3_interactive_keyword_match.py
 """
 from __future__ import annotations

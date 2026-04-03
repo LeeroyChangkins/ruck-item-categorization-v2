@@ -1,7 +1,7 @@
 """
 Shared paths for pipeline step output directories (v2 layout: step-1 … step-4, each with outputs/).
 
-Step 1 (similar-title groups) writes under step-1/outputs/ (timestamped run subfolders).
+Step 1 (similar-title groups) writes under step-1-similar-title-groups/outputs/ (timestamped run subfolders).
 """
 
 from __future__ import annotations
@@ -12,11 +12,11 @@ ROOT = Path(__file__).resolve().parent
 
 
 def step1_output_roots() -> list[Path]:
-    return [ROOT / "step-1" / "outputs"]
+    return [ROOT / "step-1-similar-title-groups" / "outputs"]
 
 
 def glob_step1_outputs(glob_pat: str) -> list[Path]:
-    """Glob under step-1/outputs/ (e.g. '**/unmatched_similar_title_groups.json')."""
+    """Glob under step-1-similar-title-groups/outputs/ (e.g. '**/unmatched_similar_title_groups.json')."""
     out: list[Path] = []
     for base in step1_output_roots():
         if base.is_dir():
@@ -25,7 +25,7 @@ def glob_step1_outputs(glob_pat: str) -> list[Path]:
 
 
 def newest_under_step1(glob_pat: str) -> Path | None:
-    """Newest env-matching file under step-1/outputs/, by mtime."""
+    """Newest env-matching file under step-1-similar-title-groups/outputs/, by mtime."""
     import shared_utils as _su
     cands = glob_step1_outputs(glob_pat)
     if not cands:

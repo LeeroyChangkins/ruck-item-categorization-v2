@@ -8,7 +8,7 @@ Cluster items whose titles are pairwise similar (default: min ratio 0.9).
 - Clustering: clique — every pair in a group has similarity >= threshold. Within each block,
   repeatedly take the largest maximal clique in the remaining induced subgraph until no clique
   reaches min_group_size.
-- Output: step-1/outputs/<run_id>/unmatched_similar_title_groups.json
+- Output: step-1-similar-title-groups/outputs/<run_id>/unmatched_similar_title_groups.json
 
 Requires: networkx (maximal clique enumeration).
 """

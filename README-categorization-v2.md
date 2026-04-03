@@ -19,9 +19,9 @@ The goal is to support a “category navigator” where:
 
 | Folder | Scripts | Outputs |
 |--------|---------|---------|
-| `step-1/` | `1_1_build_similar_title_groups.py`, `1_2_interactive_similar_title_match.py` | `step-1/outputs/<run_id>/` (groups JSON, manuals, `unmatched_after_step1.json`) |
+| `step-1-similar-title-groups/` | `1_1_build_similar_title_groups.py`, `1_2_interactive_similar_title_match.py` | `step-1-similar-title-groups/outputs/<run_id>/` (groups JSON, manuals, `unmatched_after_step1.json`) |
 | `step-2-bigram-keyword-matching/` | `2_1_generate_keywords.py`, `2_1_generate_bigrams_taxonomy.py`, `2_1_generate_bigrams_openai.py`, `2_2_match_items_to_bigrams.py`, `2_3_interactive_keyword_match.py` | `step-2-bigram-keyword-matching/outputs/` (keyword + bigram + match + split + manual JSON), `step-2-bigram-keyword-matching/checkpoints/` |
-| `step-3/` | `3_llm_match_unmatched.py` | `step-3/outputs/`, `step-3/checkpoints/` |
+| `step-3-llm-matching/` | `3_llm_match_unmatched.py` | `step-3-llm-matching/outputs/`, `step-3-llm-matching/checkpoints/` |
 | `step-4-dedupe-and-merge-matched-items/` | `4_dedupe_and_summaries.py` | `step-4-dedupe-and-merge-matched-items/outputs/<run_id>/` (deduped + summaries) |
 
 Orchestrator: `run_v2_pipeline.py` (optional `--start-step`). Shared helpers: `pipeline_paths.py`, `taxonomy_cascade.py`.

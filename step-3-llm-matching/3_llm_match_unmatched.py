@@ -8,7 +8,7 @@ Inputs:
   - Optional step-2.3 manual JSON: item ids matched manually are excluded from the LLM pool
   - .env for OPENAI_API_KEY
 
-Outputs (same timestamp under step-3/outputs/):
+Outputs (same timestamp under step-3-llm-matching/outputs/):
   - 1.4-llm_matched_YYYYMMDD_HHMMSS.json
   - 1.4-llm_unmatched_YYYYMMDD_HHMMSS.json
 

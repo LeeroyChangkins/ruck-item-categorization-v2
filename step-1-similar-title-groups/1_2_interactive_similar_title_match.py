@@ -2,7 +2,7 @@
 """
 Step 1.2 — Interactive similar-title groups → taxonomy leaves
 
-Assign leaves to groups built by step-1/1_1_build_similar_title_groups.py.
+Assign leaves to groups built by step-1-similar-title-groups/1_1_build_similar_title_groups.py.
 
 UX mirrors step-2.3 (interactive keyword match): search leaves by substring, pick by number, save after each decision.
 Per group: [c] copies master_title; [s] copy + Google Images in Chrome (macOS). [o] lists catch-all
@@ -156,7 +156,7 @@ def undo_group_decision(
 
 
 def find_latest_groups_file() -> Path | None:
-    """Newest unmatched_similar_title_groups.json under step-1/outputs/."""
+    """Newest unmatched_similar_title_groups.json under step-1-similar-title-groups/outputs/."""
     cands = glob_step1_outputs("**/unmatched_similar_title_groups.json")
     if not cands:
         return None
@@ -165,7 +165,7 @@ def find_latest_groups_file() -> Path | None:
 
 def find_latest_manual_for_groups_source(groups_src: Path) -> Path | None:
     """
-    Newest 1.6 manual JSON whose groups_source matches groups_src under step-1/outputs/ (resume).
+    Newest 1.6 manual JSON whose groups_source matches groups_src under step-1-similar-title-groups/outputs/ (resume).
     """
     gs = groups_src.resolve()
     best: tuple[float, Path] | None = None
@@ -538,7 +538,7 @@ def main() -> None:
     parser.add_argument(
         "--groups",
         metavar="PATH",
-        help="unmatched_similar_title_groups.json (default: newest under step-1/outputs/).",
+        help="unmatched_similar_title_groups.json (default: newest under step-1-similar-title-groups/outputs/).",
     )
     parser.add_argument("--resume-from", metavar="PATH", help="Continue this 1.6 manual JSON.")
     parser.add_argument("--fresh-run", action="store_true", help="Start a new manual file; no auto-resume.")
@@ -556,7 +556,7 @@ def main() -> None:
     groups_path = Path(args.groups).expanduser().resolve() if args.groups else find_latest_groups_file()
     if not groups_path or not groups_path.is_file():
         raise SystemExit(
-            "No unmatched_similar_title_groups.json. Run step-1/1_1_build_similar_title_groups.py first."
+            "No unmatched_similar_title_groups.json. Run step-1-similar-title-groups/1_1_build_similar_title_groups.py first."
         )
 
     init_step15_dedup_cache_from_groups(groups_path)

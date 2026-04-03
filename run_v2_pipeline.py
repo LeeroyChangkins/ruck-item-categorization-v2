@@ -4,21 +4,21 @@ Master controller for Categorization v2 pipeline.
 
 Flow (high level):
   Step 1 — similar-title grouping (raw catalog)
-    1.1  step-1/1_1_build_similar_title_groups.py
-    1.2  step-1/1_2_interactive_similar_title_match.py
+    1.1  step-1-similar-title-groups/1_1_build_similar_title_groups.py
+    1.2  step-1-similar-title-groups/1_2_interactive_similar_title_match.py
          → unmatched_after_step1.json for step 2
   Step 2 — keywords, bigrams, cascade match, optional manual bigram→leaf
     2.1a step-2/2_1_generate_keywords.py [--items-json …]
     2.1b step-2/2_1_generate_bigrams_taxonomy.py or 2_1_generate_bigrams_openai.py
     2.2  step-2/2_2_match_items_to_bigrams.py [--items-json …]
     2.3  step-2/2_3_interactive_keyword_match.py (optional)
-  Step 3 — LLM: step-3/3_llm_match_unmatched.py [--step1-manual …]
+  Step 3 — LLM: step-3-llm-matching/3_llm_match_unmatched.py [--step1-manual …]
   Step 4 — Dedupe: step-4/4_dedupe_and_summaries.py
   Step 5 — Attributes:
     5a  step-5/5a_group_title_templates.py   (title structural clustering)
     5b  step-5/5_generate_attributes.py      (LLM attribute schema + regex patterns)
     5c  step-5/5c_extract_attribute_values.py (regex + LLM fallback value extraction)
-  Step 6 — DB upload: step-6/6_upload_to_db.py (run separately; requires SSM tunnel)
+  Step 6 — DB upload: step-6-db-upload/6_upload_to_db.py (run separately; requires SSM tunnel)
 
 CLI --start-step uses 1.1, 1.2, 2.1, 2.2, 2.3, 3, 4, 5, 6 (first step to run). Legacy aliases:
   1.0→2.1, 1.2→2.2, 1.3→2.3, 1.4→3, 1.5→4. (Old “start at bigrams only” → use --start-step 2.1.)
@@ -47,7 +47,7 @@ from pipeline_paths import newest_under_step1
 
 ROOT = Path(__file__).resolve().parent
 STEP2_OUT = ROOT / "step-2-bigram-keyword-matching" / "outputs"
-STEP3_OUT = ROOT / "step-3" / "outputs"
+STEP3_OUT = ROOT / "step-3-llm-matching" / "outputs"
 STEP4_OUT = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 # First sub-step in this order is run; all later sub-steps run too.
@@ -138,7 +138,7 @@ def newest_matching(glob_pat: str, folder: Path) -> Path | None:
 
 
 def newest_unmatched_after_step1() -> Path | None:
-    """Newest unmatched_after_step1.json under step-1/outputs/ (resume-safe)."""
+    """Newest unmatched_after_step1.json under step-1-similar-title-groups/outputs/ (resume-safe)."""
     return newest_under_step1("**/unmatched_after_step1.json")
 
 
@@ -494,7 +494,7 @@ def main() -> None:
         print(f"  Using items file: {items_file.relative_to(ROOT)}  ({items_file.stat().st_size // 1024:,} KB)")
 
     _print_status_summary(items_file=items_file)
-    print("Outputs: step-1/  step-2/  step-3/  step-4/outputs/<run_id>/  step-5/outputs/  final-output/<ts>/")
+    print("Outputs: step-1-similar-title-groups/  step-2/  step-3-llm-matching/  step-4/outputs/<run_id>/  step-5/outputs/  final-output/<ts>/")
 
     cascade_mapping_paths: list[Path] | None = None
 
@@ -542,7 +542,7 @@ def main() -> None:
     ):
         if speed_run:
             print("\n[speed run] Running step 1.1 — build similar-title groups.")
-        cmd_11 = [py, str(ROOT / "step-1" / "1_1_build_similar_title_groups.py"), "--input", str(items_file)]
+        cmd_11 = [py, str(ROOT / "step-1-similar-title-groups" / "1_1_build_similar_title_groups.py"), "--input", str(items_file)]
         run(cmd_11)
     else:
         print("Skipping step 1.1.")
@@ -554,7 +554,7 @@ def main() -> None:
         "Run step 1.2 — interactive matching: similar-title groups → taxonomy leaves?",
         default=True,
     ):
-        cmd_12 = [py, str(ROOT / "step-1" / "1_2_interactive_similar_title_match.py")]
+        cmd_12 = [py, str(ROOT / "step-1-similar-title-groups" / "1_2_interactive_similar_title_match.py")]
         if speed_run:
             print("\n[speed run] Running step 1.2 — auto-randomly assigning groups.")
             cmd_12 += ["--auto-random", "--fresh-run"]
@@ -781,7 +781,7 @@ def main() -> None:
             s23m = newest_matching("1.3-manual_bigram_matches_*.json", STEP2_OUT)
             cmd = [
                 py,
-                str(ROOT / "step-3" / "3_llm_match_unmatched.py"),
+                str(ROOT / "step-3-llm-matching" / "3_llm_match_unmatched.py"),
                 "--model", default_model,
                 "--batch-size", str(default_batch_size),
                 "--min-confidence", default_min_conf,
@@ -841,7 +841,7 @@ def main() -> None:
 
                 cmd = [
                     py,
-                    str(ROOT / "step-3" / "3_llm_match_unmatched.py"),
+                    str(ROOT / "step-3-llm-matching" / "3_llm_match_unmatched.py"),
                     "--model", model,
                     "--batch-size", batch_size,
                     "--min-confidence", min_conf,
@@ -936,7 +936,7 @@ def main() -> None:
     if not run_6:
         print(f"Skipping step 6 (DB upload) — starting at {start_step}.")
     else:
-        step6_script = ROOT / "step-6" / "6_upload_to_db.py"
+        step6_script = ROOT / "step-6-db-upload" / "6_upload_to_db.py"
         if speed_run:
             # In speed run mode, show summary then ask once about staging upload
             print("\n" + "=" * 72)

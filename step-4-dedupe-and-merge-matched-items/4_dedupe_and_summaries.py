@@ -41,7 +41,7 @@ from typing import Any, Dict, List, Set, Tuple
 ROOT = Path(__file__).resolve().parents[1]  # v2/
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
-STEP14_OUT = ROOT / "step-3" / "outputs"
+STEP14_OUT = ROOT / "step-3-llm-matching" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 DEFAULT_TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 

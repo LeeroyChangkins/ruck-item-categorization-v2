@@ -46,13 +46,13 @@ from taxonomy_cascade import collect_slug_to_path, dedupe_category_slugs, is_cat
 ITEMS_PATH = ROOT / "source-files" / "raw-prod-items-non-deleted.json"
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 def _mapping_candidate_files() -> List[Path]:
-    d = ROOT / "step-2" / "outputs"
+    d = ROOT / "step-2-bigram-keyword-matching" / "outputs"
     if d.is_dir():
         return sorted(d.glob("1.1*-bigram_categories_mapping*.json"))
     return []
 
 
-MAPPINGS_DIR = ROOT / "step-2" / "outputs"
+MAPPINGS_DIR = ROOT / "step-2-bigram-keyword-matching" / "outputs"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 

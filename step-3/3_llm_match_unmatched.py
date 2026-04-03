@@ -41,8 +41,8 @@ from tqdm import tqdm
 
 from taxonomy_cascade import leaf_path_is_catch_all_bucket
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-2" / "outputs"
-STEP13_OUT = ROOT / "step-2" / "outputs"
+STEP12_OUT = ROOT / "step-2-bigram-keyword-matching" / "outputs"
+STEP13_OUT = ROOT / "step-2-bigram-keyword-matching" / "outputs"
 STEP14_OUTDIR = Path(__file__).resolve().parent / "outputs"
 DEFAULT_MODEL = "gpt-4o-mini"
 DEFAULT_MIN_CONF = 0.9

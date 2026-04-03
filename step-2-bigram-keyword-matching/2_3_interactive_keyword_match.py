@@ -60,7 +60,7 @@ from interactive_helpers import (
     yn_prompt,
 )
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP12_OUT = ROOT / "step-2" / "outputs"
+STEP12_OUT = ROOT / "step-2-bigram-keyword-matching" / "outputs"
 OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 MAX_LEAVES_TO_SHOW = 100

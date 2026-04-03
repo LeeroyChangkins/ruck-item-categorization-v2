@@ -84,7 +84,7 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 STEP5_DIR = Path(__file__).resolve().parent
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
+STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su
@@ -611,7 +611,7 @@ def main() -> None:
     shutil.copy2(out_path, final_dir / "proposed_attributes.json")
     shutil.copy2(TAXONOMY_PATH, final_dir / "categories_v1.json")
     step4_matched = sorted(
-        (ROOT / "step-4" / "outputs").glob("**/matched_deduped.json"),
+        (ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs").glob("**/matched_deduped.json"),
         key=lambda p: p.stat().st_mtime,
     )
     if step4_matched:

@@ -40,7 +40,7 @@ from pathlib import Path
 
 STEP6_DIR = Path(__file__).resolve().parent
 ROOT = STEP6_DIR.parent  # v2/ root
-STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
+STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 
 def _import_sibling(module_name: str, filename: str):

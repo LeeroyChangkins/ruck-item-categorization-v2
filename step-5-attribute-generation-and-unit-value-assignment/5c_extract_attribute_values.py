@@ -67,7 +67,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 STEP5_DIR = Path(__file__).resolve().parent
-STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
+STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su

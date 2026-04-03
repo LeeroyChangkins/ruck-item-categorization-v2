@@ -46,9 +46,9 @@ _load_dotenv()
 from pipeline_paths import newest_under_step1
 
 ROOT = Path(__file__).resolve().parent
-STEP2_OUT = ROOT / "step-2" / "outputs"
+STEP2_OUT = ROOT / "step-2-bigram-keyword-matching" / "outputs"
 STEP3_OUT = ROOT / "step-3" / "outputs"
-STEP4_OUT = ROOT / "step-4" / "outputs"
+STEP4_OUT = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 # First sub-step in this order is run; all later sub-steps run too.
 _PIPELINE_ORDER = ("1.1", "1.2", "2.1", "2.2", "2.3", "3", "4", "5", "6")
@@ -354,7 +354,7 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             print(_status_row("    Remaining", remaining, T))
 
     # ── Step 5 (attributes) ──────────────────────────────────────────
-    s5_outdir = ROOT / "step-5" / "outputs"
+    s5_outdir = ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "outputs"
     s5_file: "Path | None" = None
     if s5_outdir.exists():
         candidates = sorted(s5_outdir.glob("proposed_attributes_*.json"), key=lambda p: p.stat().st_mtime)
@@ -582,7 +582,7 @@ def main() -> None:
     ):
         if speed_run:
             print("\n[speed run] Running step 2.1a — keyword frequencies.")
-        cmd_kw = [py, str(ROOT / "step-2" / "2_1_generate_keywords.py")]
+        cmd_kw = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_1_generate_keywords.py")]
         if ua:
             cmd_kw += ["--items-json", str(ua)]
         if sequential_fresh or speed_run:
@@ -610,7 +610,7 @@ def main() -> None:
     elif speed_run:
         # Speed run: use taxonomy-based mapping with defaults
         print("\n[speed run] Running step 2.1b — taxonomy-based bigram mapping (defaults).")
-        cmd = [py, str(ROOT / "step-2" / "2_1_generate_bigrams_taxonomy.py")]
+        cmd = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_1_generate_bigrams_taxonomy.py")]
         if latest_10:
             cmd += ["--keywords", str(latest_10)]
         cmd += ["--min-confidence", "0.85", "--no-resume"]
@@ -628,7 +628,7 @@ def main() -> None:
         )
 
         if step11_choice == "a":
-            cmd = [py, str(ROOT / "step-2" / "2_1_generate_bigrams_taxonomy.py")]
+            cmd = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_1_generate_bigrams_taxonomy.py")]
             if latest_10 and yn("Use most recent 2.1a keyword frequency file?", default=True):
                 cmd += ["--keywords", str(latest_10)]
             else:
@@ -682,7 +682,7 @@ def main() -> None:
             min_conf = input("Min confidence to keep (default 0.85): ").strip() or "0.85"
             sleep_s = input("Sleep seconds between calls (default 0): ").strip() or "0"
 
-            cmd = [py, str(ROOT / "step-2" / "2_1_generate_bigrams_openai.py")]
+            cmd = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_1_generate_bigrams_openai.py")]
             if latest_10 and yn("Use most recent 2.1a keyword frequency file?", default=True):
                 cmd += ["--keywords", str(latest_10)]
             else:
@@ -720,7 +720,7 @@ def main() -> None:
         latest_map = newest_matching("1.1*-bigram_categories_mapping*.json", STEP2_OUT)
         if latest_map:
             print(f"Most recent mapping on disk: {latest_map.relative_to(ROOT)}")
-        cmd = [py, str(ROOT / "step-2" / "2_2_match_items_to_bigrams.py")]
+        cmd = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_2_match_items_to_bigrams.py")]
         if ua:
             cmd += ["--items-json", str(ua)]
         if cascade_mapping_paths:
@@ -754,7 +754,7 @@ def main() -> None:
         "\nRun step 2.3 — interactive manual bigram → leaf (unmatched from step 2.2 split)?",
         default=(start_step == "2.3"),
     ):
-        cmd_23 = [py, str(ROOT / "step-2" / "2_3_interactive_keyword_match.py")]
+        cmd_23 = [py, str(ROOT / "step-2-bigram-keyword-matching" / "2_3_interactive_keyword_match.py")]
         if speed_run:
             print("\n[speed run] Running step 2.3 — auto-randomly assigning bigrams.")
             cmd_23 += ["--auto-random", "--fresh-run"]
@@ -876,7 +876,7 @@ def main() -> None:
     ):
         if speed_run:
             print("\n[speed run] Running step 4 — dedupe and finalize.")
-        cmd_4 = [py, str(ROOT / "step-4" / "4_dedupe_and_summaries.py"), "--pair-latest"]
+        cmd_4 = [py, str(ROOT / "step-4-dedupe-and-merge-matched-items" / "4_dedupe_and_summaries.py"), "--pair-latest"]
         run(cmd_4)
         step4_out = STEP4_OUT
         latest_4_m = newest_matching("**/matched_deduped.json", step4_out)
@@ -907,7 +907,7 @@ def main() -> None:
                 print("\n[speed run] Running step 5a — title template grouping.")
 
             # ── 5a: title template grouping (pure Python, no LLM)
-            script_5a = ROOT / "step-5" / "5a_group_title_templates.py"
+            script_5a = ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "5a_group_title_templates.py"
             result_5a = subprocess.run([sys.executable, str(script_5a)], cwd=ROOT)
             if result_5a.returncode != 0:
                 print("  WARNING: Step 5a (template grouping) failed — skipping 5b and 5c.")
@@ -916,7 +916,7 @@ def main() -> None:
                     print("\n[speed run] Running step 5b — LLM attribute schema + patterns.")
 
                 # ── 5b: LLM attribute schema + regex patterns
-                script_5b = ROOT / "step-5" / "5_generate_attributes.py"
+                script_5b = ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "5_generate_attributes.py"
                 result_5b = subprocess.run([sys.executable, str(script_5b)], cwd=ROOT)
                 if result_5b.returncode != 0:
                     print("  WARNING: Step 5b (LLM attribute generation) failed — skipping 5c.")
@@ -925,7 +925,7 @@ def main() -> None:
                         print("\n[speed run] Running step 5c — attribute value extraction.")
 
                     # ── 5c: regex + LLM fallback value extraction
-                    script_5c = ROOT / "step-5" / "5c_extract_attribute_values.py"
+                    script_5c = ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "5c_extract_attribute_values.py"
                     result_5c = subprocess.run([sys.executable, str(script_5c)], cwd=ROOT)
                     if result_5c.returncode != 0:
                         print("  WARNING: Step 5c (value extraction) failed — continuing.")

@@ -7,7 +7,7 @@ Generate bigram -> T1 parent category mappings (high confidence) using only:
 
 Reads:
   - ../source-files/categories_v1.json
-  - ../step-2/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
+  - ../step-2-bigram-keyword-matching/outputs/1.0-title_subtitle_keyword_frequencies*.json (most recent by default)
 
 Writes (timestamped) to:
   - ./outputs/1.1a-bigram_categories_mapping_YYYYMMDD_HHMMSS.json
@@ -42,7 +42,7 @@ from taxonomy_cascade import (
 )
 
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-KEYWORDS_DIR = ROOT / "step-2" / "outputs"
+KEYWORDS_DIR = ROOT / "step-2-bigram-keyword-matching" / "outputs"
 OUTPUT_DIR = Path(__file__).resolve().parent / "outputs"
 CHECKPOINT_DIR = Path(__file__).resolve().parent / "checkpoints"
 

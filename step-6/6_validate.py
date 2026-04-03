@@ -142,7 +142,7 @@ def main() -> int:
 
     matched_path = args.matched_deduped
     if matched_path is None:
-        step4_out = ROOT / "step-4" / "outputs"
+        step4_out = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
         candidates = sorted(
             (p / "matched_deduped.json" for p in step4_out.iterdir() if p.is_dir()),
             key=lambda p: p.parent.name,

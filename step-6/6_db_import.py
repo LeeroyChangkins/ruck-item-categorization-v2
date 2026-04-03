@@ -59,7 +59,7 @@ PROD_DB_CONFIG: dict[str, Any] = {
 
 ROOT = Path(__file__).resolve().parent.parent  # v2/ root
 TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
-STEP4_OUTPUTS = ROOT / "step-4" / "outputs"
+STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 ROOT_CATEGORY_KEYS = ("materials", "tools_and_gear", "services")
 
@@ -340,7 +340,7 @@ def push_item_relationships(
 def _find_latest_step5_file(filename: str) -> Path | None:
     """Find the most recent env-matching file under step-5/outputs/."""
     import shared_utils as _su
-    candidates = list((ROOT / "step-5" / "outputs").rglob(filename))
+    candidates = list((ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "outputs").rglob(filename))
     if not candidates:
         return None
     return _su.latest_env_path(candidates, name_attr="parent")

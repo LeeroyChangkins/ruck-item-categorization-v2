@@ -130,16 +130,28 @@ def choose(prompt: str, options: list[tuple[str, str]]) -> str:
 
 
 def newest_matching(glob_pat: str, folder: Path) -> Path | None:
-    """Newest env-matching file in folder by mtime. Filenames carry the env suffix in the stem."""
+    """Newest env-matching file in folder (flat) by mtime. Filenames carry the env suffix in the stem."""
     files = list(folder.glob(glob_pat))
     if not files:
         return None
     return shared_utils.latest_env_path(files, name_attr="stem")
 
 
+def newest_in_env_subdir(folder: Path, filename_glob: str) -> Path | None:
+    """Find the newest env-matching timestamped subdir in folder, then locate filename_glob inside it."""
+    subdirs = [p for p in folder.glob("*") if p.is_dir()]
+    if not subdirs:
+        return None
+    env_dir = shared_utils.latest_env_path(subdirs, name_attr="name")
+    if not env_dir:
+        return None
+    files = list(env_dir.glob(filename_glob))
+    return max(files, key=lambda p: p.stat().st_mtime) if files else None
+
+
 def newest_unmatched_after_step1() -> Path | None:
-    """Newest unmatched_after_step1.json under step-1-similar-title-groups/outputs/ (resume-safe)."""
-    return newest_under_step1("**/unmatched_after_step1.json")
+    """Newest unmatched_after_step1*.json under step-1-similar-title-groups/outputs/."""
+    return newest_under_step1("**/unmatched_after_step1*.json")
 
 
 def _format_duration(seconds: float) -> str:
@@ -175,8 +187,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
     print("═" * W)
 
     # ── Step 1 ──────────────────────────────────────────────────────
-    s1m = newest_under_step1("**/1.6-manual_similar_title*.json")
-    groups_file = newest_under_step1("**/unmatched_similar_title_groups.json")
+    s1m = newest_under_step1("**/manual_similar_title_matches*.json")
+    groups_file = newest_under_step1("**/similar_title_groups*.json")
 
     s1_groups_total = 0
     s1_assigned = 0
@@ -197,8 +209,10 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             s1_assigned = len(md.get("group_assignments") or [])
             s1_unknown_groups = len(md.get("unknown_groups") or [])
             s1_items_matched = len(md.get("item_matches") or [])
-            ua = s1m.parent / "unmatched_after_step1.json"
-            if ua.exists():
+            # unmatched_after_step1 may have env suffix
+            ua_candidates = list(s1m.parent.glob("unmatched_after_step1*.json"))
+            ua = shared_utils.latest_env_path(ua_candidates, name_attr="stem") if ua_candidates else None
+            if ua and ua.exists():
                 ud = _read_json_safe(ua)
                 if isinstance(ud, dict):
                     s1_items_unmatched = ud.get("item_count") or len(ud.get("items") or [])
@@ -217,13 +231,9 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
                 pass
 
     # ── Step 2 ──────────────────────────────────────────────────────
-    # 2.2 auto-match: newest 1.2_split_*/matched.json
-    s22_split_dirs = sorted(
-        [p for p in STEP2_OUT.glob("1.2_split_*") if p.is_dir()],
-        key=lambda p: p.stat().st_mtime,
-    )
-    s22_matched_file = (s22_split_dirs[-1] / "matched.json") if s22_split_dirs else None
-    s22_unmatched_file = (s22_split_dirs[-1] / "unmatched_and_keywords.json") if s22_split_dirs else None
+    # 2.2 auto-match: newest env-matching run dir → split/matched*.json
+    s22_matched_file   = newest_in_env_subdir(STEP2_OUT, "split/matched*.json")
+    s22_unmatched_file = newest_in_env_subdir(STEP2_OUT, "split/unmatched_and_keywords*.json")
     s22_matched = 0
     s22_unmatched: "int | None" = None
     if s22_matched_file and s22_matched_file.exists():
@@ -235,8 +245,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             items22u = d22u.get("unmatched_items") or d22u.get("items") or []
             s22_unmatched = len(items22u)
 
-    # 2.3 manual bigram: newest 1.3-manual_bigram_matches_*.json
-    s23_file = newest_matching("1.3-manual_bigram_matches_*.json", STEP2_OUT)
+    # 2.3 manual bigram: newest bigram_matches*.json in latest env subdir
+    s23_file = newest_in_env_subdir(STEP2_OUT, "bigram_matches*.json")
     s23_matched = 0
     s23_assignments = 0
     s23_unknown = 0
@@ -250,8 +260,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
     s2_matched = s22_matched + s23_matched
 
     # ── Step 3 ──────────────────────────────────────────────────────
-    s3m_file = newest_matching("1.4-llm_matched*.json", STEP3_OUT)
-    s3u_file = newest_matching("1.4-llm_unmatched*.json", STEP3_OUT)
+    s3m_file = newest_in_env_subdir(STEP3_OUT, "llm_matched*.json")
+    s3u_file = newest_in_env_subdir(STEP3_OUT, "llm_unmatched*.json")
     s3_matched = 0
     s3_unmatched: "int | None" = None
     if s3m_file:
@@ -268,8 +278,8 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
             s3_unmatched = len(d3u.get("unmatched_items") or d3u.get("items") or d3u.get("unmatched") or [])
 
     # ── Step 4 ──────────────────────────────────────────────────────
-    s4m_file = newest_matching("**/matched_deduped.json", STEP4_OUT)
-    s4u_file = newest_matching("**/unmatched_deduped.json", STEP4_OUT)
+    s4m_file = newest_in_env_subdir(STEP4_OUT, "matched_deduped*.json")
+    s4u_file = newest_in_env_subdir(STEP4_OUT, "unmatched_deduped*.json")
     s4_matched = 0
     s4_unmatched = 0
     if s4m_file:
@@ -357,9 +367,7 @@ def _print_status_summary(items_file: "Path | None" = None) -> None:
     s5_outdir = ROOT / "step-5-attribute-generation-and-unit-value-assignment" / "outputs"
     s5_file: "Path | None" = None
     if s5_outdir.exists():
-        candidates = sorted(s5_outdir.glob("proposed_attributes_*.json"), key=lambda p: p.stat().st_mtime)
-        if candidates:
-            s5_file = candidates[-1]
+        s5_file = newest_in_env_subdir(s5_outdir, "proposed_attributes*.json")
     print()
     if s5_file:
         try:
@@ -879,18 +887,15 @@ def main() -> None:
         cmd_4 = [py, str(ROOT / "step-4-dedupe-and-merge-matched-items" / "4_dedupe_and_summaries.py"), "--pair-latest"]
         run(cmd_4)
         step4_out = STEP4_OUT
-        latest_4_m = newest_matching("**/matched_deduped.json", step4_out)
-        latest_4_u = newest_matching("**/unmatched_deduped.json", step4_out)
-        latest_4_ms = newest_matching("**/matched_summary.json", step4_out)
-        latest_4_us = newest_matching("**/unmatched_summary.json", step4_out)
+        latest_4_m  = newest_in_env_subdir(step4_out, "matched_deduped*.json")
+        latest_4_u  = newest_in_env_subdir(step4_out, "unmatched_deduped*.json")
+        latest_4_s  = newest_in_env_subdir(step4_out, "summary.json")
         if latest_4_m:
             print(f"\nLatest step 4 matched (deduped): {latest_4_m.relative_to(ROOT)}")
         if latest_4_u:
             print(f"Latest step 4 unmatched (deduped): {latest_4_u.relative_to(ROOT)}")
-        if latest_4_ms:
-            print(f"Latest step 4 matched summary: {latest_4_ms.relative_to(ROOT)}")
-        if latest_4_us:
-            print(f"Latest step 4 unmatched summary: {latest_4_us.relative_to(ROOT)}")
+        if latest_4_s:
+            print(f"Latest step 4 summary: {latest_4_s.relative_to(ROOT)}")
     else:
         print("Skipping step 4.")
 

@@ -88,6 +88,7 @@ STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su
+from shared_utils import write_step_summary, env_suffix
 from shared_utils import load_dotenv_file as _load_dotenv, timestamp as _timestamp
 
 DEFAULT_MODEL      = "gpt-4o"
@@ -534,7 +535,8 @@ def main() -> None:
 
     out_dir: Path = args.out_dir or groups_dir.parent
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / "proposed_attributes.json"
+    suf = env_suffix()
+    out_path = out_dir / f"proposed_attributes{suf}.json"
 
     # ── load taxonomy display names
     leaves = load_leaves(TAXONOMY_PATH)
@@ -599,6 +601,21 @@ def main() -> None:
         json.dumps(output, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+
+    write_step_summary(
+        out_dir,
+        step="step-5-attribute-generation-and-unit-value-assignment (5b LLM)",
+        stats={
+            "leaves_total":            len(leaves),
+            "leaves_with_attributes":  len(merged_attrs),
+            "attrs_with_patterns":     attrs_with_patterns,
+            "low_structure_cats":      len(low_structure_paths),
+            "unique_units":            len(merged_units),
+        },
+        input_files=[str(groups_dir.relative_to(ROOT))],
+        output_files=[out_path.name],
+    )
+
     print(f"\nOutput: {out_path.relative_to(ROOT)}")
     print(f"  {len(merged_attrs)} categories with attributes")
     print(f"  {attrs_with_patterns} categories with at least one extraction pattern")
@@ -608,14 +625,14 @@ def main() -> None:
     # ── consolidate to final-output/
     final_dir = ROOT / "final-output" / out_dir.name
     final_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(out_path, final_dir / "proposed_attributes.json")
+    shutil.copy2(out_path, final_dir / f"proposed_attributes{suf}.json")
     shutil.copy2(TAXONOMY_PATH, final_dir / "categories_v1.json")
     step4_matched = sorted(
-        (ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs").glob("**/matched_deduped.json"),
+        (ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs").glob(f"**/matched_deduped*.json"),
         key=lambda p: p.stat().st_mtime,
     )
     if step4_matched:
-        shutil.copy2(step4_matched[-1], final_dir / "matched_deduped.json")
+        shutil.copy2(step4_matched[-1], final_dir / f"matched_deduped{suf}.json")
     print(f"\nFinal outputs staged → final-output/{out_dir.name}/")
 
 

@@ -71,7 +71,7 @@ STEP4_OUTPUTS = ROOT / "step-4-dedupe-and-merge-matched-items" / "outputs"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _su
-from shared_utils import load_dotenv_file as _load_dotenv
+from shared_utils import load_dotenv_file as _load_dotenv, write_step_summary, env_suffix
 
 DEFAULT_MODEL       = "gpt-4o"
 DEFAULT_LLM_BATCH   = 20
@@ -123,9 +123,9 @@ def normalise_title(title: str) -> str:
 
 def find_latest_attributes() -> Path:
     outputs = STEP5_DIR / "outputs"
-    candidates = list(outputs.rglob("proposed_attributes.json"))
+    candidates = list(outputs.rglob("proposed_attributes*.json"))
     if not candidates:
-        sys.exit("No proposed_attributes.json found — run step 5b first.")
+        sys.exit("No proposed_attributes*.json found — run step 5b first.")
     # filter by parent dir (timestamped run folder) env suffix
     result = _su.latest_env_path(candidates, name_attr="parent")
     return result or candidates[0]
@@ -567,7 +567,11 @@ def main() -> None:
         return
 
     # ── write outputs
-    values_path = out_dir / "item_attribute_values.json"
+    suf = env_suffix()
+    values_path   = out_dir / f"item_attribute_values{suf}.json"
+    rejected_path = out_dir / f"unextracted_values{suf}.json"
+    stats_path    = out_dir / f"extraction_stats{suf}.json"
+
     values_path.write_text(
         json.dumps(all_accepted, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
@@ -575,26 +579,33 @@ def main() -> None:
     print(f"\nWrote: {values_path.relative_to(ROOT)}")
 
     if llm_rejected:
-        rejected_path = out_dir / "unextracted_values.json"
         rejected_path.write_text(
             json.dumps(llm_rejected, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
         )
         print(f"Wrote: {rejected_path.relative_to(ROOT)}  (low/none confidence — not uploaded)")
 
-    stats_path = out_dir / "extraction_stats.json"
     stats_path.write_text(
         json.dumps(stats, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
     print(f"Wrote: {stats_path.relative_to(ROOT)}")
 
+    write_step_summary(
+        out_dir,
+        step="step-5-attribute-generation-and-unit-value-assignment (5c extraction)",
+        stats=stats,
+        output_files=[values_path.name]
+            + ([rejected_path.name] if llm_rejected else [])
+            + [stats_path.name],
+    )
+
     # Copy to final-output/
     final_dir = ROOT / "final-output" / out_dir.name
     if final_dir.exists():
         import shutil
-        shutil.copy2(values_path, final_dir / "item_attribute_values.json")
-        print(f"Copied item_attribute_values.json → final-output/{out_dir.name}/")
+        shutil.copy2(values_path, final_dir / f"item_attribute_values{suf}.json")
+        print(f"Copied item_attribute_values{suf}.json → final-output/{out_dir.name}/")
 
 
 if __name__ == "__main__":

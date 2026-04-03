@@ -37,7 +37,7 @@ OUTDIR = Path(__file__).resolve().parent / "outputs"
 
 VERSION = "1.6-unmatched-similar-title-groups"
 
-from shared_utils import timestamp  # noqa: E402
+from shared_utils import timestamp, write_step_summary, env_suffix  # noqa: E402
 
 
 def normalize_title(s: str) -> str:
@@ -410,7 +410,8 @@ def main() -> None:
     ts = timestamp()
     run_dir = OUTDIR / ts
     run_dir.mkdir(parents=True, exist_ok=False)
-    out_path = run_dir / "unmatched_similar_title_groups.json"
+    suf = env_suffix()
+    out_path = run_dir / f"similar_title_groups{suf}.json"
 
     payload = {
         "version": VERSION,
@@ -433,6 +434,15 @@ def main() -> None:
     }
 
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+    write_step_summary(
+        run_dir,
+        step="step-1-similar-title-groups",
+        stats=stats,
+        input_files=[str(in_path.relative_to(ROOT))],
+        output_files=[out_path.name],
+    )
+
     print(f"Wrote {out_path.relative_to(ROOT)}")
     print(
         f"Groups: {stats['groups_emitted']}  Items in groups: {stats['items_in_groups']}  "

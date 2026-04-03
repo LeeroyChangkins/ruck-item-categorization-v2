@@ -62,7 +62,7 @@ TAXONOMY_PATH = ROOT / "source-files" / "categories_v1.json"
 
 sys.path.insert(0, str(ROOT))
 import shared_utils as _timestamp_module
-from shared_utils import timestamp as _timestamp
+from shared_utils import timestamp as _timestamp, write_step_summary
 
 DEFAULT_MIN_CLUSTER = 3
 DEFAULT_LOW_STRUCTURE_RATIO = 0.60
@@ -269,6 +269,16 @@ def main() -> None:
         (groups_dir / "_manifest.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
             encoding="utf-8",
+        )
+        write_step_summary(
+            out_root,
+            step="step-5-attribute-generation-and-unit-value-assignment (5a templates)",
+            stats={
+                "categories_with_items": len(manifest_entries),
+                "total_items_grouped":   total_items_processed,
+                "low_structure_count":   low_structure_count,
+            },
+            output_files=["title_groups/_manifest.json", f"title_groups/<category>.json (×{len(manifest_entries)})"],
         )
         print(f"\nWrote {len(manifest_entries)} category files → {groups_dir.relative_to(ROOT)}/")
 

@@ -61,8 +61,11 @@ UNMATCHED_KEYWORD_MIN_CHARS = 5  # strictly more than 4 characters
 UNMATCHED_KEYWORD_MIN_ITEMS = 4  # strictly more than 3 distinct unmatched items
 
 
+import shared_utils as _su
+
+
 def timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d_%H%M%S")
+    return _su.timestamp()
 
 
 def tokenize_alpha_preserve(text: str) -> List[str]:
@@ -299,15 +302,17 @@ def write_split_artifacts(
     unmatched_word_list.sort(key=lambda x: (-x["unmatched_item_count"], -x["token_count"], x["word"]))
 
     # 3) Write files
-    (split_out_dir / "bigrams_combined.json").write_text(
+    suf = _su.env_suffix()
+    split_out_dir.mkdir(parents=True, exist_ok=True)
+    (split_out_dir / f"bigrams_combined{suf}.json").write_text(
         json.dumps(bigrams_combined, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    (split_out_dir / "matched.json").write_text(
+    (split_out_dir / f"matched{suf}.json").write_text(
         json.dumps(matched_items, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    (split_out_dir / "unmatched_and_keywords.json").write_text(
+    (split_out_dir / f"unmatched_and_keywords{suf}.json").write_text(
         json.dumps(
             {
                 "unmatched_items": unmatched_items,
@@ -541,15 +546,26 @@ def run_single_mapping(args: argparse.Namespace) -> None:
     }
 
     ts = timestamp()
-    out_path = OUTPUT_DIR / f"1.2-bigram_sorted_items_{ts}.json"
+    suf = _su.env_suffix()
+    run_dir = OUTPUT_DIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+    out_path = run_dir / f"bigram_sorted_items{suf}.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     print(f"Wrote {out_path}")
     print(f"matched_items: {len(matched_items)}")
     print(f"unmatched_items: {len(unmatched_items)}")
 
-    split_dir = OUTPUT_DIR / f"1.2_split_{ts}"
+    split_dir = run_dir / "split"
     write_split_artifacts(matched_items, unmatched_items, split_dir)
+
+    _su.write_step_summary(
+        run_dir,
+        step="step-2-bigram-keyword-matching",
+        stats={"matched_items": len(matched_items), "unmatched_items": len(unmatched_items)},
+        output_files=[out_path.name, "split/matched" + suf + ".json",
+                      "split/unmatched_and_keywords" + suf + ".json"],
+    )
 
     try:
         if ckpt.exists():
@@ -703,16 +719,27 @@ def run_phased_cascade(args: argparse.Namespace, cascade_paths: List[str]) -> No
     }
 
     ts = timestamp()
-    out_path = OUTPUT_DIR / f"1.2-bigram_sorted_items_{ts}.json"
+    suf = _su.env_suffix()
+    run_dir = OUTPUT_DIR / ts
+    run_dir.mkdir(parents=True, exist_ok=True)
+    out_path = run_dir / f"bigram_sorted_items{suf}.json"
     out_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
 
     print(f"Wrote {out_path}")
     print(f"matched_items: {len(matched_items)}")
     print(f"unmatched_items: {len(unmatched_items)}")
 
-    split_dir = OUTPUT_DIR / f"1.2_split_{ts}"
+    split_dir = run_dir / "split"
     write_split_artifacts(matched_items, unmatched_items, split_dir)
     print(f"Split artifacts: {split_dir}", flush=True)
+
+    _su.write_step_summary(
+        run_dir,
+        step="step-2-bigram-keyword-matching (cascade)",
+        stats={"matched_items": len(matched_items), "unmatched_items": len(unmatched_items)},
+        output_files=[out_path.name, "split/matched" + suf + ".json",
+                      "split/unmatched_and_keywords" + suf + ".json"],
+    )
 
 
 def _load_items_list() -> tuple[list[dict], Path]:

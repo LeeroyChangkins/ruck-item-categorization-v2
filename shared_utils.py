@@ -3,6 +3,7 @@ shared_utils.py — Common utilities shared across v2 pipeline scripts.
 """
 from __future__ import annotations
 
+import json
 import os
 from datetime import datetime
 from pathlib import Path
@@ -63,6 +64,49 @@ def latest_env_path(candidates: list[Path], *, name_attr: str = "parent") -> Pat
 
     # fallback — no suffix set or nothing matched: return overall newest
     return max(candidates, key=lambda p: p.stat().st_mtime)
+
+
+def write_step_summary(
+    run_dir: Path,
+    step: str,
+    stats: dict,
+    input_files: list | None = None,
+    output_files: list | None = None,
+    extra: dict | None = None,
+) -> None:
+    """Write a consistent summary.json to a step's run directory.
+
+    Schema:
+      {
+        "step":         str,          // directory name of the step
+        "env":          str,          // prod | dev | unknown
+        "run_id":       str,          // parent folder name e.g. 20260331_164151-prod
+        "generated_at": str,          // ISO timestamp
+        "stats":        dict,         // step-specific counts
+        "input_files":  list | null,
+        "output_files": list | null,
+        ...extra fields...
+      }
+    """
+    env = os.environ.get("PIPELINE_ENV", "").strip().lower() or "unknown"
+    payload: dict = {
+        "step":         step,
+        "env":          env,
+        "run_id":       run_dir.name,
+        "generated_at": datetime.now().isoformat(timespec="seconds"),
+        "stats":        stats,
+    }
+    if input_files is not None:
+        payload["input_files"] = input_files
+    if output_files is not None:
+        payload["output_files"] = output_files
+    if extra:
+        payload.update(extra)
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "summary.json").write_text(
+        json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
 
 
 def load_dotenv_file(env_path: Path | None = None) -> None:

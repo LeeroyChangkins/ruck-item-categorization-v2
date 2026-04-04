@@ -119,14 +119,45 @@ def yn(prompt: str, default: bool = True) -> bool:
             return False
 
 
-def choose(prompt: str, options: list[tuple[str, str]]) -> str:
+def choose(prompt: str, options: list[tuple[str, str]], disabled: set[str] | None = None) -> str:
+    disabled = disabled or set()
     print(prompt)
     for k, label in options:
-        print(f"  {k}) {label}")
+        if k in disabled:
+            print(f"  {k}) \033[9m{label}\033[0m  [unavailable — see warnings above]")
+        else:
+            print(f"  {k}) {label}")
     while True:
         ans = input("> ").strip()
-        if any(ans == k for k, _ in options):
+        if any(ans == k for k, _ in options if k not in disabled):
             return ans
+        if any(ans == k for k, _ in options if k in disabled):
+            print(f"  Step {ans} is unavailable due to missing .env variables. Pick another.")
+
+
+def _check_env_vars(env_ans: str) -> tuple[list[str], set[str]]:
+    """
+    Returns (warnings, disabled_steps).
+    warnings: human-readable lines describing what is missing.
+    disabled_steps: step IDs that cannot run due to missing vars.
+    """
+    warnings: list[str] = []
+    disabled: set[str] = set()
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        warnings.append("  • OPENAI_API_KEY is not set  →  steps 3 and 5 require it")
+        disabled.update({"3", "5"})
+
+    if env_ans == "dev":
+        if not (os.environ.get("DEV_DB_USER") and os.environ.get("DEV_DB_PASSWORD")):
+            warnings.append("  • DEV_DB_USER / DEV_DB_PASSWORD not set  →  step 6 (dev DB upload) unavailable")
+            disabled.add("6")
+    else:
+        if not (os.environ.get("PROD_DB_USER") and os.environ.get("PROD_DB_PASSWORD")):
+            warnings.append("  • PROD_DB_USER / PROD_DB_PASSWORD not set  →  step 6 (prod DB upload) unavailable")
+            disabled.add("6")
+
+    return warnings, disabled
 
 
 def newest_matching(glob_pat: str, folder: Path) -> Path | None:
@@ -494,6 +525,21 @@ def main() -> None:
     else:
         print(f"  Using items file: {items_file.relative_to(ROOT)}  ({items_file.stat().st_size // 1024:,} KB)")
 
+    # ── .env variable check ──────────────────────────────────────────────────────
+    env_warnings, disabled_steps = _check_env_vars(env_ans)
+    if env_warnings:
+        print()
+        print("  ⚠️  Missing .env variables detected:")
+        for w in env_warnings:
+            print(w)
+        print()
+        raw_proceed = input("  Proceed anyway? [Y/n] ").strip().lower()
+        if raw_proceed in ("n", "no"):
+            print("  Exiting. Set the missing variables in your .env file and restart.")
+            return
+    else:
+        disabled_steps = set()
+
     _print_status_summary(items_file=items_file)
     print("Outputs: step-1-similar-title-groups/  step-2/  step-3-llm-matching/  step-4/outputs/<run_id>/  step-5/outputs/  final-output/<ts>/")
 
@@ -517,6 +563,7 @@ def main() -> None:
                     ("5", "Step 5 — Attribute generation (5a template grouping → 5b LLM schema+patterns → 5c value extraction)"),
                     ("6", "Step 6 — DB upload (requires SSM tunnel)"),
                 ],
+                disabled=disabled_steps,
             )
 
     print(f"\nStarting at {start_step!r} (runs this phase and all following phases).")

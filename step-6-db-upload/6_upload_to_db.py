@@ -19,7 +19,7 @@ Flow:
 
 Prerequisites:
   - SSM tunnel running on the expected local port (ruck-db-staging / ruck-db-prod)
-  - DB_USER and DB_PASSWORD set in .env at the v2 root, or entered interactively
+  - DEV_DB_USER / DEV_DB_PASSWORD or PROD_DB_USER / PROD_DB_PASSWORD set in .env at the v2 root
   - psycopg2-binary installed (pip install psycopg2-binary)
 
 Setup guide: https://www.notion.so/AWS-Local-Configuration-2ad33ea5030a80649112edd494fc7c28
@@ -100,12 +100,13 @@ def _confirm(prompt: str, default_yes: bool = False) -> bool:
         print("  Please enter y or n.")
 
 
-def _prompt_credentials() -> tuple[str, str]:
-    env_user = os.environ.get("DB_USER", "")
-    env_pass = os.environ.get("DB_PASSWORD", "")
+def _prompt_credentials(env: str) -> tuple[str, str]:
+    prefix = "DEV" if env == "dev" else "PROD"
+    env_user = os.environ.get(f"{prefix}_DB_USER", "")
+    env_pass = os.environ.get(f"{prefix}_DB_PASSWORD", "")
 
     if env_user and env_pass:
-        print(f"  DB credentials loaded from .env (user: {env_user})")
+        print(f"  DB credentials loaded from .env ({prefix}_DB_USER: {env_user})")
         return env_user, env_pass
 
     user = input(f"  DB username [{env_user}]: ").strip() or env_user
@@ -209,11 +210,21 @@ def _do_upload(
     # ── Credentials ───────────────────────────────────────────────────────────
     if not db_user:
         print()
-        db_user, db_password = _prompt_credentials()
+        db_user, db_password = _prompt_credentials(env)
 
     # ── Confirm dry/live ──────────────────────────────────────────────────────
     if dry_run is None:
         dry_run = not _confirm("Write to the database? (No = dry-run preview)", default_yes=False)
+
+    # ── Production safety gate ────────────────────────────────────────────────
+    if not dry_run and env == "prod":
+        print()
+        print("  ⚠️  You are about to write to the PRODUCTION database.")
+        print('  Type exactly:  confirm upload to production database')
+        confirmation = input("  → ").strip()
+        if confirmation != "confirm upload to production database":
+            print("\n  Confirmation did not match. Upload cancelled.")
+            return
 
     mode_label = "DRY RUN (no writes)" if dry_run else "LIVE RUN (writing to DB)"
     print(f"\n  Mode: {mode_label}")
